@@ -3,6 +3,7 @@ package com.mixfa.ailibrary.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mixfa.ailibrary.misc.Utils;
+import lombok.Builder;
 import lombok.With;
 import lombok.experimental.FieldNameConstants;
 import org.bson.types.ObjectId;
@@ -43,6 +44,7 @@ public record Book(
     ) {
     }
 
+    @Builder
     public record SearchRequest(
             String title,
             String[] authors,

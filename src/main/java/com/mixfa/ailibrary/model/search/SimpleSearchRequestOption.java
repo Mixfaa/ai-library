@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
-class SimpleSearchRequestOption implements SearchOption {
+public class SimpleSearchRequestOption implements SearchOption {
     private final Book.SearchRequest req;
 
     @Override

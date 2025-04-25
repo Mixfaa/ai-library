@@ -13,4 +13,6 @@ public interface CommentService {
     double getBookRate(Object bookId);
 
     Page<Comment> listComments(Object bookId, Pageable pageable);
+
+    Page<Comment> listMyComments(Pageable pageable);
 }

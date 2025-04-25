@@ -17,19 +17,19 @@ import java.time.Instant;
 @FieldNameConstants
 public record Comment(
         @Id ObjectId id,
-        ObjectId bookId,
+        @DBRef Book book,
         String text,
         double rate,
         Instant timestamp,
         @DBRef Account owner
 ) implements HasOwner {
 
-    public Comment(ObjectId bookId, String text, double rate, Account owner, Instant timestamp) {
-        this(ObjectId.get(), bookId, text, rate, timestamp, owner);
+    public Comment(Book book, String text, double rate, Account owner, Instant timestamp) {
+        this(ObjectId.get(), book, text, rate, timestamp, owner);
     }
 
-    public Comment(ObjectId bookId, String text, double rate, Account owner) {
-        this(ObjectId.get(), bookId, text, rate, Instant.now(), owner);
+    public Comment(Book book, String text, double rate, Account owner) {
+        this(ObjectId.get(), book, text, rate, Instant.now(), owner);
     }
 
     public record AddRequest(

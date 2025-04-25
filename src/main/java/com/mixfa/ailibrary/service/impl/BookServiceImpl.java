@@ -25,7 +25,7 @@ public class BookServiceImpl implements BookService {
     private static final Update INC_TOOK_UPD = new Update().inc(Book.Fields.tookCount, 1);
     private static final Update INC_READ_UPD = new Update().inc(Book.Fields.readCount, 1);
 
-    public Book findBookOrThrow(Object bookId) throws Exception {
+    public Book findBookOrThrow(Object bookId) {
         return bookRepo.findById(Utils.idToStr(bookId)).orElseThrow(() -> ExceptionType.BOOK_NOT_FOUND.make(bookId));
     }
 

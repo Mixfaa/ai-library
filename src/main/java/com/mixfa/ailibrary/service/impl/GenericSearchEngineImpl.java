@@ -5,7 +5,6 @@ import com.mixfa.ailibrary.model.CountResponse;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.service.SearchEngine;
 import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -94,7 +93,7 @@ public final class GenericSearchEngineImpl<T> implements SearchEngine<T> {
             var count = facetResponse.count().getFirst().count();
             return new PageImpl<>(facetResponse.elements(), pageable, count);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            // mostly NoSuchElementException
             return Page.empty(pageable);
         }
     }
@@ -158,13 +157,13 @@ public final class GenericSearchEngineImpl<T> implements SearchEngine<T> {
                 .as("count");
         var facetResponseClass = RuntimeFacetResponseClassGenerator.get(typeClass);
 
-        var result = mongoTemplate.aggregate(Aggregation.newAggregation(facet) , typeClass, facetResponseClass);
+        var result = mongoTemplate.aggregate(Aggregation.newAggregation(facet), typeClass, facetResponseClass);
         return handleFacetResponse(result.getUniqueMappedResult(), pageable);
     }
 
     @Nullable
     @Override
     public T findOne(SearchOption searchOption) {
-        return find(searchOption, PageRequest.of(0,1)).getContent().getFirst();
+        return find(searchOption, PageRequest.of(0, 1)).getContent().getFirst();
     }
 }

@@ -28,16 +28,13 @@ public class LibrariesRoute extends AppLayout {
         this.librarySearchService = librarySearchService;
         SideBarInitializer.init(this);
 
-
         var searchField = new TextField("Search library");
 
         IntFunction<Page<Library>> fetchLibraries = (page) ->
                 librarySearchService.find(SearchOption.Libraries.byName(searchField.getValue()), PageRequest.of(page, 10));
 
-
         var librariesGrid = new Grid<>(Library.class, false);
         var girdPagination = new GridPagination<>(librariesGrid, 10, fetchLibraries);
-
         librariesGrid.addColumn(Library::name).setHeader("Name");
         librariesGrid.addColumn(Library::address).setHeader("Address");
         librariesGrid.addComponentColumn(lib -> new Button("Goto", _ -> UI.getCurrent().navigate(LibraryRoute.class, lib.name())));
@@ -45,6 +42,7 @@ public class LibrariesRoute extends AppLayout {
         if (Account.isAdminAuthenticated()) {
             librariesGrid.addComponentColumn(lib -> new Button("Manage orders", _ -> UI.getCurrent().navigate(ManageLibraryOrders.class, lib.name())));
         }
+        girdPagination.refresh();
 
         var searchBtn = new Button("Search", _ -> {
             var books = fetchLibraries.apply(0);

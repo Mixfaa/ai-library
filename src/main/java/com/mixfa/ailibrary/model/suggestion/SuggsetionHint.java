@@ -3,6 +3,11 @@ package com.mixfa.ailibrary.model.suggestion;
 public interface SuggsetionHint {
     public String makeHint();
 
+
+    public static SuggsetionHint composition(Iterable<SuggsetionHint> hints) {
+        return new Composition(hints);
+    }
+
     public static SuggsetionHint empty() {
         return EmptyHint.instance;
     }

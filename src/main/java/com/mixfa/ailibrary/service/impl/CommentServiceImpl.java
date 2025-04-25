@@ -5,12 +5,13 @@ import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Comment;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.model.user.HasOwner;
+import com.mixfa.ailibrary.service.BookService;
 import com.mixfa.ailibrary.service.CommentService;
+import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.repo.BookRepo;
 import com.mixfa.ailibrary.service.repo.CommentsRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
@@ -18,14 +19,19 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
+
+import static com.mixfa.ailibrary.misc.Utils.fmt;
 
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
     private final CommentsRepo commentsRepo;
+    private final SearchEngine.ForComments commentSearchEngine;
     private final BookRepo bookRepo;
     private final MongoTemplate mongoTemplate;
+    private final BookService bookService;
 
     @Override
     public Comment addComment(Comment.AddRequest request) {
@@ -39,7 +45,8 @@ public class CommentServiceImpl implements CommentService {
         if (!bookRepo.existsById(request.bookId()))
             throw ExceptionType.BOOK_NOT_FOUND.make(request.bookId());
 
-        var comment = new Comment(Utils.idToObj(request.bookId()), request.text(), request.rate(), remoteUser);
+        var book = bookService.findBookOrThrow(request.bookId());
+        var comment = new Comment(book, request.text(), request.rate(), remoteUser);
 
         return commentsRepo.save(comment);
     }
@@ -56,7 +63,7 @@ public class CommentServiceImpl implements CommentService {
             static final AvgRate ZERO_RATE = new AvgRate(0.0);
         }
 
-        var q = Criteria.where(Comment.Fields.bookId).is(Utils.idToObj(bookId));
+        var q = Criteria.where(fmt("{0}.$id", Comment.Fields.book)).is(Utils.idToObj(bookId));
 
         var matchOp = Aggregation.match(q);
         var avgRateOp = Aggregation.group().avg(Comment.Fields.rate).as("avgRate");
@@ -69,11 +76,17 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Page<Comment> listComments(Object bookId, Pageable pageable) {
-        var q = Query.query(Criteria.where(Comment.Fields.bookId).is(Utils.idToObj(bookId)));
+        return commentSearchEngine.find(
+                () -> List.of(Aggregation.match(Criteria.where(fmt("{0}.$id", Comment.Fields.book)).is(Utils.idToObj(bookId)))),
+                pageable
+        );
+    }
 
-        var total = mongoTemplate.count(q, Comment.class);
-        var comments = mongoTemplate.find(q.skip(pageable.getOffset()).limit(pageable.getPageSize()), Comment.class);
-
-        return new PageImpl<>(comments, pageable, total);
+    @Override
+    public Page<Comment> listMyComments(Pageable pageable) {
+        return commentSearchEngine.find(
+                () -> List.of(Aggregation.match(HasOwner.ownerCriteria())),
+                pageable
+        );
     }
 }

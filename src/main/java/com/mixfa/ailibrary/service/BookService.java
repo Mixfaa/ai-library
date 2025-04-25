@@ -17,5 +17,5 @@ public interface BookService {
 
     Optional<Book> getById(Object id);
 
-    Book findBookOrThrow(Object id) throws Exception;
+    Book findBookOrThrow(Object id);
 }

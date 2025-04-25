@@ -3,13 +3,12 @@ package com.mixfa.ailibrary.misc;
 import com.mixfa.ailibrary.controller.FileStorageContoller;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Library;
+import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.route.comp.BookCommentsComponent;
 import com.mixfa.ailibrary.route.comp.BookDetailsComponent;
 import com.mixfa.ailibrary.route.comp.DialogCloseButton;
-import com.mixfa.ailibrary.service.CommentService;
-import com.mixfa.ailibrary.service.FileStorageService;
-import com.mixfa.ailibrary.service.LibraryService;
-import com.mixfa.ailibrary.service.UserDataService;
+import com.mixfa.ailibrary.route.comp.GridWithPagination;
+import com.mixfa.ailibrary.service.*;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
@@ -22,16 +21,20 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.FileBuffer;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
@@ -123,25 +126,47 @@ public class VaadinCommons {
         return dialog;
     }
 
-    public static <T> void configureDefaultBookGridEx(Grid<T> grid, Function<T,Book> tranformer, Locale userLocale) {
-        grid.addColumn(b -> tranformer.apply(b).titleString(userLocale));
-        grid.addColumn(b -> tranformer.apply(b).authorsString());
+    public static <T> void configureDefaultBookGridEx(Grid<T> grid, Function<T, Book> tranformer, Locale userLocale) {
+        grid.addColumn(b -> tranformer.apply(b).titleString(userLocale)).setHeader("Title");
+        grid.addColumn(b -> tranformer.apply(b).authorsString()).setHeader("Authors");
     }
 
-    public static <T> void configureBookGridPreviewEx(Grid<T> grid,  Function<T,Book> tranformer,Locale locale, CommentService commentService, UserDataService userDataService) {
+    public static <T> void configureBookGridPreviewEx(Grid<T> grid, Function<T, Book> tranformer, Locale locale, CommentService commentService, UserDataService userDataService) {
         var bookPreviewDialogCache = new LinkedHashMap<Book, Dialog>();
         grid.addComponentColumn(b -> new Button("Preview", _ -> {
             var book = tranformer.apply(b);
             var dialog = bookPreviewDialogCache.computeIfAbsent(book, key -> bookPreviewDialog(key, locale, commentService, userDataService));
             dialog.open();
-        }));
+        })).setHeader("Preview");
     }
 
     public static void configureDefaultBookGrid(Grid<Book> grid, Locale userLocale) {
-       configureDefaultBookGridEx(grid, Utils::value, userLocale);
+        configureDefaultBookGridEx(grid, Utils::value, userLocale);
     }
 
     public static void configureBookGridPreview(Grid<Book> grid, Locale locale, CommentService commentService, UserDataService userDataService) {
         configureBookGridPreviewEx(grid, Utils::value, locale, commentService, userDataService);
+    }
+
+    public static IntFunction<Page<Library>> makeLibrariesSearchFunc(SearchEngine.ForLibraries librariesSearchEngine, TextField queryField) {
+        return page -> librariesSearchEngine.find(
+                SearchOption.Libraries.byName(queryField.getValue()),
+                PageRequest.of(page, 10)
+        );
+    }
+
+    public static IntFunction<Page<Library>> makeLibrariesFetchFunc(SearchEngine.ForLibraries librariesSearchEngine) {
+        return page -> librariesSearchEngine.find(
+                SearchOption.empty(), PageRequest.of(page, 10)
+        );
+    }
+
+    public static GridWithPagination<Library> makeLibrariesPageableGrid(IntFunction<Page<Library>> fetchFunc) {
+        var grid = new GridWithPagination<>(Library.class, 10, fetchFunc);
+        grid.addColumn(Library::name).setHeader("Name");
+        grid.addColumn(Library::address).setHeader("Address");
+
+
+        return grid;
     }
 }
