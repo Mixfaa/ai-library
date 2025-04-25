@@ -1,0 +1,47 @@
+/* frontend/styles/book-card-styles.css */
+
+.book-card {
+    display: flex; /* Use flexbox for image and details layout */
+    flex-direction: row; /* Arrange items horizontally */
+    align-items: flex-start; /* Align items to the top */
+    border: 1px solid var(--lumo-contrast-10pct); /* Subtle border */
+    border-radius: var(--lumo-border-radius-m); /* Rounded corners */
+    padding: var(--lumo-space-m); /* Padding inside the card */
+    background-color: var(--lumo-base-color); /* Card background */
+    box-shadow: var(--lumo-box-shadow-xs); /* Subtle shadow */
+    width: 350px; /* Or set a max-width, adjust as needed */
+    gap: var(--lumo-space-m); /* Space between image and details */
+}
+
+.book-image {
+    width: 100px; /* Fixed image width */
+    height: 150px; /* Fixed image height */
+    object-fit: cover; /* Scale image nicely */
+    border-radius: var(--lumo-border-radius-s); /* Slightly rounded image corners */
+    flex-shrink: 0; /* Prevent image from shrinking */
+}
+
+.book-details {
+    display: flex;
+    flex-direction: column; /* Stack title, author, rating vertically */
+    flex-grow: 1; /* Allow details to take remaining space */
+    gap: var(--lumo-space-xs); /* Small gap between text elements */
+}
+
+/* Ensure title doesn't have excessive margins */
+.book-details > h3 {
+    margin-top: 0;
+    margin-bottom: var(--lumo-space-xs);
+    line-height: 1.2; /* Adjust line height for title */
+}
+
+/* --- Rating Star Styles Removed --- */
+
+
+/* Optional: Style for the main view container */
+.book-list-view {
+    /* padding: var(--lumo-space-l); */
+    /* display: grid; */
+    /* grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); */
+    /* gap: 1em; */
+}

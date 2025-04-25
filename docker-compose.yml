@@ -1,0 +1,40 @@
+services:
+  #MongoDB Service
+  ai-lib-mongodb:
+    image: mongo:7.0
+    container_name: mongo
+    restart: always
+    command: [ "--replSet", "rs0", "--bind_ip_all", "--port", "27017" ]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017'}]}) }" | mongosh --port 27017
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      start_interval: 1s
+      retries: 30
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: dragonfly
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    environment:
+      - DF_CACHE_SIZE=1GB  # Adjust cache size as needed
+      - DF_THREADS=1        # Number of threads to use
+    command: [ "--maxmemory", "1GB" ]
+    volumes:
+      - dragonfly_data:/data
+
+
+volumes:
+  mongo-data:
+  mongo-config:
+  dragonfly_data:

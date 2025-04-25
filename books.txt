@@ -1,0 +1,152 @@
+[
+  {
+    "localizedTitle": {
+      "en": "The Hobbit, or There and Back Again",
+      "uk": "Гобіт, або Туди і звідти"
+    },
+    "authors": ["J.R.R. Tolkien"],
+    "genres": ["Fantasy", "Adventure", "Children's Literature"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/en/4/4a/TheHobbit_FirstEdition.jpg"
+    ],
+    "localizedDescription": {
+      "en": "The adventurous tale of Bilbo Baggins, a hobbit who lives a quiet life until Gandalf the wizard convinces him to join thirteen dwarves on a quest to reclaim their stolen treasure from the dragon Smaug.",
+      "uk": "Пригодницька історія Більбо Беґґінса, гобіта, який живе тихим життям, доки чарівник Ґандальф не переконує його приєднатися до тринадцяти гномів у поході, щоб повернути їхні вкрадені скарби від дракона Смауґа."
+    }
+  },
+  {
+    "localizedTitle": {
+      "en": "Nineteen Eighty-Four",
+      "uk": "1984"
+    },
+    "authors": ["George Orwell"],
+    "genres": ["Dystopian", "Science Fiction", "Political Fiction"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/1984first.jpg/800px-1984first.jpg"
+    ],
+    "localizedDescription": {
+      "en": "A dystopian novel set in Airstrip One (formerly Great Britain), a province of the superstate Oceania in a world of perpetual war, omnipresent government surveillance, and public manipulation.",
+      "uk": "Антиутопічний роман, дія якого відбувається на Аеродромі Один (колишня Велика Британія), провінції наддержави Океанія у світі вічної війни, всеосяжного урядового нагляду та маніпуляції громадськістю."
+    }
+  },
+  {
+    "localizedTitle": {
+      "en": "Pride and Prejudice",
+      "uk": "Гордість і упередження"
+    },
+    "authors": ["Jane Austen"],
+    "genres": ["Romance", "Classic", "Satire"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/PrideAndPrejudiceTitlePage.jpg/800px-PrideAndPrejudiceTitlePage.jpg"
+    ],
+    "localizedDescription": {
+      "en": "Follows the turbulent relationship between Elizabeth Bennet, the daughter of a country gentleman, and Fitzwilliam Darcy, a rich aristocratic landowner. Explores themes of love, class, and social manners.",
+      "uk": "Розповідає про бурхливі стосунки між Елізабет Беннет, дочкою сільського джентльмена, та Фіцвільямом Дарсі, багатим аристократичним землевласником. Досліджує теми кохання, класу та соціальних манер."
+    }
+  },
+  {
+    "localizedTitle": {
+      "en": "To Kill a Mockingbird",
+      "uk": "Убити пересмішника"
+    },
+    "authors": ["Harper Lee"],
+    "genres": ["Southern Gothic", "Coming-of-Age", "Legal Drama"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/To_Kill_a_Mockingbird_%28first_edition_cover%29.jpg/800px-To_Kill_a_Mockingbird_%28first_edition_cover%29.jpg"
+    ],
+    "localizedDescription": {
+      "en": "Set in the American South during the Great Depression, the story is told through the eyes of Scout Finch as her lawyer father Atticus defends a black man falsely accused of raping a white woman.",
+      "uk": "Події розгортаються на американському Півдні під час Великої депресії. Історія розповідається очима Скаут Фінч, чий батько-адвокат Аттікус захищає чорношкірого чоловіка, несправедливо звинуваченого у зґвалтуванні білої жінки."
+    }
+  },
+  {
+    "localizedTitle": {
+      "en": "The Great Gatsby",
+      "uk": "Великий Гетсбі"
+    },
+    "authors": ["F. Scott Fitzgerald"],
+    "genres": ["Classic", "Tragedy", "Modernist"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/The_Great_Gatsby_Cover_1925_Retouched.jpg/800px-The_Great_Gatsby_Cover_1925_Retouched.jpg"
+    ],
+    "localizedDescription": {
+      "en": "A novel about the mysterious millionaire Jay Gatsby and his quixotic passion and obsession for the beautiful former debutante Daisy Buchanan, set during the Roaring Twenties.",
+      "uk": "Роман про таємничого мільйонера Джея Гетсбі та його донкіхотську пристрасть і одержимість прекрасною колишньою дебютанткою Дейзі Б'юкенен, дія якого відбувається в ревучі двадцяті."
+    }
+  },
+  {
+    "localizedTitle": {
+      "en": "Moby Dick; or, The Whale",
+      "uk": "Мобі Дік, або Білий Кит"
+    },
+    "authors": ["Herman Melville"],
+    "genres": ["Adventure", "Epic", "Psychological Novel"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Moby_Dick_FE_title_page.jpg/800px-Moby_Dick_FE_title_page.jpg"
+    ],
+    "localizedDescription": {
+      "en": "The narrative of the sailor Ishmael about the obsessive quest of Ahab, captain of the whaling ship Pequod, for revenge against Moby Dick, the giant white sperm whale that bit off his leg.",
+      "uk": "Розповідь моряка Ізмаїла про одержиму помсту Ахава, капітана китобійного судна «Пекод», Мобі Діку, гігантському білому кашалоту, який відкусив йому ногу."
+    }
+  },
+  {
+    "localizedTitle": {
+      "en": "War and Peace",
+      "uk": "Війна і мир"
+    },
+    "authors": ["Leo Tolstoy"],
+    "genres": ["Historical Novel", "Epic", "Realist Novel"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Tolstoy_-_War_and_Peace_-_first_edition%2C_1869.jpg/800px-Tolstoy_-_War_and_Peace_-_first_edition%2C_1869.jpg"
+    ],
+    "localizedDescription": {
+      "en": "An epic novel that chronicles the French invasion of Russia and the impact of the Napoleonic era on Tsarist society through the stories of five Russian aristocratic families.",
+      "uk": "Епічний роман, який описує французьке вторгнення в Росію та вплив наполеонівської епохи на царське суспільство через історії п'яти російських аристократичних родин."
+    }
+  },
+  {
+    "localizedTitle": {
+      "en": "The Catcher in the Rye",
+      "uk": "Ловець у житі"
+    },
+    "authors": ["J. D. Salinger"],
+    "genres": ["Coming-of-Age", "Realist Novel"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/The_Catcher_in_the_Rye_%281951%2C_first_edition_cover%29.jpg/800px-The_Catcher_in_the_Rye_%281951%2C_first_edition_cover%29.jpg"
+    ],
+    "localizedDescription": {
+      "en": "Follows protagonist Holden Caulfield's experiences in New York City in the days following his expulsion from Pencey Prep, a preparatory school. Explores themes of teenage angst and alienation.",
+      "uk": "Розповідає про досвід головного героя Голдена Колфілда в Нью-Йорку в дні після його виключення з підготовчої школи Пенсі. Досліджує теми підліткової тривоги та відчуження."
+    }
+  },
+  {
+    "localizedTitle": {
+      "en": "Fahrenheit 451",
+      "uk": "451 градус за Фаренгейтом"
+    },
+    "authors": ["Ray Bradbury"],
+    "genres": ["Dystopian", "Science Fiction"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/en/thumb/d/db/Fahrenheit_451_1st_ed_cover.jpg/800px-Fahrenheit_451_1st_ed_cover.jpg"
+    ],
+    "localizedDescription": {
+      "en": "Presents a future American society where books are outlawed and 'firemen' burn any that are found. The story follows Guy Montag, a fireman who becomes disillusioned with his role.",
+      "uk": "Представляє майбутнє американське суспільство, де книги заборонені, а 'пожежники' спалюють усі знайдені. Історія розповідає про Гая Монтега, пожежника, який розчаровується у своїй ролі."
+    }
+  },
+  {
+    "localizedTitle": {
+      "en": "Kobzar",
+      "uk": "Кобзар"
+    },
+    "authors": ["Taras Shevchenko"],
+    "genres": ["Poetry", "Classic", "Ukrainian Literature"],
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Taras_Shevchenko_-_Kobzar%2C_1860.jpg/800px-Taras_Shevchenko_-_Kobzar%2C_1860.jpg"
+    ],
+    "localizedDescription": {
+      "en": "A seminal collection of poetry by Taras Shevchenko, considered the foundational figure of modern Ukrainian literature and a symbol of Ukrainian national identity. Themes include hardship, history, and hope.",
+      "uk": "Основоположна збірка поезій Тараса Шевченка, який вважається засновником сучасної української літератури та символом української національної ідентичності. Теми включають поневіряння, історію та надію."
+    }
+  }
+]
