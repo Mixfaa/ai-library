@@ -1,6 +1,5 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.misc.Services;
 import com.mixfa.ailibrary.misc.UserFriendlyException;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
@@ -12,6 +11,7 @@ import com.mixfa.ailibrary.route.comp.SideBarInitializer;
 import com.mixfa.ailibrary.service.CommentService;
 import com.mixfa.ailibrary.service.LibraryService;
 import com.mixfa.ailibrary.service.UserDataService;
+import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -36,18 +36,18 @@ import static com.mixfa.ailibrary.misc.Utils.fmt;
 @Route("/user_details")
 public class UserDetailsRoute extends AppLayout {
     private final Locale userLocale;
-    private final Services services;
 
     private final LibraryService libService;
     private final CommentService commentService;
     private final UserDataService userDataService;
+    private final Services services;
 
     public UserDetailsRoute(Services services) {
-        this.services = services;
         this.userDataService = services.userDataService();
         this.commentService = services.commentService();
         this.userLocale = userDataService.getLocale();
         this.libService = services.libService();
+        this.services = services;
         SideBarInitializer.init(this);
 
         setContent(makeContent());
@@ -91,7 +91,7 @@ public class UserDetailsRoute extends AppLayout {
 
         var waitListGrid = new Grid<>(Book.class, false);
         VaadinCommons.configureDefaultBookGrid(waitListGrid, userLocale);
-        VaadinCommons.configureBookGridPreview(waitListGrid, userLocale, commentService, userDataService);
+        VaadinCommons.configureBookGridPreview(waitListGrid, userLocale, services);
 
         waitListGrid.addComponentColumn(book -> new Button("Remove", _ ->
         {
@@ -111,7 +111,7 @@ public class UserDetailsRoute extends AppLayout {
         VaadinCommons.configureDefaultBookGridEx(grid, ReadBook::book, userLocale);
         grid.addComponentColumn(rb -> new Button((rb.mark() == ReadBook.Mark.LIKE ? VaadinIcon.THUMBS_UP : VaadinIcon.THUMBS_DOWN).create()))
                 .setHeader("Your Mark");
-        VaadinCommons.configureBookGridPreviewEx(grid, ReadBook::book, userLocale, commentService, userDataService);
+        VaadinCommons.configureBookGridPreviewEx(grid, ReadBook::book, userLocale, services);
         grid.addComponentColumn(rb -> new Button("Remove", _ -> {
             readList.addRemove(rb.book(), null);
             grid.setItems(readList.get());
@@ -125,7 +125,7 @@ public class UserDetailsRoute extends AppLayout {
         var commentsGrid = new GridWithPagination<>(Comment.class, 10, fetchFunc);
         commentsGrid.addColumn(Comment::text).setHeader("Text");
         commentsGrid.addColumn(comment -> comment.book().titleString(userLocale)).setHeader("Book");
-        VaadinCommons.configureBookGridPreviewEx(commentsGrid, Comment::book, userLocale, commentService, userDataService);
+        VaadinCommons.configureBookGridPreviewEx(commentsGrid, Comment::book, userLocale, services);
         commentsGrid.addComponentColumn(comment -> new Button("Delete", _ -> {
             commentService.removeComment(comment.id());
             commentsGrid.refresh();

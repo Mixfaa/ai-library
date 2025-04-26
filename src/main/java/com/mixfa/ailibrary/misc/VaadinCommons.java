@@ -9,6 +9,7 @@ import com.mixfa.ailibrary.route.comp.BookDetailsComponent;
 import com.mixfa.ailibrary.route.comp.DialogCloseButton;
 import com.mixfa.ailibrary.route.comp.GridWithPagination;
 import com.mixfa.ailibrary.service.*;
+import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
@@ -101,7 +102,8 @@ public class VaadinCommons {
         }};
     }
 
-    public static Dialog bookPreviewDialog(Book book, Locale locale, CommentService commentService, UserDataService userDataService) {
+    public static Dialog bookPreviewDialog(Book book, Locale locale, Services services) {
+        var commentService = services.commentService();
         var dialog = new Dialog("Book preview " + book.titleString(locale));
 
         var content = new HorizontalLayout();
@@ -120,7 +122,7 @@ public class VaadinCommons {
         );
 
         content.add(image, details);
-        dialog.add(new BookDetailsComponent(book, commentService, userDataService), new BookCommentsComponent(book, commentService));
+        dialog.add(new BookDetailsComponent(book, services), new BookCommentsComponent(book, commentService));
         dialog.getFooter().add(new DialogCloseButton(dialog));
 
         return dialog;
@@ -131,11 +133,11 @@ public class VaadinCommons {
         grid.addColumn(b -> tranformer.apply(b).authorsString()).setHeader("Authors");
     }
 
-    public static <T> void configureBookGridPreviewEx(Grid<T> grid, Function<T, Book> tranformer, Locale locale, CommentService commentService, UserDataService userDataService) {
+    public static <T> void configureBookGridPreviewEx(Grid<T> grid, Function<T, Book> tranformer, Locale locale,Services services) {
         var bookPreviewDialogCache = new LinkedHashMap<Book, Dialog>();
         grid.addComponentColumn(b -> new Button("Preview", _ -> {
             var book = tranformer.apply(b);
-            var dialog = bookPreviewDialogCache.computeIfAbsent(book, key -> bookPreviewDialog(key, locale, commentService, userDataService));
+            var dialog = bookPreviewDialogCache.computeIfAbsent(book, key -> bookPreviewDialog(key, locale, services));
             dialog.open();
         })).setHeader("Preview");
     }
@@ -144,8 +146,8 @@ public class VaadinCommons {
         configureDefaultBookGridEx(grid, Utils::value, userLocale);
     }
 
-    public static void configureBookGridPreview(Grid<Book> grid, Locale locale, CommentService commentService, UserDataService userDataService) {
-        configureBookGridPreviewEx(grid, Utils::value, locale, commentService, userDataService);
+    public static void configureBookGridPreview(Grid<Book> grid, Locale locale, Services services) {
+        configureBookGridPreviewEx(grid, Utils::value, locale, services);
     }
 
     public static IntFunction<Page<Library>> makeLibrariesSearchFunc(SearchEngine.ForLibraries librariesSearchEngine, TextField queryField) {

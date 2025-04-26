@@ -13,6 +13,7 @@ import com.mixfa.ailibrary.route.comp.CustomMultiSelectComboBox;
 import com.mixfa.ailibrary.route.comp.GridPagination;
 import com.mixfa.ailibrary.route.comp.SideBarInitializer;
 import com.mixfa.ailibrary.service.*;
+import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -56,6 +57,7 @@ public class BooksEditRoute extends AppLayout {
     private final Locale userLocale;
     private final CommentService commentService;
     private final UserDataService userDataService;
+    private final Services services;
 
     private Page<Book> fetchBooks(int page) {
         var query = searchField.getValue();
@@ -207,13 +209,14 @@ public class BooksEditRoute extends AppLayout {
         return layout;
     }
 
-    public BooksEditRoute(BookService bookService, SearchEngine.ForBooks bookSearchService, FileStorageService fileStorageService, ObjectMapper objectMapper, CommentService commentService, UserDataService userDataService) {
-        this.bookService = bookService;
-        this.bookSearchService = bookSearchService;
-        this.fileStorageService = fileStorageService;
+    public BooksEditRoute(Services services, ObjectMapper objectMapper) {
+        this.bookService = services.bookService();
+        this.bookSearchService = services.booksSearchEngine();
+        this.fileStorageService = services.fileStorageService();
         this.objectMapper = objectMapper;
-        this.commentService = commentService;
-        this.userDataService = userDataService;
+        this.commentService = services.commentService();
+        this.userDataService = services.userDataService();
+        this.services = services;
         this.userLocale = userDataService.getLocale();
         SideBarInitializer.init(this);
 
@@ -230,7 +233,7 @@ public class BooksEditRoute extends AppLayout {
                 _ -> UI.getCurrent().navigate(EditBookRoute.class, book.id().toHexString())));
         var dialogCache = new LinkedHashMap<Book, Dialog>();
         foundBooksGrid.addComponentColumn(book -> new Button("Preview", _ -> {
-            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, userLocale, commentService, userDataService));
+            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, userLocale, services));
             dialog.open();
         }));
 

@@ -25,7 +25,8 @@ public class SideBarInitializer {
         sideNav.addItem(
                 new SideNavItem("Catalog", MainRoute.class, VaadinIcon.BOOK.create()),
                 new SideNavItem("Libraries", LibrariesRoute.class, VaadinIcon.ARCHIVES.create()),
-                new SideNavItem("My details", UserDetailsRoute.class, VaadinIcon.USER.create())
+                new SideNavItem("My details", UserDetailsRoute.class, VaadinIcon.USER.create()),
+                new SideNavItem("Ai Suggestions", AiFeaturesRoute.class, VaadinIcon.MAGIC.create())
         );
 
         if (authentication.role().isAdmin()) {

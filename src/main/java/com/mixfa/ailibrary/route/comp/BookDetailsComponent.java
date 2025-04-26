@@ -4,8 +4,10 @@ import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Genre;
 import com.mixfa.ailibrary.model.ReadBook;
-import com.mixfa.ailibrary.service.CommentService;
+import com.mixfa.ailibrary.service.LibraryService;
+import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.UserDataService;
+import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.*;
@@ -29,11 +31,15 @@ public class BookDetailsComponent extends VerticalLayout {
     private final double rating;
     private final UserDataService.WaitList waitList;
     private final UserDataService.ReadBooks readBooks;
+    private final SearchEngine.ForLibraries libSearchEngine;
+    private final LibraryService libraryService;
 
-    public BookDetailsComponent(Book book, CommentService commentService, UserDataService userDataService) {
+    public BookDetailsComponent(Book book, Services services) {
         this.book = book;
-        this.rating = commentService.getBookRate(book.id());
-        this.userDataService = userDataService;
+        this.libSearchEngine = services.librariesSearchEngine();
+        this.libraryService = services.libService();
+        this.rating = services.commentService().getBookRate(book.id());
+        this.userDataService = services.userDataService();
         this.userLocale = userDataService.getLocale();
         this.waitList = userDataService.waitList();
         this.readBooks = userDataService.readBooks();
@@ -94,7 +100,8 @@ public class BookDetailsComponent extends VerticalLayout {
         header.add(
                 bookTitle,
                 createWaitListButton(),
-                createReadBookButton()
+                createReadBookButton(),
+                new LibraryFinderButton(book, libSearchEngine, libraryService, userLocale)
         );
 
         return header;

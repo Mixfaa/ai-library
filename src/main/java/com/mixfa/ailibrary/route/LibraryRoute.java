@@ -10,6 +10,7 @@ import com.mixfa.ailibrary.service.CommentService;
 import com.mixfa.ailibrary.service.LibraryService;
 import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.UserDataService;
+import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -41,13 +42,15 @@ public class LibraryRoute extends AppLayout implements HasUrlParameter<String> {
     private final SearchEngine.ForBooks booksSearch;
     private final LibraryService libraryService;
     private final CommentService commentService;
+    private final Services services;
 
-    public LibraryRoute(SearchEngine.ForBooks booksSearch, LibraryService libraryService, CommentService commentService, UserDataService userDataService) {
-        this.booksSearch = booksSearch;
-        this.libraryService = libraryService;
-        this.commentService = commentService;
+    public LibraryRoute(Services services) {
+        this.booksSearch = services.booksSearchEngine();
+        this.libraryService = services.libService();
+        this.commentService = services.commentService();
+        this.userDataService = services.userDataService();
+        this.services = services;
         SideBarInitializer.init(this);
-        this.userDataService = userDataService;
     }
 
     private Component makeContent() {
@@ -80,7 +83,7 @@ public class LibraryRoute extends AppLayout implements HasUrlParameter<String> {
 
         var dialogCache = new LinkedHashMap<Book, Dialog>();
         booksGrid.addComponentColumn(book -> new Button("Preview", _ -> {
-            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, userLocale, commentService, userDataService));
+            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, userLocale, services));
             dialog.open();
         }));
 

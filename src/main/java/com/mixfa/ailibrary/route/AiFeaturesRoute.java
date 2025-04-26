@@ -1,15 +1,15 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.misc.Services;
+import com.mixfa.ailibrary.service.impl.Services;
+import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Library;
 import com.mixfa.ailibrary.model.search.PresentInLibraries;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.search.SimpleSearchRequestOption;
-import com.mixfa.ailibrary.model.suggestion.ReadBooksHint;
-import com.mixfa.ailibrary.model.suggestion.SuggestedBook;
-import com.mixfa.ailibrary.model.suggestion.SuggsetionHint;
+import com.mixfa.ailibrary.model.suggestion.*;
+import com.mixfa.ailibrary.route.comp.CustomMultiSelectComboBox;
 import com.mixfa.ailibrary.route.comp.DialogCloseButton;
 import com.mixfa.ailibrary.route.comp.SideBarInitializer;
 import com.mixfa.ailibrary.service.SearchEngine;
@@ -31,12 +31,15 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Slf4j
 @PermitAll
 @Route("ai-features")
 public class AiFeaturesRoute extends AppLayout {
@@ -57,15 +60,13 @@ public class AiFeaturesRoute extends AppLayout {
     }
 
     private Component makeSearchInLibrariesSection(List<SearchOption> options) {
-        var layout = new VerticalLayout();
-
         var searchField = new TextField("Search for libraries");
         var librariesGrid = VaadinCommons.makeLibrariesPageableGrid(
                 VaadinCommons.makeLibrariesSearchFunc(librarySearchEngine, searchField)
         );
         searchField.addValueChangeListener(_ -> librariesGrid.refresh());
         librariesGrid.setSelectionMode(Grid.SelectionMode.MULTI);
-
+        librariesGrid.refresh();
         librariesGrid.addSelectionListener(e -> {
             options.removeIf(searchOption -> PresentInLibraries.class.isInstance(searchField));
 
@@ -74,7 +75,7 @@ public class AiFeaturesRoute extends AppLayout {
             );
         });
 
-        return layout;
+        return new VerticalLayout(searchField, librariesGrid.component());
     }
 
     private Component makeTookMinCount(List<SearchOption> options) {
@@ -105,20 +106,32 @@ public class AiFeaturesRoute extends AppLayout {
                 suggestionHints.add(new ReadBooksHint(userDataService.readBooks().get()));
         });
 
-        return includeReadBooksCheckBox;
+        var likedBookSelect = new CustomMultiSelectComboBox<String>("Liked books", Utils::value);
+        likedBookSelect.setWidth("50%");
+        likedBookSelect.addValueChangeListener(e -> {
+            suggestionHints.removeIf(suggsetionHint -> LikedBooksHint.class.isInstance(suggestionHints));
+            suggestionHints.add(new LikedBooksHint(e.getValue().toArray(String[]::new)));
+        });
+
+        var dislikedBookSelect = new CustomMultiSelectComboBox<String>("Disliked books", Utils::value);
+        dislikedBookSelect.setWidth("50%");
+        dislikedBookSelect.addValueChangeListener(e -> {
+            suggestionHints.removeIf(suggsetionHint -> DislikedBooksHint.class.isInstance(suggestionHints));
+            suggestionHints.add(new LikedBooksHint(e.getValue().toArray(String[]::new)));
+        });
+
+        // select for liked and disliked books
+        return new VerticalLayout(includeReadBooksCheckBox, likedBookSelect, dislikedBookSelect);
     }
 
     private Component makeContent() {
         var header = new Paragraph("Suggestions service");
 
-        // display options
-        // select/configure options
-        // get suggstions
-
         var searchOptions = new ArrayList<SearchOption>();
         var suggestionHints = new ArrayList<SuggsetionHint>();
 
         var optionsDialog = new Dialog("Configure options");
+        optionsDialog.setWidth("1200px");
         optionsDialog.getFooter().add(new DialogCloseButton(optionsDialog));
 
         var optionsAccordion = new Accordion();
@@ -135,10 +148,21 @@ public class AiFeaturesRoute extends AppLayout {
 
             Notification.show("Your request submitted");
             executor.submit(() -> {
-                var suggestions = suggestionService.getSuggestions(
-                        SearchOption.composition(searchOptions),
-                        SuggsetionHint.composition(suggestionHints)
-                );
+                System.out.println("Submitted");
+                final SuggestedBook[] suggestions;
+                try {
+                    suggestions = suggestionService.getSuggestions(
+                            SearchOption.composition(searchOptions),
+                            SuggsetionHint.composition(suggestionHints)
+                    );
+                    System.out.println("Suggestions ready " + Arrays.toString(suggestions));
+                    log.info("Suggestions are ready: {}", suggestions);
+                } catch (Throwable e) {
+                    System.out.println(e);
+                    UI.getCurrent().access(() -> Notification.show("Error occurred", 5000, Notification.Position.MIDDLE));
+                    log.error("Error while getting suggestions", e);
+                    throw e;
+                }
 
                 UI.getCurrent().access(() -> {
                     Notification.show("Your suggestions are ready!");
@@ -158,8 +182,6 @@ public class AiFeaturesRoute extends AppLayout {
             });
         });
 
-        return VaadinCommons.applyMainStyle(new
-
-                VerticalLayout(header, optionsDialogButton, getSuggestionsButton));
+        return VaadinCommons.applyMainStyle(new VerticalLayout(header, optionsDialogButton, getSuggestionsButton));
     }
 }

@@ -6,13 +6,13 @@ import com.mixfa.ailibrary.model.Book;
 public class DislikedBooksHint implements SuggsetionHint {
     private final String hint;
 
-    public DislikedBooksHint(Book[] books) {
+    public DislikedBooksHint(String[] books) {
         var sb = new StringBuilder();
 
         sb.append("User DISLIKED next books:\n");
 
-        for (Book book : books)
-            Utils.appendBookDescForAi(book, sb);
+        for (String book : books)
+            sb.append(book).append("\n");
 
         this.hint = sb.toString();
     }

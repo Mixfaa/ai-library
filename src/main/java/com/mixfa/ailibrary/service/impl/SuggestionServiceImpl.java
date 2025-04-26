@@ -163,8 +163,14 @@ public class SuggestionServiceImpl implements SuggestionService {
 
         var promptObj = new Prompt(List.of(REQUEST_PROMPT, booksContext, userContext), OPTIONS);
 
+        System.out.println("Calling llmv with next prompt:");
+        System.out.println(
+                promptObj.getContents()
+        );
+
         var text = chatModel.call(promptObj).getResult().getOutput().getText();
 
+        System.out.println("LLM respond with next text:");
         System.out.println(text);
 
         try {

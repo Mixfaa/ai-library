@@ -198,17 +198,18 @@ public class UserDataServiceImpl implements UserDataService {
 
         @Override
         public boolean addRemove(Book book) {
-            var readBooks = waitListRef.get();
+            var waitListedBooks = waitListRef.get();
             var predicate = makePredicate(book);
 
-            var exists = Utils.anyMatch(readBooks, predicate);
+            var exists = Utils.anyMatch(waitListedBooks, predicate);
 
             if (exists)
-                readBooks = Utils.filter(readBooks, predicate.negate());
+                waitListedBooks = Utils.filter(waitListedBooks, predicate.negate());
             else
-                readBooks = ArrayUtils.add(readBooks, book);
+                waitListedBooks = ArrayUtils.add(waitListedBooks, book);
 
-            setField(UserData.Fields.waitList, readBooks, UserData::new);
+            waitListRef.set(waitListedBooks);
+            setField(UserData.Fields.waitList, waitListedBooks, UserData::new);
             return !exists;
         }
 
