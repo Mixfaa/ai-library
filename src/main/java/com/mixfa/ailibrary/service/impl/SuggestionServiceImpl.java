@@ -1,6 +1,6 @@
 package com.mixfa.ailibrary.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Book;
@@ -12,22 +12,32 @@ import com.mixfa.ailibrary.model.suggestion.SuggsetionHint;
 import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.SuggestionService;
 import com.mixfa.ailibrary.service.UserDataService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.ResponseFormat;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.util.json.schema.JsonSchemaGenerator;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import static com.mixfa.ailibrary.misc.Utils.fmt;
+
+@Slf4j
 @Service
 public class SuggestionServiceImpl implements SuggestionService {
     private final UserDataService userDataService;
@@ -36,29 +46,16 @@ public class SuggestionServiceImpl implements SuggestionService {
     private final ListOperations<String, BookRecord> listOps;
     private final SearchEngine.ForBooks bookSearchService;
 
-    private static final UserMessage REQUEST_PROMPT = new UserMessage("Suggest 3 books to read, based on user`s read books and available books\n");
+
     private static final String BOOK_RECORDS_KEY = "all-books";
-    private static final OpenAiChatOptions OPTIONS = OpenAiChatOptions.builder()
-            .responseFormat(
-                    ResponseFormat.builder()
-                            .jsonSchema(
-                                    JsonSchemaGenerator.generateForType(SuggestedBook[].class)
-                            )
-                            .type(ResponseFormat.Type.JSON_OBJECT)
-                            .build())
-            .build();
 
     public record BookRecord(
             String id,
             String description) {
         public static BookRecord create(Book book) {
             var id = book.id().toHexString();
-            var title = book.localizedTitle().getOrDefault(Utils.DEFAULT_LOCALE, null);
-            if (title == null) {
-                var localeFirst = book.localizedTitle().keySet().stream().findFirst();
-                if (localeFirst.isPresent())
-                    title = book.localizedTitle().get(localeFirst.get());
-            }
+            var title = book.titleString(Utils.DEFAULT_LOCALE);
+
             var sb = new StringBuilder();
 
             sb.append("Book description").append('\n');
@@ -94,7 +91,8 @@ public class SuggestionServiceImpl implements SuggestionService {
     }
 
     public String prepareBooksContext(SearchOption searchOptions) {
-        var sb = new StringBuilder().append("Books, present in library:\n");
+        var sb = new StringBuilder().append("Books present in library:\n");
+
         if (searchOptions.isEmpty()) {
             long size = Objects.requireNonNull(listOps.size(BOOK_RECORDS_KEY));
             if (size == 0) {
@@ -103,8 +101,9 @@ public class SuggestionServiceImpl implements SuggestionService {
                     var bookRecords = books.getContent().stream().map(BookRecord::create).toArray(BookRecord[]::new);
                     listOps.leftPushAll(BOOK_RECORDS_KEY, bookRecords);
 
-                    for (BookRecord bookRecord : bookRecords)
+                    for (BookRecord bookRecord : bookRecords) {
                         sb.append(bookRecord.description);
+                    }
 
                     return true;
                 });
@@ -125,8 +124,9 @@ public class SuggestionServiceImpl implements SuggestionService {
             Utils.iteratePages(fetchFunc, books -> {
                 var bookRecords = books.getContent().stream().map(BookRecord::create).toArray(BookRecord[]::new);
 
-                for (BookRecord bookRecord : bookRecords)
+                for (BookRecord bookRecord : bookRecords) {
                     sb.append(bookRecord.description);
+                }
 
                 return true;
             });
@@ -156,27 +156,119 @@ public class SuggestionServiceImpl implements SuggestionService {
         return getSuggestions(SearchOption.empty(), suggsetionHint);
     }
 
+    private String makeBooksContext(final SearchOption searchOption, final SearchFunctionArgs args) {
+        var pageRequest = PageRequest.of(args.page, 15);
+
+        var query = args.query;
+        Page<Book> books = Page.empty();
+        if (StringUtils.isNotBlank(query)) {
+            var compsedSearchOptions = SearchOption.composition(SearchOption.Books.byTitle(query), searchOption);
+            books = bookSearchService.find(compsedSearchOptions, pageRequest);
+        }
+        if (books.isEmpty())
+            books = bookSearchService.find(searchOption, pageRequest);
+
+        return fmt("Page: {0}\nTotal pages: {1}\n", args.page, books.getTotalPages()) +
+                books.getContent()
+                        .stream()
+                        .map(BookRecord::create)
+                        .map(BookRecord::description)
+                        .collect(Collectors.joining("\n"));
+    }
+
+    private static final String RESPONSE_JSON_SCHEMA = JsonSchemaGenerator.generateForType(SuggestedBook[].class);
+    private static final ResponseFormat RESPONSE_FORMAT = ResponseFormat.builder()
+            .type(ResponseFormat.Type.JSON_OBJECT)
+            .build();
+
+    private static final OpenAiChatOptions JSONIZE_OPTIONS = OpenAiChatOptions.builder()
+            .responseFormat(RESPONSE_FORMAT)
+            .build();
+
+    private static final UserMessage SEARCH_PROMPT;
+
+    static {
+        var rootPromptBuilder = new StringBuilder();
+
+        rootPromptBuilder.append("Suggest 3 books to read, based on user`s read books and available books, to list availiable books, use search function\n");
+        rootPromptBuilder.append("In response provide: bookId, title and reason(why user should read book)\n");
+        rootPromptBuilder.append("You must use ID from book description (from search function), not 1,2,3");
+        rootPromptBuilder.append("You must not wrap json in ```json tag");
+        rootPromptBuilder.append("You must ALWAYS respond with Json Array, even if single book");
+        rootPromptBuilder.append("You are not allowed to respond with question or anything except what you were asked for");
+        rootPromptBuilder.append(RESPONSE_JSON_SCHEMA);
+
+        SEARCH_PROMPT = new UserMessage(rootPromptBuilder.toString());
+    }
+
+    private static final String JSONIZE_MESSAGE;
+
+    static {
+        var jsonizeMessageBuilder = new StringBuilder();
+        jsonizeMessageBuilder.append("Write provided list of books as json array, jscon scheme:\n");
+        jsonizeMessageBuilder.append("Required fields:\n");
+        for (Field field : SuggestedBook.class.getDeclaredFields()) {
+            var fieldName = field.getName();
+            var type = field.getType().getSimpleName();
+
+            jsonizeMessageBuilder.append(fieldName).append(": ").append(type).append("\n");
+        }
+
+        JSONIZE_MESSAGE = jsonizeMessageBuilder.toString();
+    }
+
+    public record SearchFunctionArgs(String query, int page) {
+    }
+
+    private static JsonNode findThat(JsonNode root, Predicate<JsonNode> predicate) {
+        for (JsonNode jsonNode : root) {
+            if (predicate.test(jsonNode)) return jsonNode;
+        }
+        return null;
+    }
+
     @Override
     public SuggestedBook[] getSuggestions(SearchOption searchOptions, SuggsetionHint suggsetionHint) {
-        var booksContext = new UserMessage(prepareBooksContext(searchOptions));
+
         var userContext = new UserMessage(suggsetionHint.makeHint());
 
-        var promptObj = new Prompt(List.of(REQUEST_PROMPT, booksContext, userContext), OPTIONS);
+        var searchTool = FunctionToolCallback.builder("search", (SearchFunctionArgs args) -> makeBooksContext(searchOptions, args))
+                .inputType(SearchFunctionArgs.class)
+                .description("Search for available books page by page. Params: String query(can be empty), int page(starts from 0)")
+                .build();
 
-        System.out.println("Calling llmv with next prompt:");
-        System.out.println(
-                promptObj.getContents()
-        );
+        var searchPromptOptions = OpenAiChatOptions.builder()
+                .toolCallbacks(searchTool)
+                .build();
 
-        var text = chatModel.call(promptObj).getResult().getOutput().getText();
+        var searchResult = chatModel.call(new Prompt(List.of(SEARCH_PROMPT, userContext), searchPromptOptions));
+        log.info("LLM respond:");
+        System.out.println(searchResult);
 
-        System.out.println("LLM respond with next text:");
-        System.out.println(text);
+        var textToParse = searchResult.getResult().getOutput().getText();
+
+        final var jsonPrefix = "```json";
+        if (textToParse.startsWith(jsonPrefix))
+            textToParse = textToParse.substring(jsonPrefix.length());
+        final var jsonPostfix = "```";
+        if (textToParse.endsWith(jsonPostfix))
+            textToParse = textToParse.substring(0, textToParse.length() - jsonPostfix.length());
 
         try {
-            return objectMapper.readValue(text, SuggestedBook[].class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            var output = textToParse;
+
+            var tree = objectMapper.readTree(output);
+
+            if (tree.isObject())
+                tree = findThat(tree, JsonNode::isArray);
+            if (tree == null)
+                return new SuggestedBook[]{
+                        objectMapper.treeToValue(tree, SuggestedBook.class)
+            };
+
+            return objectMapper.treeToValue(tree, SuggestedBook[].class);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 }

@@ -65,7 +65,6 @@ public class LibraryRoute extends AppLayout implements HasUrlParameter<String> {
                 .set("box-shadow", "0 8px 24px rgba(0, 0, 0, 0.12)")
                 .set("padding", "24px");
 
-
         div.add(new HorizontalLayout(new H3(library.name()), new H3(library.address())));
         var queryField = new TextField("Search books");
         IntFunction<Page<Book>> fetchFunc = (page) -> {

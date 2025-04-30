@@ -1,6 +1,5 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.service.impl.Services;
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
@@ -15,6 +14,8 @@ import com.mixfa.ailibrary.route.comp.SideBarInitializer;
 import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.SuggestionService;
 import com.mixfa.ailibrary.service.UserDataService;
+import com.mixfa.ailibrary.service.impl.Services;
+import com.mixfa.ailibrary.service.repo.BookRepo;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
@@ -36,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -45,18 +47,25 @@ import java.util.concurrent.Executors;
 public class AiFeaturesRoute extends AppLayout {
     private final SuggestionService suggestionService;
     private final SearchEngine.ForLibraries librarySearchEngine;
+    private final SearchEngine.ForBooks bookSearchEngine;
     private final UserDataService userDataService;
 
+    private final Locale userLocale;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    private final BookRepo bookRepo;
+    private final Services services;
 
-    public AiFeaturesRoute(Services services, UserDataService userDataService) {
+    public AiFeaturesRoute(Services services, BookRepo bookRepo) {
         this.suggestionService = services.suggestionService();
         this.librarySearchEngine = services.librariesSearchEngine();
-
+        this.bookSearchEngine = services.booksSearchEngine();
+        this.userDataService = services.userDataService();
+        this.bookRepo = bookRepo;
+        this.userLocale = userDataService.getLocale();
+        this.services = services;
         SideBarInitializer.init(this);
 
         setContent(makeContent());
-        this.userDataService = userDataService;
     }
 
     private Component makeSearchInLibrariesSection(List<SearchOption> options) {
@@ -147,38 +156,43 @@ public class AiFeaturesRoute extends AppLayout {
         var getSuggestionsButton = new Button("Get suggestions", _ -> {
 
             Notification.show("Your request submitted");
-            executor.submit(() -> {
-                System.out.println("Submitted");
-                final SuggestedBook[] suggestions;
-                try {
-                    suggestions = suggestionService.getSuggestions(
-                            SearchOption.composition(searchOptions),
-                            SuggsetionHint.composition(suggestionHints)
-                    );
-                    System.out.println("Suggestions ready " + Arrays.toString(suggestions));
-                    log.info("Suggestions are ready: {}", suggestions);
-                } catch (Throwable e) {
-                    System.out.println(e);
-                    UI.getCurrent().access(() -> Notification.show("Error occurred", 5000, Notification.Position.MIDDLE));
-                    log.error("Error while getting suggestions", e);
-                    throw e;
-                }
 
-                UI.getCurrent().access(() -> {
-                    Notification.show("Your suggestions are ready!");
 
-                    var suggestionsDialog = new Dialog("Suggestions");
-                    suggestionsDialog.getFooter().add(new DialogCloseButton(suggestionsDialog));
+            final SuggestedBook[] suggestions;
+            try {
+                suggestions = suggestionService.getSuggestions(
+                        SearchOption.composition(searchOptions),
+                        SuggsetionHint.composition(suggestionHints)
+                );
+                System.out.println("Suggestions ready " + Arrays.toString(suggestions));
+                log.info("Suggestions are ready: {}", suggestions);
+            } catch (Throwable e) {
+                UI.getCurrent().access(() -> Notification.show("Error occurred", 5000, Notification.Position.MIDDLE));
+                log.error("Error while getting suggestions", e);
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
 
-                    var suggestionsGrid = new Grid<>(SuggestedBook.class, false);
+            UI.getCurrent().access(() -> {
+                Notification.show("Your suggestions are ready!");
 
-                    suggestionsGrid.addColumn(SuggestedBook::title).setHeader("Title");
-                    suggestionsGrid.addColumn(SuggestedBook::reason).setHeader("Reason");
+                var suggestionsDialog = new Dialog("Suggestions");
+                suggestionsDialog.setWidth("1500px");
+                suggestionsDialog.getFooter().add(new DialogCloseButton(suggestionsDialog));
 
-                    suggestionsGrid.setItems(suggestions);
-                    suggestionsDialog.setCloseOnOutsideClick(false);
-                    suggestionsDialog.open();
-                });
+                var suggestionsGrid = new Grid<>(SuggestedBook.class, false);
+
+                suggestionsGrid.addColumn(SuggestedBook::title).setHeader("Title");
+                suggestionsGrid.addColumn(SuggestedBook::reason).setHeader("Reason");
+
+                VaadinCommons.configureBookGridPreviewEx(suggestionsGrid, sb -> {
+                    return bookRepo.findById(sb.bookId()).orElseThrow();
+                }, userLocale, services);
+
+                suggestionsGrid.setItems(suggestions);
+                suggestionsDialog.add(suggestionsGrid);
+                suggestionsDialog.setCloseOnOutsideClick(false);
+                suggestionsDialog.open();
             });
         });
 
