@@ -1,8 +1,10 @@
 package com.mixfa.ailibrary.misc;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Genre;
 import com.mixfa.ailibrary.model.user.AuthenticatedAccount;
+import jakarta.annotation.Nullable;
 import lombok.experimental.UtilityClass;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,12 @@ public class Utils {
 
     public static Locale DEFAULT_LOCALE = Locale.ENGLISH;
     public static int PAGE_SIZE = 15;
+
+    public static @Nullable JsonNode findJsonNode(JsonNode root, Predicate<JsonNode> predicate) {
+        for (JsonNode jsonNode : root)
+            if (predicate.test(jsonNode)) return jsonNode;
+        return null;
+    }
 
     public static <V> V getFromLocalizedMap(Map<Locale, V> map, Locale key) {
         var value = map.get(key);
