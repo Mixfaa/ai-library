@@ -71,7 +71,7 @@ public final class GenericSearchEngineImpl<T> implements SearchEngine<T> {
         this.projectionOperation = Aggregation.project(typeClass);
     }
 
-    private static class EmptyCriteriaDef implements CriteriaDefinition {
+    private static class EmptyCriteria implements CriteriaDefinition {
 
         @Override
         public Document getCriteriaObject() {
@@ -83,7 +83,7 @@ public final class GenericSearchEngineImpl<T> implements SearchEngine<T> {
             return null;
         }
 
-        static final EmptyCriteriaDef instance = new EmptyCriteriaDef();
+        static final EmptyCriteria instance = new EmptyCriteria();
     }
 
     private Page<T> handleFacetResponse(FacetResponse facetResponse, Pageable pageable) {
@@ -100,27 +100,7 @@ public final class GenericSearchEngineImpl<T> implements SearchEngine<T> {
 
     @Override
     public Page<T> findAll(Pageable pageable) {
-        var match = Aggregation.match(EmptyCriteriaDef.instance);
-        SkipOperation skip;
-        LimitOperation limit;
-        if (pageable.isUnpaged()) {
-            skip = Aggregation.skip(0);
-            limit = Aggregation.limit(15);
-        } else {
-            skip = Aggregation.skip(pageable.getOffset());
-            limit = Aggregation.limit(pageable.getPageSize());
-        }
-
-        var facet = Aggregation.facet(match, skip, limit)
-                .as("elements")
-                .and(Aggregation.count().as(CountResponse.Fields.count))
-                .as("count");
-
-        var facetResponseClass = RuntimeFacetResponseClassGenerator.get(typeClass);
-
-        var result = mongoTemplate.aggregate(Aggregation.newAggregation(facet), typeClass, facetResponseClass)
-                .getUniqueMappedResult();
-        return handleFacetResponse(result, pageable);
+        return find(SearchOption.empty(), pageable);
     }
 
     @Override
@@ -161,9 +141,15 @@ public final class GenericSearchEngineImpl<T> implements SearchEngine<T> {
         return handleFacetResponse(result.getUniqueMappedResult(), pageable);
     }
 
+    private static final Pageable ONE_ELEMENT_PAGE = PageRequest.of(0, 1);
+
     @Nullable
     @Override
     public T findOne(SearchOption searchOption) {
-        return find(searchOption, PageRequest.of(0, 1)).getContent().getFirst();
+        try {
+            return find(searchOption, ONE_ELEMENT_PAGE).getContent().getFirst();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
