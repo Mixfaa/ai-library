@@ -22,18 +22,13 @@ import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.util.json.schema.JsonSchemaGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static com.mixfa.ailibrary.misc.Utils.fmt;
 
 @Slf4j
 @Service
@@ -41,10 +36,8 @@ public class SuggestionServiceImpl implements SuggestionService {
     private final UserDataService userDataService;
     private final ChatModel chatModel;
     private final ObjectMapper objectMapper;
-    private final ListOperations<String, BookRecord> listOps;
+    private final ValueOperations<String, String> valueOps;
     private final SearchEngine.ForBooks bookSearchService;
-
-    private static final String BOOK_RECORDS_KEY = "all-books";
 
     private static final String RESPONSE_JSON_SCHEMA = JsonSchemaGenerator.generateForType(SuggestedBook[].class);
     private static final UserMessage SEARCH_PROMPT;
@@ -82,89 +75,17 @@ public class SuggestionServiceImpl implements SuggestionService {
     public record SearchFunctionArgs(String query, int page) {
     }
 
-    public record BookRecord(
-            String id,
-            String description) {
-        public static BookRecord create(Book book) {
-            var id = book.id().toHexString();
-            var title = book.titleString(Utils.DEFAULT_LOCALE);
-
-            var sb = new StringBuilder();
-
-            sb.append("Book description").append('\n');
-            sb.append("ID = ").append(id).append('\n');
-            sb.append("title = ").append(title).append('\n');
-
-            var desc = book.localizedDescription().getOrDefault(Utils.DEFAULT_LOCALE, null);
-            if (desc != null)
-                sb.append("Description = \n").append(desc).append('\n');
-
-            sb.append("genres = ");
-            for (Genre genre : book.genres())
-                sb.append(genre.name()).append(", ");
-            sb.append("\nAuthors = ");
-            for (String author : book.authors())
-                sb.append(author).append(", ");
-            sb.append('\n');
-            return new BookRecord(id, sb.toString());
-        }
-    }
-
     public SuggestionServiceImpl(
             UserDataService userDataService,
             ChatModel chatModel,
-            RedisTemplate<String, BookRecord> redisTemplate,
+            RedisTemplate<String, String> redisTemplate,
             ObjectMapper objectMapper,
             SearchEngine.ForBooks bookSearchService) {
         this.userDataService = userDataService;
         this.chatModel = chatModel;
         this.objectMapper = objectMapper;
-        this.listOps = redisTemplate.opsForList();
+        this.valueOps = redisTemplate.opsForValue();
         this.bookSearchService = bookSearchService;
-    }
-
-    public String prepareBooksContext(SearchOption searchOptions) {
-        var sb = new StringBuilder().append("Books present in library:\n");
-
-        if (searchOptions.isEmpty()) {
-            long size = Objects.requireNonNull(listOps.size(BOOK_RECORDS_KEY));
-            if (size == 0) {
-
-                Utils.iteratePages(bookSearchService::findAll, books -> {
-                    var bookRecords = books.getContent().stream().map(BookRecord::create).toArray(BookRecord[]::new);
-                    listOps.leftPushAll(BOOK_RECORDS_KEY, bookRecords);
-
-                    for (BookRecord bookRecord : bookRecords) {
-                        sb.append(bookRecord.description);
-                    }
-
-                    return true;
-                });
-
-            } else {
-                var pgSize = 30L;
-                var pages = Math.ceilDiv(size, pgSize);
-                for (int page = 0; page < pages; page++) {
-                    var booksRecords = listOps.range(BOOK_RECORDS_KEY, page * pgSize, (page + 1) * pgSize);
-                    for (BookRecord booksRecord : Objects.requireNonNull(booksRecords))
-                        sb.append(booksRecord.description);
-                }
-            }
-        } else {
-            Function<Pageable, Page<Book>> fetchFunc = (Pageable pageable) -> bookSearchService.find(searchOptions,
-                    pageable);
-
-            Utils.iteratePages(fetchFunc, books -> {
-                var bookRecords = books.getContent().stream().map(BookRecord::create).toArray(BookRecord[]::new);
-
-                for (BookRecord bookRecord : bookRecords) {
-                    sb.append(bookRecord.description);
-                }
-
-                return true;
-            });
-        }
-        return sb.toString();
     }
 
     @Override
@@ -211,23 +132,56 @@ public class SuggestionServiceImpl implements SuggestionService {
         return sb.toString();
     }
 
+    private static String makeBookDescriptionKey(Book book) {
+        return makeBookDescriptionKey(book.id().toHexString());
+    }
+
+    public static String makeBookDescriptionKey(String id) {
+        return id + ":book-desc";
+    }
+
     private String makeBooksContext(final SearchOption searchOption, final SearchFunctionArgs args) {
         var pageRequest = PageRequest.of(args.page, 15);
 
         var query = args.query;
-        Page<Book> books = Page.empty();
+        Page<Book> booksPage = Page.empty();
         if (StringUtils.isNotBlank(query)) {
             var compsedSearchOptions = SearchOption.composition(SearchOption.Books.byTitle(query), searchOption);
-            books = bookSearchService.find(compsedSearchOptions, pageRequest);
+            booksPage = bookSearchService.find(compsedSearchOptions, pageRequest);
         }
-        if (books.isEmpty())
-            books = bookSearchService.find(searchOption, pageRequest);
+        if (booksPage.isEmpty())
+            booksPage = bookSearchService.find(searchOption, pageRequest);
 
-        return fmt("Page: {0}\nTotal pages: {1}\n", args.page, books.getTotalPages()) +
-                books.getContent()
-                        .stream()
-                        .map(SuggestionServiceImpl::makeBookDescription)
-                        .collect(Collectors.joining("\n"));
+
+        var booksResponseBuilder = new StringBuilder();
+        booksResponseBuilder
+                .append("Page: ").append(args.page)
+                .append("\nTotal pages: ").append(booksPage.getTotalPages())
+                .append('\n');
+
+        var books = booksPage.getContent();
+        var descriptions = valueOps.multiGet(books.stream().map(SuggestionServiceImpl::makeBookDescriptionKey).toList());
+
+        if (books.size() != descriptions.size())
+            throw new RuntimeException("Book description count mismatch (valueOps multiGet)");
+
+        var toSetValues = new HashMap<String, String>();
+        for (int i = 0; i < books.size(); i++) {
+            var book = books.get(i);
+            var description = descriptions.get(i);
+
+            if (description == null) {
+                description = makeBookDescription(book);
+                toSetValues.put(makeBookDescriptionKey(book), description);
+            }
+
+            booksResponseBuilder.append(description);
+        }
+
+        if (!toSetValues.isEmpty())
+            valueOps.multiSet(toSetValues);
+
+        return booksResponseBuilder.toString();
     }
 
     @Override

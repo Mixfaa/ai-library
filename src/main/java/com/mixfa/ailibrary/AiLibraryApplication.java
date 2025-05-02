@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.MongoLocaleConverter;
 import com.mixfa.ailibrary.service.AdminAuthenticator;
-import com.mixfa.ailibrary.service.impl.SuggestionServiceImpl;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
@@ -22,7 +21,7 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import java.util.*;
+import java.util.List;
 
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
 @EnableMongoRepositories
@@ -52,12 +51,7 @@ public class AiLibraryApplication implements AppShellConfigurator {
 
         return template;
     }
-
-    @Bean
-    public RedisTemplate<String, SuggestionServiceImpl.BookRecord> redisTemplateBookRecord(RedisConnectionFactory rcf) {
-        return makeRedisTemplate(SuggestionServiceImpl.BookRecord.class, rcf);
-    }
-
+  
     @Bean
     public RedisTemplate<String, ?> redisTemplate(RedisConnectionFactory rcf) {
         RedisTemplate<String, ?> template = new RedisTemplate<>();
