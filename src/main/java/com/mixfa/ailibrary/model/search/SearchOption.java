@@ -1,12 +1,9 @@
 package com.mixfa.ailibrary.model.search;
 
 import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Library;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 
 import java.util.List;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public interface SearchOption {
     List<AggregationOperation> makePipeline();
@@ -23,12 +20,9 @@ public interface SearchOption {
         static SearchOption presentInLibs(Iterable<String> libsNames) {
             return new PresentInLibraries(libsNames);
         }
-        static SearchOption presentInLibs(String[] libsNames) {
-            return new PresentInLibraries(libsNames);
-        }
 
-        static SearchOption presentInLib(String libName) {
-            return PresentInLibraries.forSingleLibrary(libName);
+        static SearchOption presentInLibs(String... libs) {
+            return new PresentInLibraries(libs);
         }
 
         static SearchOption byTitle(String query) {

@@ -70,7 +70,7 @@ public class LibraryRoute extends AppLayout implements HasUrlParameter<String> {
         IntFunction<Page<Book>> fetchFunc = (page) -> {
             var searchOptions = SearchOption.composition(
                     SearchOption.Books.byTitle(queryField.getValue()),
-                    SearchOption.Books.presentInLib(library.name())
+                    SearchOption.Books.presentInLibs(library.name())
             );
 
             return booksSearch.find(searchOptions, PageRequest.of(page, 10));

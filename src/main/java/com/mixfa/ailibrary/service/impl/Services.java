@@ -14,9 +14,10 @@ public class Services {
     private final UserDataService userDataService;
     private final CommentService commentService;
     private final BookService bookService;
-    private final SearchEngine.ForBooks booksSearchEngine;
-    private final SearchEngine.ForLibraries librariesSearchEngine;
     private final SuggestionService suggestionService;
     private final FileStorageService fileStorageService;
     private final LibraryService libService;
+    private final SearchEngine.ForBooks booksSearchEngine;
+    private final SearchEngine.ForLibraries librariesSearchEngine;
+    private final SearchEngine.ForComments commentsSearchEngine;
 }

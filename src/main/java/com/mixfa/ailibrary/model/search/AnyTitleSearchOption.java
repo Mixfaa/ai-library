@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.util.List;
 
 @RequiredArgsConstructor
-class AnyTitleSearchOption implements SearchOption {
+public class AnyTitleSearchOption implements SearchOption {
     private final String query;
 
     @Override

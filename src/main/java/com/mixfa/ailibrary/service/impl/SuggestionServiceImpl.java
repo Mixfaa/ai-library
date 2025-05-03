@@ -40,21 +40,18 @@ public class SuggestionServiceImpl implements SuggestionService {
     private final SearchEngine.ForBooks bookSearchService;
 
     private static final String RESPONSE_JSON_SCHEMA = JsonSchemaGenerator.generateForType(SuggestedBook[].class);
-    private static final UserMessage SEARCH_PROMPT;
-
-    static {
-        var rootPromptBuilder = new StringBuilder();
-
-        rootPromptBuilder.append("Suggest 3 books to read, based on user`s read books and available books, to list availiable books, use search function\n");
-        rootPromptBuilder.append("In response provide: bookId, title and reason(why user should read book)\n");
-        rootPromptBuilder.append("You must use ID from book description (from search function), not 1,2,3");
-        rootPromptBuilder.append("You must not wrap json in ```json tag");
-        rootPromptBuilder.append("You must ALWAYS respond with Json Array, even if single book");
-        rootPromptBuilder.append("You are not allowed to respond with question or anything except what you were asked for");
-        rootPromptBuilder.append(RESPONSE_JSON_SCHEMA);
-
-        SEARCH_PROMPT = new UserMessage(rootPromptBuilder.toString());
-    }
+    private static final UserMessage SEARCH_PROMPT = new UserMessage(
+            String.join(
+                    "\n",
+                    "Suggest 3 books to read, based on user`s read books and available books, to list availiable books, use search function",
+                    "In response provide: bookId, title and reason(why user should read book)",
+                    "You must use ID from book description (from search function), not 1,2,3",
+                    "You must not wrap json in ```json tag",
+                    "You must ALWAYS respond with Json Array, even if single book",
+                    "You are not allowed to respond with question or anything except what you were asked for",
+                    RESPONSE_JSON_SCHEMA
+            )
+    );
 
     private static final String JSONIZE_MESSAGE;
 

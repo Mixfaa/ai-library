@@ -6,14 +6,13 @@ import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.aggregation.LookupOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
-
 public class PresentInLibraries implements SearchOption {
-    private static final LookupOperation LOOKUP_OPERATION = LookupOperation.newLookup()
+    protected static final LookupOperation LOOKUP_OPERATION = LookupOperation.newLookup()
             .from(Library.TABLE_NAME)
             .localField("_id")
             .foreignField(
@@ -21,14 +20,17 @@ public class PresentInLibraries implements SearchOption {
                             Library.Fields.booksAvailabilities, Library.BookAvailability.Fields.book))
             .as("libraries");
 
-
     private final List<AggregationOperation> pipeline;
 
-    private static <T> AggregationOperation makeMatchAggregation(T v) {
+    protected static <T> AggregationOperation makeMatchAggregation(T v) {
         return Aggregation.match(Criteria.where("libraries._id").in(v));
     }
 
     public PresentInLibraries(String... names) {
+        if (names == null || names.length == 0) {
+            this.pipeline = List.of();
+            return;
+        }
         this.pipeline = List.of(
                 LOOKUP_OPERATION,
                 makeMatchAggregation(names)
@@ -36,6 +38,10 @@ public class PresentInLibraries implements SearchOption {
     }
 
     public PresentInLibraries(Iterable<String> names) {
+        if (names == null || !names.iterator().hasNext()) {
+            this.pipeline = List.of();
+            return;
+        }
         this.pipeline = List.of(
                 LOOKUP_OPERATION,
                 makeMatchAggregation(names)
@@ -47,10 +53,9 @@ public class PresentInLibraries implements SearchOption {
         return pipeline;
     }
 
-    public static SearchOption forSingleLibrary(String libname) {
-        return () -> List.of(
-                LOOKUP_OPERATION,
-                makeMatchAggregation(libname)
-        );
+    @Override
+    public boolean isEmpty() {
+        return pipeline.isEmpty();
     }
 }
+
