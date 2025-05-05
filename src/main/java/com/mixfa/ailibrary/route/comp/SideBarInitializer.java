@@ -12,6 +12,7 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.arch.Processor;
 
 @UtilityClass
 public class SideBarInitializer {
@@ -32,7 +33,8 @@ public class SideBarInitializer {
         if (authentication.role().isAdmin()) {
             sideNav.addItem(
                     new SideNavItem("Edit books", BooksEditRoute.class, VaadinIcon.BOOK.create()),
-                    new SideNavItem("Edit libraries", LibsEditRoute.class, VaadinIcon.HOME.create())
+                    new SideNavItem("Edit libraries", LibsEditRoute.class, VaadinIcon.HOME.create()),
+                    new SideNavItem("Import from open lib", OpenLibImport.class, VaadinIcon.MAGIC.create())
             );
         }
 

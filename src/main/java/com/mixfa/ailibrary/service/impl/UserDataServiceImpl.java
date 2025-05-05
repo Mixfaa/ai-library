@@ -38,7 +38,6 @@ public class UserDataServiceImpl implements UserDataService {
         return mongoTemplate.save(new UserData(account));
     }
 
-
     private UserData saveUserData(UserData userData) {
         userData.throwIfNotOwned();
         return mongoTemplate.save(userData);

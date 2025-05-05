@@ -1,6 +1,8 @@
 package com.mixfa.ailibrary.model.search;
 
+import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Book;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 
 import java.util.List;
@@ -40,18 +42,14 @@ public interface SearchOption {
         }
     }
 
-    class EmptyOption implements SearchOption {
-        @Override
-        public List<AggregationOperation> makePipeline() {
-            return List.of();
+    interface Comments {
+        static SearchOption byBook(Book book) {
+            return new CommentsByBook(book.id());
         }
 
-        @Override
-        public boolean isEmpty() {
-            return true;
+        static SearchOption byBook(Object bookId) {
+            return new CommentsByBook(Utils.idToObj(bookId));
         }
-
-        static final EmptyOption instance = new EmptyOption();
     }
 
     static SearchOption empty() {
@@ -64,5 +62,19 @@ public interface SearchOption {
 
     static SearchOption composition(Iterable<SearchOption> options) {
         return new SearchOptionComposition(options);
+    }
+
+    final class EmptyOption implements SearchOption {
+        @Override
+        public List<AggregationOperation> makePipeline() {
+            return List.of();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return true;
+        }
+
+        static final EmptyOption instance = new EmptyOption();
     }
 }

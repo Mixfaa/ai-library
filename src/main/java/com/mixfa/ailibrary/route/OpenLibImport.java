@@ -1,0 +1,176 @@
+package com.mixfa.ailibrary.route;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mixfa.ailibrary.misc.Utils;
+import com.mixfa.ailibrary.misc.VaadinCommons;
+import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.Genre;
+import com.mixfa.ailibrary.model.user.Role;
+import com.mixfa.ailibrary.route.comp.SideBarInitializer;
+import com.mixfa.ailibrary.service.BookService;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.Route;
+import jakarta.annotation.security.RolesAllowed;
+
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.*;
+import java.util.function.Function;
+
+@Route("open-lib-import")
+@RolesAllowed(Role.ADMIN_ROLE)
+public class OpenLibImport extends AppLayout {
+    private static final String OPEN_LIBRARY_API_URL = "https://openlibrary.org/search.json";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final HttpClient httpClient = HttpClient.newHttpClient();
+    private final BookService bookService;
+
+    public OpenLibImport(BookService bookService) {
+        SideBarInitializer.init(this);
+
+        setContent(makeContent());
+        this.bookService = bookService;
+    }
+
+    public static Optional<String> searchBooks(String query) {
+        String url = OPEN_LIBRARY_API_URL + "?q=" + URLEncoder.encode(query);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200)
+                return Optional.ofNullable(response.body());
+        } catch (Exception e) {
+        }
+        return Optional.empty();
+    }
+
+    public static List<Book.AddRequest> extractBookData(String jsonResponse) {
+
+        JsonNode root = null;
+        try {
+            root = objectMapper.readTree(jsonResponse);
+            System.out.println(root.toString());
+        } catch (JsonProcessingException e) {
+            return List.of();
+        }
+        JsonNode docs = root.get("docs");
+
+        if (docs == null || !docs.isArray()) {
+            return Collections.emptyList();
+        }
+
+        Function<JsonNode, String> titleProvider = node -> {
+            var titleEl = node.get("title");
+            if (titleEl == null) return null;
+            if (!titleEl.isTextual()) return null;
+            return titleEl.asText();
+        };
+        Function<JsonNode, String[]> authorsProvider = node -> {
+            var authorEl = node.get("author_name");
+            if (authorEl == null) return null;
+            if (!authorEl.isArray()) return null;
+            if (authorEl.size() == 0) return null;
+
+            try {
+                return objectMapper.treeToValue(authorEl, String[].class);
+            } catch (Exception _) {
+                return null;
+            }
+        };
+
+        Function<JsonNode, String[]> imagesProvider = node -> {
+            var coverEl = node.get("cover_i");
+            if (coverEl == null) return null;
+
+            var coverId = coverEl.asText();
+            if (coverId.isBlank()) return null;
+            return new String[]{"https://covers.openlibrary.org/b/id/" + coverId + "-L.jpg"};
+        };
+
+        final var random = new Random();
+        final var allGenres = new ArrayList<>(List.of(Genre.values()));
+        Function<JsonNode, Genre[]> genresProvider = _ -> {
+            Collections.shuffle(allGenres);
+            return allGenres.stream()
+                    .limit(random.nextInt(1, 4))
+                    .toArray(Genre[]::new);
+        };
+
+
+        List<Book.AddRequest> addRequests = new ArrayList<>();
+
+        for (JsonNode doc : docs) {
+            var title = titleProvider.apply(doc);
+            if (title == null) continue;
+
+            String[] authors = null;
+            authors = authorsProvider.apply(doc);
+
+            if (authors == null) continue;
+
+            String[] images = imagesProvider.apply(doc);
+            if (images == null) continue;
+
+            var genres = genresProvider.apply(doc);
+
+            addRequests.add(
+                    new Book.AddRequest(
+                            Map.of(Utils.DEFAULT_LOCALE, title),
+                            authors,
+                            genres,
+                            images,
+                            Map.of()
+                    )
+            );
+        }
+
+        return addRequests;
+    }
+
+    private Component makeContent() {
+        var searchField = new TextField("Search in open lib");
+        var grid = new Grid<Book.AddRequest>(Book.AddRequest.class, false);
+        grid.addColumn(req -> Utils.getFromLocalizedMap(req.localizedTitle())).setHeader("title");
+        grid.addColumn(req -> Arrays.toString(req.authors())).setHeader("authors");
+        grid.addComponentColumn(req -> new Button("Add", _ -> {
+            try {
+                bookService.addBook(req);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Notification.show("Error: " + e.getMessage());
+            }
+        }));
+
+
+        searchField.addValueChangeListener(e -> {
+            var query = e.getValue();
+
+            var contentOpt = searchBooks(query);
+            if (contentOpt.isEmpty()) {
+                Notification.show("Nothing found");
+                return;
+            }
+            var bookRequests = extractBookData(contentOpt.get());
+            System.out.println(bookRequests);
+            if (bookRequests.isEmpty()) Notification.show("Nothing found");
+            grid.setItems(bookRequests);
+        });
+
+        return VaadinCommons.applyMainStyle(new VerticalLayout(searchField, grid));
+    }
+}

@@ -3,6 +3,7 @@ package com.mixfa.ailibrary.service.impl;
 import com.mixfa.ailibrary.misc.ExceptionType;
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Comment;
+import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.model.user.HasOwner;
 import com.mixfa.ailibrary.service.BookService;
@@ -19,7 +20,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
@@ -77,7 +77,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public Page<Comment> listComments(Object bookId, Pageable pageable) {
         return commentSearchEngine.find(
-                () -> List.of(Aggregation.match(Criteria.where(fmt("{0}.$id", Comment.Fields.book)).is(Utils.idToObj(bookId)))),
+                SearchOption.Comments.byBook(bookId),
                 pageable
         );
     }
@@ -85,7 +85,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public Page<Comment> listMyComments(Pageable pageable) {
         return commentSearchEngine.find(
-                () -> List.of(Aggregation.match(HasOwner.ownerCriteria())),
+                HasOwner.ownerSearchOption(),
                 pageable
         );
     }

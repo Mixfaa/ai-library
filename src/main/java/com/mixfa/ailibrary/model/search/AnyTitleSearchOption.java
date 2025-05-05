@@ -2,6 +2,7 @@ package com.mixfa.ailibrary.model.search;
 
 import com.mixfa.ailibrary.model.Book;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.aggregation.ObjectOperators;
@@ -29,6 +30,6 @@ public class AnyTitleSearchOption implements SearchOption {
 
     @Override
     public boolean isEmpty() {
-        return query == null || query.isBlank();
+        return StringUtils.isBlank(query);
     }
 }
