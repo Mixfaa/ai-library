@@ -12,7 +12,10 @@ import com.mixfa.ailibrary.model.suggestion.SuggsetionHint;
 import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.SuggestionService;
 import com.mixfa.ailibrary.service.UserDataService;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -27,8 +30,10 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -68,6 +73,16 @@ public class SuggestionServiceImpl implements SuggestionService {
 
         JSONIZE_MESSAGE = jsonizeMessageBuilder.toString();
     }
+
+    private final Retry retry = Retry.of("suggestionService",
+            RetryConfig.<SuggestedBook[]>custom()
+                    .maxAttempts(3)
+                    .failAfterMaxAttempts(true)
+                    .waitDuration(Duration.ofMillis(250))
+                    .retryOnResult(ArrayUtils::isEmpty)
+                    .build());
+
+    private final Function<Prompt, SuggestedBook[]> getAndParseFunc = Retry.decorateFunction(retry, this::getAndParse);
 
     public record SearchFunctionArgs(String query, int page) {
     }
@@ -181,6 +196,39 @@ public class SuggestionServiceImpl implements SuggestionService {
         return booksResponseBuilder.toString();
     }
 
+    private SuggestedBook[] getAndParse(Prompt prompt) {
+        var searchResult = chatModel.call(prompt);
+        log.info("LLM respond:");
+        System.out.println(searchResult);
+
+        var textToParse = searchResult.getResult().getOutput().getText();
+
+        final var jsonPrefix = "```json";
+        if (textToParse.startsWith(jsonPrefix))
+            textToParse = textToParse.substring(jsonPrefix.length());
+        final var jsonPostfix = "```";
+        if (textToParse.endsWith(jsonPostfix))
+            textToParse = textToParse.substring(0, textToParse.length() - jsonPostfix.length());
+
+        var output = textToParse;
+
+        try {
+            var rootTree = objectMapper.readTree(output);
+
+            if (rootTree.isObject()) {
+                var tree = Utils.findJsonNode(rootTree, JsonNode::isArray);
+
+                if (tree != null)
+                    return new SuggestedBook[]{objectMapper.treeToValue(tree, SuggestedBook.class)};
+            }
+
+            return objectMapper.treeToValue(rootTree, SuggestedBook[].class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     @Override
     public SuggestedBook[] getSuggestions(SearchOption searchOptions, SuggsetionHint suggsetionHint) {
         var userContext = new UserMessage(suggsetionHint.makeHint());
@@ -194,34 +242,7 @@ public class SuggestionServiceImpl implements SuggestionService {
                 .toolCallbacks(searchTool)
                 .build();
 
-        var searchResult = chatModel.call(new Prompt(List.of(SEARCH_PROMPT, userContext), searchPromptOptions));
-        log.info("LLM respond:");
-        System.out.println(searchResult);
-
-        var textToParse = searchResult.getResult().getOutput().getText();
-
-        final var jsonPrefix = "```json";
-        if (textToParse.startsWith(jsonPrefix))
-            textToParse = textToParse.substring(jsonPrefix.length());
-        final var jsonPostfix = "```";
-        if (textToParse.endsWith(jsonPostfix))
-            textToParse = textToParse.substring(0, textToParse.length() - jsonPostfix.length());
-
-        try {
-            var output = textToParse;
-
-            var rootTree = objectMapper.readTree(output);
-
-            if (rootTree.isObject()) {
-                var tree = Utils.findJsonNode(rootTree, JsonNode::isArray);
-
-                if (tree != null)
-                    return new SuggestedBook[]{objectMapper.treeToValue(tree, SuggestedBook.class)};
-            }
-
-            return objectMapper.treeToValue(rootTree, SuggestedBook[].class);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
+        var prompt = new Prompt(List.of(SEARCH_PROMPT, userContext), searchPromptOptions);
+        return getAndParseFunc.apply(prompt);
     }
 }

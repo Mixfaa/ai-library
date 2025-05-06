@@ -26,6 +26,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 @Route("open-lib-import")
@@ -60,7 +61,6 @@ public class OpenLibImport extends AppLayout {
     }
 
     public static List<Book.AddRequest> extractBookData(String jsonResponse) {
-
         JsonNode root = null;
         try {
             root = objectMapper.readTree(jsonResponse);
@@ -92,7 +92,6 @@ public class OpenLibImport extends AppLayout {
                 return null;
             }
         };
-
         Function<JsonNode, String[]> imagesProvider = node -> {
             var coverEl = node.get("cover_i");
             if (coverEl == null) return null;
@@ -144,17 +143,23 @@ public class OpenLibImport extends AppLayout {
     private Component makeContent() {
         var searchField = new TextField("Search in open lib");
         var grid = new Grid<Book.AddRequest>(Book.AddRequest.class, false);
+        var requestItems = new AtomicReference<List<Book.AddRequest>>(List.of());
         grid.addColumn(req -> Utils.getFromLocalizedMap(req.localizedTitle())).setHeader("title");
         grid.addColumn(req -> Arrays.toString(req.authors())).setHeader("authors");
         grid.addComponentColumn(req -> new Button("Add", _ -> {
             try {
                 bookService.addBook(req);
+                var newItems = requestItems.get();
+                newItems.remove(req);
+
+                grid.setItems(newItems);
+
                 Notification.show("Book successfully added");
             } catch (Exception e) {
                 e.printStackTrace();
                 Notification.show("Error: " + e.getMessage());
             }
-        }));
+        })).setHeader("Add to library");
 
         searchField.addValueChangeListener(e -> {
             var query = e.getValue();
@@ -165,8 +170,8 @@ public class OpenLibImport extends AppLayout {
                 return;
             }
             var bookRequests = extractBookData(contentOpt.get());
-            System.out.println(bookRequests);
             if (bookRequests.isEmpty()) Notification.show("Nothing found");
+            requestItems.set(bookRequests);
             grid.setItems(bookRequests);
         });
 
