@@ -111,7 +111,6 @@ public class OpenLibImport extends AppLayout {
                     .toArray(Genre[]::new);
         };
 
-
         List<Book.AddRequest> addRequests = new ArrayList<>();
 
         for (JsonNode doc : docs) {
@@ -150,12 +149,12 @@ public class OpenLibImport extends AppLayout {
         grid.addComponentColumn(req -> new Button("Add", _ -> {
             try {
                 bookService.addBook(req);
+                Notification.show("Book successfully added");
             } catch (Exception e) {
                 e.printStackTrace();
                 Notification.show("Error: " + e.getMessage());
             }
         }));
-
 
         searchField.addValueChangeListener(e -> {
             var query = e.getValue();
