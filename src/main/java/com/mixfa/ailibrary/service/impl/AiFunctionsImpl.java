@@ -37,7 +37,6 @@ public class AiFunctionsImpl implements AiFunctions {
         this.userDataService = userDataService;
     }
 
-
     private String makeBooksContext(final SearchOption searchOption, final SearchArgs args) {
         var pageRequest = PageRequest.of(args.page(), 15);
 
@@ -51,8 +50,7 @@ public class AiFunctionsImpl implements AiFunctions {
         }
         if (booksPage.isEmpty())
             booksPage = booksSearchEngine.find(searchOption, pageRequest);
-
-
+ 
         var booksResponseBuilder = new StringBuilder();
         booksResponseBuilder
                 .append("Page: ").append(args.page())

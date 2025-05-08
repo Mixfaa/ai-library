@@ -168,9 +168,11 @@ public class BookDetailsComponent extends VerticalLayout {
     }
 
     private Button createTalkToButton() {
-        var aiChatBotComp = new AiChatBotComponent(book, bookChatBotService);
+        var aiChatBotComp = new AiChatBotDialog(book, bookChatBotService);
 
-        return new Button(VaadinIcon.MAGIC.create(),_ -> aiChatBotComp.open());
+        return new Button(VaadinIcon.MAGIC.create(), _ -> aiChatBotComp.open()) {{
+            setTooltipText("Chat with chat bot about this book");
+        }};
     }
 
 

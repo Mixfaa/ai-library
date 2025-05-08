@@ -12,13 +12,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class AiChatBotComponent {
-    private final Dialog dialog = new Dialog();
+public class AiChatBotDialog extends Dialog {
     private final Executor executor = Executors.newSingleThreadExecutor();
     private final BookChatBotService.BookChatBot bookChatBot;
 
-    public AiChatBotComponent(Book book, BookChatBotService bookChatBotService) {
-        dialog.getFooter().add(new CloseDialogButton(dialog));
+    public AiChatBotDialog(Book book, BookChatBotService bookChatBotService) {
+        super();
+        getFooter().add(new CloseDialogButton(this));
         this.bookChatBot = bookChatBotService.createBookChatBot(book);
 
         var messages = new CopyOnWriteArrayList<MessageListItem>();
@@ -42,10 +42,6 @@ public class AiChatBotComponent {
         messageInput.setWidth("500px");
         messageList.setItems(messages);
 
-        dialog.add(new VerticalLayout(messageList, messageInput));
-    }
-
-    public void open() {
-        dialog.open();
+        this.add(new VerticalLayout(messageList, messageInput));
     }
 }
