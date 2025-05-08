@@ -8,8 +8,8 @@ import com.mixfa.ailibrary.model.search.PresentInLibraries;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.search.SimpleSearchRequestOption;
 import com.mixfa.ailibrary.model.suggestion.*;
+import com.mixfa.ailibrary.route.comp.CloseDialogButton;
 import com.mixfa.ailibrary.route.comp.CustomMultiSelectComboBox;
-import com.mixfa.ailibrary.route.comp.DialogCloseButton;
 import com.mixfa.ailibrary.route.comp.SideBarInitializer;
 import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.SuggestionService;
@@ -141,7 +141,7 @@ public class AiFeaturesRoute extends AppLayout {
 
         var optionsDialog = new Dialog("Configure options");
         optionsDialog.setWidth("1200px");
-        optionsDialog.getFooter().add(new DialogCloseButton(optionsDialog));
+        optionsDialog.getFooter().add(new CloseDialogButton(optionsDialog));
 
         var optionsAccordion = new Accordion();
 
@@ -156,43 +156,43 @@ public class AiFeaturesRoute extends AppLayout {
         var getSuggestionsButton = new Button("Get suggestions", _ -> {
 
             Notification.show("Your request submitted");
+            executor.execute(() -> {
+                final SuggestedBook[] suggestions;
+                try {
+                    suggestions = suggestionService.getSuggestions(
+                            SearchOption.composition(searchOptions),
+                            SuggsetionHint.composition(suggestionHints)
+                    );
+                    System.out.println("Suggestions ready " + Arrays.toString(suggestions));
+                    log.info("Suggestions are ready: {}", suggestions);
+                } catch (Throwable e) {
+                    UI.getCurrent().access(() -> Notification.show("Error occurred", 5000, Notification.Position.MIDDLE));
+                    log.error("Error while getting suggestions", e);
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
 
+                this.getUI().ifPresent(ui -> ui.access(() -> {
+                    Notification.show("Your suggestions are ready!");
 
-            final SuggestedBook[] suggestions;
-            try {
-                suggestions = suggestionService.getSuggestions(
-                        SearchOption.composition(searchOptions),
-                        SuggsetionHint.composition(suggestionHints)
-                );
-                System.out.println("Suggestions ready " + Arrays.toString(suggestions));
-                log.info("Suggestions are ready: {}", suggestions);
-            } catch (Throwable e) {
-                UI.getCurrent().access(() -> Notification.show("Error occurred", 5000, Notification.Position.MIDDLE));
-                log.error("Error while getting suggestions", e);
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
+                    var suggestionsDialog = new Dialog("Suggestions");
+                    suggestionsDialog.setWidth("1500px");
+                    suggestionsDialog.getFooter().add(new CloseDialogButton(suggestionsDialog));
 
-            UI.getCurrent().access(() -> {
-                Notification.show("Your suggestions are ready!");
+                    var suggestionsGrid = new Grid<>(SuggestedBook.class, false);
 
-                var suggestionsDialog = new Dialog("Suggestions");
-                suggestionsDialog.setWidth("1500px");
-                suggestionsDialog.getFooter().add(new DialogCloseButton(suggestionsDialog));
+                    suggestionsGrid.addColumn(SuggestedBook::title).setHeader("Title");
+                    suggestionsGrid.addColumn(SuggestedBook::reason).setHeader("Reason");
 
-                var suggestionsGrid = new Grid<>(SuggestedBook.class, false);
+                    VaadinCommons.configureBookGridPreviewEx(suggestionsGrid, sb -> {
+                        return bookRepo.findById(sb.bookId()).orElseThrow();
+                    }, userLocale, services);
 
-                suggestionsGrid.addColumn(SuggestedBook::title).setHeader("Title");
-                suggestionsGrid.addColumn(SuggestedBook::reason).setHeader("Reason");
-
-                VaadinCommons.configureBookGridPreviewEx(suggestionsGrid, sb -> {
-                    return bookRepo.findById(sb.bookId()).orElseThrow();
-                }, userLocale, services);
-
-                suggestionsGrid.setItems(suggestions);
-                suggestionsDialog.add(suggestionsGrid);
-                suggestionsDialog.setCloseOnOutsideClick(false);
-                suggestionsDialog.open();
+                    suggestionsGrid.setItems(suggestions);
+                    suggestionsDialog.add(suggestionsGrid);
+                    suggestionsDialog.setCloseOnOutsideClick(false);
+                    suggestionsDialog.open();
+                }));
             });
         });
 

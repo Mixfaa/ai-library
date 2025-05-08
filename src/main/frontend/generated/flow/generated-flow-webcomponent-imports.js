@@ -3,10 +3,10 @@ import { injectGlobalWebcomponentCss } from 'Frontend/generated/jar-resources/th
 import '@vaadin/polymer-legacy-adapter/style-modules.js';
 import '@vaadin/app-layout/theme/lumo/vaadin-app-layout.js';
 import '@vaadin/vertical-layout/theme/lumo/vaadin-vertical-layout.js';
+import '@vaadin/button/theme/lumo/vaadin-button.js';
 import '@vaadin/multi-select-combo-box/theme/lumo/vaadin-multi-select-combo-box.js';
 import 'Frontend/generated/jar-resources/flow-component-renderer.js';
 import 'Frontend/generated/jar-resources/comboBoxConnector.js';
-import '@vaadin/button/theme/lumo/vaadin-button.js';
 import '@vaadin/horizontal-layout/theme/lumo/vaadin-horizontal-layout.js';
 import '@vaadin/grid/theme/lumo/vaadin-grid.js';
 import '@vaadin/grid/theme/lumo/vaadin-grid-column.js';

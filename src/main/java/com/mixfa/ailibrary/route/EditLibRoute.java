@@ -7,7 +7,7 @@ import com.mixfa.ailibrary.model.Library;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.user.Role;
 import com.mixfa.ailibrary.route.comp.CustomMultiSelectComboBox;
-import com.mixfa.ailibrary.route.comp.DialogCloseButton;
+import com.mixfa.ailibrary.route.comp.CloseDialogButton;
 import com.mixfa.ailibrary.route.comp.GridWithPagination;
 import com.mixfa.ailibrary.route.comp.SideBarInitializer;
 import com.mixfa.ailibrary.service.LibraryService;
@@ -147,7 +147,7 @@ public class EditLibRoute extends AppLayout implements HasUrlParameter<String> {
             });
             localesSelect.setValue(bookAvailabilityBuilder.localeToAmount().keySet());
 
-            dialog.getFooter().add(new Button("Remove", _ -> libraryBuilder.removeForBook(book)), new DialogCloseButton(dialog));
+            dialog.getFooter().add(new Button("Remove", _ -> libraryBuilder.removeForBook(book)), new CloseDialogButton(dialog));
 
             dialog.add(new VerticalLayout(localesSelect, localeAmountLayout));
 

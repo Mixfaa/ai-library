@@ -61,7 +61,7 @@ public class LibraryFinderButton extends Button {
 
         pageableGrid.setItems(libs.getContent());
         dialog.add(searchField, pageableGrid.component());
-        dialog.getFooter().add(new DialogCloseButton(dialog));
+        dialog.getFooter().add(new CloseDialogButton(dialog));
         dialog.open();
     }
 }

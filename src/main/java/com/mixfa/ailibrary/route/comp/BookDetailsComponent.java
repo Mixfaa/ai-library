@@ -4,6 +4,7 @@ import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Genre;
 import com.mixfa.ailibrary.model.ReadBook;
+import com.mixfa.ailibrary.service.BookChatBotService;
 import com.mixfa.ailibrary.service.LibraryService;
 import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.UserDataService;
@@ -33,9 +34,11 @@ public class BookDetailsComponent extends VerticalLayout {
     private final UserDataService.ReadBooks readBooks;
     private final SearchEngine.ForLibraries libSearchEngine;
     private final LibraryService libraryService;
+    private final BookChatBotService bookChatBotService;
 
     public BookDetailsComponent(Book book, Services services) {
         this.book = book;
+        this.bookChatBotService = services.bookChatBotService();
         this.libSearchEngine = services.librariesSearchEngine();
         this.libraryService = services.libService();
         this.rating = services.commentService().getBookRate(book.id());
@@ -101,6 +104,7 @@ public class BookDetailsComponent extends VerticalLayout {
                 bookTitle,
                 createWaitListButton(),
                 createReadBookButton(),
+                createTalkToButton(),
                 new LibraryFinderButton(book, libSearchEngine, libraryService, userLocale)
         );
 
@@ -162,6 +166,13 @@ public class BookDetailsComponent extends VerticalLayout {
 
         return readBookPopover;
     }
+
+    private Button createTalkToButton() {
+        var aiChatBotComp = new AiChatBotComponent(book, bookChatBotService);
+
+        return new Button(VaadinIcon.MAGIC.create(),_ -> aiChatBotComp.open());
+    }
+
 
     private Component createAuthorSection() {
         var authors = String.join(", ", book.authors());

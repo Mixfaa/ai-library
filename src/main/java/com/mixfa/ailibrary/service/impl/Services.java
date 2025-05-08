@@ -20,4 +20,6 @@ public class Services {
     private final SearchEngine.ForBooks booksSearchEngine;
     private final SearchEngine.ForLibraries librariesSearchEngine;
     private final SearchEngine.ForComments commentsSearchEngine;
+    private final AiFunctions aiFunctions;
+    private final BookChatBotService bookChatBotService;
 }

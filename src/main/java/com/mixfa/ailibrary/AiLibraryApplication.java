@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.MongoLocaleConverter;
 import com.mixfa.ailibrary.service.AdminAuthenticator;
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
@@ -27,6 +28,7 @@ import java.util.List;
 @EnableMongoRepositories
 @PWA(name = "ai-library", shortName = "ailib")
 @Theme(variant = Lumo.DARK)
+@Push
 public class AiLibraryApplication implements AppShellConfigurator {
     @Bean
     public AdminAuthenticator adminAuthenticator(@Value("${admin.email}") String adminEmail) {

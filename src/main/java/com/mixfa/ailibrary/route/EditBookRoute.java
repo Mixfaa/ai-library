@@ -1,13 +1,11 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.controller.FileStorageContoller;
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Genre;
 import com.mixfa.ailibrary.model.user.Role;
 import com.mixfa.ailibrary.route.comp.CustomMultiSelectComboBox;
-import com.mixfa.ailibrary.route.comp.DialogCloseButton;
 import com.mixfa.ailibrary.route.comp.LocalizedDetails;
 import com.mixfa.ailibrary.route.comp.SideBarInitializer;
 import com.mixfa.ailibrary.service.BookService;
@@ -16,21 +14,14 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.FileBuffer;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;

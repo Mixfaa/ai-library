@@ -3,6 +3,7 @@ package com.mixfa.ailibrary.misc;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Genre;
+import com.mixfa.ailibrary.model.ReadBook;
 import com.mixfa.ailibrary.model.user.AuthenticatedAccount;
 import jakarta.annotation.Nullable;
 import lombok.experimental.UtilityClass;
@@ -11,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import java.lang.reflect.Array;
 import java.text.MessageFormat;
@@ -24,6 +27,14 @@ public class Utils {
 
     public static Locale DEFAULT_LOCALE = Locale.ENGLISH;
     public static int PAGE_SIZE = 15;
+
+    public static <T> Sinks.Many<T> sink() {
+        return Sinks.many().multicast().onBackpressureBuffer();
+    }
+
+    public static <T> Flux<T> sinkToFlux(Sinks.Many<T> sink) {
+        return sink.asFlux().share();
+    }
 
     public static @Nullable JsonNode findJsonNode(JsonNode root, Predicate<JsonNode> predicate) {
         for (JsonNode jsonNode : root)
@@ -62,10 +73,40 @@ public class Utils {
         return value;
     }
 
+    public static String makeBookDescription(Book book) {
+        var id = book.id().toHexString();
+        var title = book.titleString(Utils.DEFAULT_LOCALE);
+
+        var sb = new StringBuilder();
+        appendBookDescForAi(book, sb);
+        sb.append("\n\n");
+        return sb.toString();
+    }
+
+    public static String makeBookDescriptionAndMark(ReadBook readBook) {
+        var book = readBook.book();
+        var mark = readBook.mark();
+
+        var id = book.id().toHexString();
+        var title = book.titleString(Utils.DEFAULT_LOCALE);
+
+        var sb = new StringBuilder();
+
+        appendBookDescForAi(book, sb);
+        sb.append("User review = ").append(mark.name()).append("\n");
+        sb.append("\n\n");
+        return sb.toString();
+    }
+
     public static void appendBookDescForAi(Book book, StringBuilder sb) {
+        sb.append("Book description").append('\n');
+        sb.append("ID = ").append(book.id().toHexString()).append('\n');
         sb.append("Title = ").append(
                 Utils.getFromLocalizedMap(book.localizedTitle())
         ).append("\n");
+        var desc = book.localizedDescription().getOrDefault(Utils.DEFAULT_LOCALE, null);
+        if (desc != null)
+            sb.append("Description = \n").append(desc).append('\n');
         sb.append("Authors = ");
         for (String author : book.authors())
             sb.append(author).append(", ");
@@ -209,6 +250,14 @@ public class Utils {
             }
         }
         return copy;
+    }
+
+    public static String makeBookDescriptionKey(Book book) {
+        return makeBookDescriptionKey(book.id().toHexString());
+    }
+
+    public static String makeBookDescriptionKey(String id) {
+        return id + ":book-desc";
     }
 
 

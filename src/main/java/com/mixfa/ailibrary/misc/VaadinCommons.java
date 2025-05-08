@@ -6,7 +6,7 @@ import com.mixfa.ailibrary.model.Library;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.route.comp.BookCommentsComponent;
 import com.mixfa.ailibrary.route.comp.BookDetailsComponent;
-import com.mixfa.ailibrary.route.comp.DialogCloseButton;
+import com.mixfa.ailibrary.route.comp.CloseDialogButton;
 import com.mixfa.ailibrary.route.comp.GridWithPagination;
 import com.mixfa.ailibrary.service.*;
 import com.mixfa.ailibrary.service.impl.Services;
@@ -70,7 +70,7 @@ public class VaadinCommons {
 
     public static Dialog editImagesDialog(List<String> imagesList, FileStorageService fileStorageService) {
         return new Dialog("Edit images") {{
-            this.getFooter().add(new DialogCloseButton(this));
+            this.getFooter().add(new CloseDialogButton(this));
 
             var urlsGrid = new Grid<String>(String.class, false) {{
                 addColumn(Utils::value).setHeader("URL");
@@ -123,7 +123,7 @@ public class VaadinCommons {
 
         content.add(image, details);
         dialog.add(new BookDetailsComponent(book, services), new BookCommentsComponent(book, commentService));
-        dialog.getFooter().add(new DialogCloseButton(dialog));
+        dialog.getFooter().add(new CloseDialogButton(dialog));
 
         return dialog;
     }
