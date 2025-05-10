@@ -3,6 +3,7 @@ package com.mixfa.ailibrary.service.impl;
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.search.SearchOption;
+import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.service.AiFunctions;
 import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.UserDataService;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,7 +53,7 @@ public class AiFunctionsImpl implements AiFunctions {
         }
         if (booksPage.isEmpty())
             booksPage = booksSearchEngine.find(searchOption, pageRequest);
- 
+
         var booksResponseBuilder = new StringBuilder();
         booksResponseBuilder
                 .append("Page: ").append(args.page())
@@ -95,9 +98,12 @@ public class AiFunctionsImpl implements AiFunctions {
                 .build();
     }
 
+    private final Map<Long, FunctionToolCallback<Void, String>> userIdToReadBooksToolsCache = new ConcurrentHashMap<>();
+
     @Override
     public FunctionToolCallback<Void, String> usersReadBooks() {
-        return FunctionToolCallback.builder("get user`s read books", () -> {
+        var userId = Account.getAuthenticated().id();
+        return userIdToReadBooksToolsCache.computeIfAbsent(userId, _ -> FunctionToolCallback.builder("get user`s read books", () -> {
                     var usersReadBooks = userDataService.readBooks().get();
                     ArrayUtils.shuffle(usersReadBooks);
                     return Arrays.stream(usersReadBooks).limit(10)
@@ -105,6 +111,6 @@ public class AiFunctionsImpl implements AiFunctions {
                             .collect(Collectors.joining("\n"));
                 })
                 .description("Returns list of 10 random books and user`s marks, that user have read and marked")
-                .build();
+                .build());
     }
 }

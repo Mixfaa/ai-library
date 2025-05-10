@@ -175,7 +175,6 @@ public class BookDetailsComponent extends VerticalLayout {
         }};
     }
 
-
     private Component createAuthorSection() {
         var authors = String.join(", ", book.authors());
         Icon authorIcon = VaadinIcon.USER.create();
