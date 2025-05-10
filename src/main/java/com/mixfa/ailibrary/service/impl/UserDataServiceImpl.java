@@ -47,7 +47,7 @@ public class UserDataServiceImpl implements UserDataService {
         var match = Aggregation.match(
                 UserData.ownerCriteria()
         );
-        var projection = Aggregation.project().and(field).as("result");
+        var projection = Aggregation.project().and(field).as(CachedRuntimeWrapperClassGen.FIELD_NAME);
 
         var classAndGetter = CachedRuntimeWrapperClassGen.get(tClass);
 
@@ -90,19 +90,19 @@ public class UserDataServiceImpl implements UserDataService {
         return locale;
     }
 
-    private final Map<Account, ReadBooks> readBooksCache = new ConcurrentHashMap<>();
-    private final Map<Account, WaitList> waitListCache = new ConcurrentHashMap<>();
+    private final Map<Long, ReadBooks> readBooksCache = new ConcurrentHashMap<>();
+    private final Map<Long, WaitList> waitListCache = new ConcurrentHashMap<>();
 
     @Override
     public ReadBooks readBooks() {
-        var account = Account.getAuthenticatedAccount();
-        return readBooksCache.computeIfAbsent(account, key -> new ReadBooksImpl(fetchField(UserData.Fields.readBooks, ReadBook[].class, UserData::readBooks)));
+        var accountId = Account.getAuthenticated().id();
+        return readBooksCache.computeIfAbsent(accountId, key -> new ReadBooksImpl(fetchField(UserData.Fields.readBooks, ReadBook[].class, UserData::readBooks)));
     }
 
     @Override
     public WaitList waitList() {
-        var account = Account.getAuthenticatedAccount();
-        return waitListCache.computeIfAbsent(account, key -> new WaitListImpl(fetchField(UserData.Fields.waitList, Book[].class, UserData::waitList)));
+        var accountId = Account.getAuthenticated().id();
+        return waitListCache.computeIfAbsent(accountId, key -> new WaitListImpl(fetchField(UserData.Fields.waitList, Book[].class, UserData::waitList)));
     }
 
     private class ReadBooksImpl implements ReadBooks {

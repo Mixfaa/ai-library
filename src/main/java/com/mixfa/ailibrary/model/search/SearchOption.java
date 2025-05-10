@@ -2,7 +2,6 @@ package com.mixfa.ailibrary.model.search;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Book;
-import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 
 import java.util.List;
@@ -14,40 +13,40 @@ public interface SearchOption {
         return false;
     }
 
-    interface Books {
-        static SearchOption fromRequest(Book.SearchRequest request) {
+    final class Books {
+        public static SearchOption fromRequest(Book.SearchRequest request) {
             return new SimpleSearchRequestOption(request);
         }
 
-        static SearchOption presentInLibs(Iterable<String> libsNames) {
+        public static SearchOption presentInLibs(Iterable<String> libsNames) {
             return new PresentInLibraries(libsNames);
         }
 
-        static SearchOption presentInLibs(String... libs) {
+        public static SearchOption presentInLibs(String... libs) {
             return new PresentInLibraries(libs);
         }
 
-        static SearchOption byTitle(String query) {
+        public static SearchOption byTitle(String query) {
             return new AnyTitleSearchOption(query);
         }
     }
 
-    interface Libraries {
-        static SearchOption containsBook(Book book) {
+    final class Libraries {
+        public static SearchOption containsBook(Book book) {
             return new LibContainsBook(book);
         }
 
-        static SearchOption byName(String query) {
+        public static SearchOption byName(String query) {
             return new LibraryByName(query);
         }
     }
 
     interface Comments {
-        static SearchOption byBook(Book book) {
+        public static SearchOption byBook(Book book) {
             return new CommentsByBook(book.id());
         }
 
-        static SearchOption byBook(Object bookId) {
+        public static SearchOption byBook(Object bookId) {
             return new CommentsByBook(Utils.idToObj(bookId));
         }
     }

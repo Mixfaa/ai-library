@@ -30,31 +30,28 @@ import java.util.concurrent.ConcurrentHashMap;
 class RuntimeFacetResponseClassGenerator {
     private static final Map<Class, Class<FacetResponse>> cache = new ConcurrentHashMap<>();
 
+    private static <T> Class<FacetResponse> makeFacetResponse(Class<T> typeClass) {
+        var elementsTypeDef = TypeDescription.Generic.Builder
+                .parameterizedType(List.class, typeClass)
+                .build();
+        var countTypeDef = TypeDescription.Generic.Builder
+                .parameterizedType(List.class, CountResponse.class)
+                .build();
+
+        return (Class<FacetResponse>) new ByteBuddy()
+                .makeRecord()
+                .implement(FacetResponse.class)
+                .name("FacetResponse" + typeClass.getSimpleName())
+                .defineRecordComponent("elements", elementsTypeDef)
+                .defineRecordComponent("count", countTypeDef)
+                .make()
+                .load(FacetResponse.class.getClassLoader())
+                .getLoaded();
+    }
+
     @SneakyThrows
     public static <T> Class<FacetResponse> get(Class<T> typeClass) {
-        Class<FacetResponse> cached = cache.get(typeClass);
-        if (cached == null) {
-            var elementsTypeDef = TypeDescription.Generic.Builder
-                    .parameterizedType(List.class, typeClass)
-                    .build();
-            var countTypeDef = TypeDescription.Generic.Builder
-                    .parameterizedType(List.class, CountResponse.class)
-                    .build();
-
-            cached = (Class<FacetResponse>) new ByteBuddy()
-                    .makeRecord()
-                    .implement(FacetResponse.class)
-                    .name("FacetResponse" + typeClass.getSimpleName())
-                    .defineRecordComponent("elements", elementsTypeDef)
-                    .defineRecordComponent("count", countTypeDef)
-                    .make()
-                    .load(FacetResponse.class.getClassLoader())
-                    .getLoaded();
-
-            cache.put(typeClass, cached);
-        }
-
-        return cached;
+        return cache.computeIfAbsent(typeClass, RuntimeFacetResponseClassGenerator::makeFacetResponse);
     }
 }
 

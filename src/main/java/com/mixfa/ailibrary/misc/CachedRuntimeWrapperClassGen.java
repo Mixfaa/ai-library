@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unchecked")
 public class CachedRuntimeWrapperClassGen {
     private static final Map<Class, ClassAndGetter> cache = new ConcurrentHashMap<>();
-    private static final String FIELD_NAME = "result";
+    public static final String FIELD_NAME = "result";
 
     @Getter
     @Accessors(fluent = true)
