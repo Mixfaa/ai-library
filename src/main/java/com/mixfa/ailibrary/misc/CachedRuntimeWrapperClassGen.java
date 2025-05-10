@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unchecked")
 public class CachedRuntimeWrapperClassGen {
     private static final Map<Class, ClassAndGetter> cache = new ConcurrentHashMap<>();
+    private static final String FIELD_NAME = "result";
 
     @Getter
     @Accessors(fluent = true)
@@ -27,7 +28,7 @@ public class CachedRuntimeWrapperClassGen {
         @SneakyThrows
         public ClassAndGetter(Class tClass, Class fieldType) {
             this.tClass = tClass;
-            this.getter = MethodHandles.privateLookupIn(tClass, MethodHandles.lookup()).findGetter(tClass, "result", fieldType);
+            this.getter = MethodHandles.privateLookupIn(tClass, MethodHandles.lookup()).findGetter(tClass, FIELD_NAME, fieldType);
         }
 
         @SneakyThrows
@@ -36,23 +37,20 @@ public class CachedRuntimeWrapperClassGen {
         }
     }
 
-    @SneakyThrows
-    public static <T> ClassAndGetter get(Class<T> fieldType) {
-        var cached = cache.get(fieldType);
-        if (cached != null)
-            return cached;
-
-        var tClass = new ByteBuddy()
+    private static <T> ClassAndGetter makeWrapperClass(Class<T> fieldType) {
+        var generatedClass = new ByteBuddy()
                 .makeRecord()
                 .name("GeneratedClass_" + ObjectId.get().toHexString())
-                .defineRecordComponent("result", fieldType)
+                .defineRecordComponent(FIELD_NAME, fieldType)
                 .make()
                 .load(CachedRuntimeWrapperClassGen.class.getClassLoader())
                 .getLoaded();
 
-        cached = new ClassAndGetter(tClass, fieldType);
-        cache.put(fieldType, cached);
+        return new ClassAndGetter(generatedClass, fieldType);
+    }
 
-        return cached;
+    @SneakyThrows
+    public static <T> ClassAndGetter get(Class<T> fieldType) {
+        return cache.computeIfAbsent(fieldType, CachedRuntimeWrapperClassGen::makeWrapperClass);
     }
 }

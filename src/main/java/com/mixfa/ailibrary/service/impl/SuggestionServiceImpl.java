@@ -81,7 +81,6 @@ public class SuggestionServiceImpl implements SuggestionService {
         return getSuggestions(SearchOption.empty(), suggsetionHint);
     }
 
-
     private SuggestedBook[] getAndParse(Prompt prompt) {
         var searchResult = chatModel.call(prompt);
         log.info("LLM respond:");
