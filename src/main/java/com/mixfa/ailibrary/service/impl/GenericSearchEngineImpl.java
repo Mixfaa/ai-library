@@ -89,8 +89,7 @@ public final class GenericSearchEngineImpl<T> implements SearchEngine<T> {
                 return Page.empty(pageable);
             var count = facetResponse.count().getFirst().count();
             return new PageImpl<>(facetResponse.elements(), pageable, count);
-        } catch (Exception ex) {
-            // probably NoSuchElementException
+        } catch (Exception ex) { // probably NoSuchElementException
             return Page.empty(pageable);
         }
     }
