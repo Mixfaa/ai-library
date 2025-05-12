@@ -64,7 +64,7 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public Library.BookAvailability[] setBookAvailability(String libname, Object bookId,
-                                                          Map<Locale, Long> localeToCount) throws Exception {
+                                                          Map<Locale, Long> localeToCount) {
         var library = findOrThrow(libname);
         var bookIdObj = Utils.idToObj(bookId);
 

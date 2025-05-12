@@ -31,7 +31,7 @@ public interface LibraryService {
     Library findOrThrow(String libname);
 
     Library.BookAvailability[] setBookAvailability(String libname, Object bookId,
-                                                   Map<Locale, Long> localeToCount) throws Exception;
+                                                   Map<Locale, Long> localeToCount);
 
     void deleteOfflineLib(String libname);
 }
