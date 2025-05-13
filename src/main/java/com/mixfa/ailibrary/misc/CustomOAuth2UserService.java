@@ -1,6 +1,5 @@
 package com.mixfa.ailibrary.misc;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.model.user.AuthenticatedAccount;
@@ -40,9 +39,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     ) {
     }
 
-    private final static TypeReference<GithubEmail[]> githubEmailsTypeRef = new TypeReference<>() {
-    };
-
     @SneakyThrows
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -56,7 +52,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
         GithubEmail[] emails;
         try {
-            emails = objectMapper.readValue(response.body(), githubEmailsTypeRef);
+
+            emails = objectMapper.readValue(response.body(), GithubEmail[].class);
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);

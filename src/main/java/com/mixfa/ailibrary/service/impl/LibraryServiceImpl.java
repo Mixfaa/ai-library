@@ -5,6 +5,7 @@ import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.BookStatus;
 import com.mixfa.ailibrary.model.BookStatus.Status;
 import com.mixfa.ailibrary.model.Library;
+import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.model.user.HasOwner;
 import com.mixfa.ailibrary.service.BookService;
@@ -181,15 +182,9 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     @Transactional
     public BookStatus updateBookStatusData(Object bookStatusId, Status newStatus) {
+
         var bookStatus = bookStatusSearchEngine.findOne(
-                () -> List.of(
-                        Aggregation.match(
-                                new Criteria().andOperator(
-                                        Criteria.where("_id").is(Utils.idToObj(bookStatusId)),
-                                        HasOwner.ownerCriteria()
-                                )
-                        )
-                )
+                SearchOption.Match.all(Criteria.where("_id").is(Utils.idToObj(bookStatusId)), HasOwner.ownerCriteria())
         );
         if (newStatus == BookStatus.Status.RETURNED) {
             bookService.markRead(bookStatus.book().id());
@@ -211,7 +206,7 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     public Page<BookStatus> findAllTakenBooks(String libraryId, Pageable pageable) {
         return bookStatusSearchEngine.find(
-                () -> List.of(Aggregation.match(Criteria.where(fmt("{0}.$id", BookStatus.Fields.library)).is(libraryId))),
+                SearchOption.match(Criteria.where(fmt("{0}.$id", BookStatus.Fields.library)).is(libraryId)),
                 pageable
         );
     }

@@ -13,8 +13,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class AiChatBotDialog extends Dialog {
-    private final Executor executor = Executors.newSingleThreadExecutor();
-    private final BookChatBotService.BookChatBot bookChatBot;
+    private static final Executor executor = Executors.newSingleThreadExecutor();
+    private final BookChatBotService.ChatBot bookChatBot;
 
     public AiChatBotDialog(Book book, BookChatBotService bookChatBotService) {
         super();

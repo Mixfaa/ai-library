@@ -2,9 +2,13 @@ package com.mixfa.ailibrary.model.search;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Book;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.CriteriaDefinition;
 
 import java.util.List;
+import java.util.function.BiFunction;
 
 public interface SearchOption {
     List<AggregationOperation> makePipeline();
@@ -61,6 +65,41 @@ public interface SearchOption {
 
     static SearchOption composition(Iterable<SearchOption> options) {
         return new SearchOptionComposition(options);
+    }
+
+    static SearchOption match(CriteriaDefinition criteriaDefinition) {
+        return () -> List.of(Aggregation.match(criteriaDefinition));
+    }
+
+    final class Match {
+        public static SearchOption all(Criteria... criterias) {
+            return withOperator(
+                    Criteria::andOperator,
+                    criterias
+            );
+        }
+
+        public static SearchOption any(Criteria... criterias) {
+            return withOperator(
+                    Criteria::andOperator,
+                    criterias
+            );
+        }
+
+        public static SearchOption nor(Criteria... criterias) {
+            return withOperator(
+                    Criteria::norOperator,
+                    criterias
+            );
+        }
+
+        public static SearchOption withOperator(
+                BiFunction<Criteria, Criteria[], Criteria> operator,
+                Criteria... criterias) {
+            return () -> List.of(
+                    Aggregation.match(operator.apply(new Criteria(), criterias))
+            );
+        }
     }
 
     final class EmptyOption implements SearchOption {

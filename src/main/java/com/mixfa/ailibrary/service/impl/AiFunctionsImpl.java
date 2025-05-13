@@ -1,32 +1,26 @@
 package com.mixfa.ailibrary.service.impl;
 
-import com.mixfa.ailibrary.misc.Utils;
+import com.mixfa.ailibrary.misc.ByUserCache;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.search.SearchOption;
-import com.mixfa.ailibrary.model.user.Account;
-import com.mixfa.ailibrary.service.AiFunctions;
-import com.mixfa.ailibrary.service.SearchEngine;
-import com.mixfa.ailibrary.service.UserDataService;
+import com.mixfa.ailibrary.service.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Service
 public class AiFunctionsImpl implements AiFunctions {
-    private final ValueOperations<String, String> valueOps;
     private final SearchEngine.ForBooks booksSearchEngine;
     private final UserDataService userDataService;
+    private final BookService bookService;
+    private final AiBookDescriptionService aiBookDescriptionService;
+
+    private final ByUserCache<FunctionToolCallback<?, ?>> cache = new ByUserCache<>();
 
     private final FunctionToolCallback<SearchArgs, String> defaultSearchFunction =
             FunctionToolCallback.builder("default search", (SearchArgs args) -> makeBooksContext(SearchOption.empty(), args))
@@ -34,10 +28,12 @@ public class AiFunctionsImpl implements AiFunctions {
                     .description("Search for available books page by page. Params: String query(can be empty), int page(starts from 0)")
                     .build();
 
-    public AiFunctionsImpl(SearchEngine.ForBooks booksSearchEngine, UserDataService userDataService, RedisTemplate<String, String> redisTemplate) {
-        this.valueOps = redisTemplate.opsForValue();
+    public AiFunctionsImpl(SearchEngine.ForBooks booksSearchEngine, UserDataService userDataService, BookService bookService, AiBookDescriptionService aiBookDescriptionService) {
+
         this.booksSearchEngine = booksSearchEngine;
         this.userDataService = userDataService;
+        this.bookService = bookService;
+        this.aiBookDescriptionService = aiBookDescriptionService;
     }
 
     private String makeBooksContext(final SearchOption searchOption, final SearchArgs args) {
@@ -61,26 +57,10 @@ public class AiFunctionsImpl implements AiFunctions {
                 .append('\n');
 
         var books = booksPage.getContent();
-        var descriptions = valueOps.multiGet(books.stream().map(Utils::makeBookDescriptionKey).toList());
+        var descriptions = aiBookDescriptionService.bookDescriptionList(books);
 
-        if (books.size() != descriptions.size())
-            throw new RuntimeException("Book description count mismatch (valueOps multiGet)");
-
-        var toSetValues = new HashMap<String, String>();
-        for (int i = 0; i < books.size(); i++) {
-            var book = books.get(i);
-            var description = descriptions.get(i);
-
-            if (description == null) {
-                description = Utils.makeBookDescription(book);
-                toSetValues.put(Utils.makeBookDescriptionKey(book), description);
-            }
-
-            booksResponseBuilder.append(description);
-        }
-
-        if (!toSetValues.isEmpty())
-            valueOps.multiSet(toSetValues);
+        for (String description : descriptions)
+            booksResponseBuilder.append(description).append('\n');
 
         return booksResponseBuilder.toString();
     }
@@ -98,19 +78,44 @@ public class AiFunctionsImpl implements AiFunctions {
                 .build();
     }
 
-    private final Map<Long, FunctionToolCallback<Void, String>> userIdToReadBooksToolsCache = new ConcurrentHashMap<>();
-
     @Override
     public FunctionToolCallback<Void, String> usersReadBooks() {
-        var userId = Account.getAuthenticated().id();
-        return userIdToReadBooksToolsCache.computeIfAbsent(userId, _ -> FunctionToolCallback.builder("get user`s read books", () -> {
+        return (FunctionToolCallback<Void, String>) cache.getOrPut("usersReadBooks", _ -> FunctionToolCallback.builder("getUserReadBooks", () -> {
                     var usersReadBooks = userDataService.readBooks().get();
                     ArrayUtils.shuffle(usersReadBooks);
-                    return Arrays.stream(usersReadBooks).limit(10)
-                            .map(Utils::makeBookDescriptionAndMark)
-                            .collect(Collectors.joining("\n"));
+                    return aiBookDescriptionService.bookDescriptionAndMarkList(
+                            Arrays.stream(usersReadBooks).limit(10).toList()
+                    );
                 })
                 .description("Returns list of 10 random books and user`s marks, that user have read and marked")
                 .build());
+    }
+
+    @Override
+    public FunctionToolCallback<Void, String> usersWaitList() {
+        return (FunctionToolCallback<Void, String>) cache.getOrPut("usersWaitList", _ -> FunctionToolCallback.builder("getUsersWaitList", () -> {
+                    var usersWaitList = userDataService.waitList().get();
+                    ArrayUtils.shuffle(usersWaitList);
+                    return aiBookDescriptionService.bookDescriptionList(
+                            Arrays.stream(usersWaitList).limit(10).toList()
+                    );
+                })
+                .description("Returns list of 10 random books from user`s wait list")
+                .build());
+    }
+
+    private void addBookToWaitListImpl(BookIdArg args) {
+        var waitList = userDataService.waitList();
+        var book = bookService.findBookOrThrow(args.bookId());
+        if (!waitList.isInList(book))
+            waitList.addRemove(book);
+    }
+
+    @Override
+    public FunctionToolCallback<BookIdArg, Void> addBookToWaitList() {
+        return (FunctionToolCallback<BookIdArg, Void>) cache.getOrPut("addBookToWaitList", _ ->
+                FunctionToolCallback.builder("addBookToUserWaitList", this::addBookToWaitListImpl)
+                        .description("Adds book to users wait list, parameter: bookId (string)")
+                        .build());
     }
 }

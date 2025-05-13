@@ -3,9 +3,8 @@ package com.mixfa.ailibrary.model.suggestion;
 public interface SuggsetionHint {
     public String makeHint();
 
-
     public static SuggsetionHint composition(Iterable<SuggsetionHint> hints) {
-        return new Composition(hints);
+        return new SuggestionHintComposition(hints);
     }
 
     public static SuggsetionHint empty() {
@@ -22,32 +21,5 @@ public interface SuggsetionHint {
         }
 
         public static final SuggsetionHint instance = new EmptyHint();
-    }
-
-    public class Composition implements SuggsetionHint {
-        private final String hint;
-
-        public Composition(Iterable<SuggsetionHint> hints) {
-            var sb = new StringBuilder();
-
-            for (SuggsetionHint suggsetionHint : hints)
-                sb.append(suggsetionHint.makeHint()).append("\n");
-
-            this.hint = sb.toString();
-        }
-
-        public Composition(SuggsetionHint... hints) {
-            var sb = new StringBuilder();
-
-            for (SuggsetionHint suggsetionHint : hints)
-                sb.append(suggsetionHint.makeHint()).append("\n");
-
-            this.hint = sb.toString();
-        }
-
-        @Override
-        public String makeHint() {
-            return hint;
-        }
     }
 }

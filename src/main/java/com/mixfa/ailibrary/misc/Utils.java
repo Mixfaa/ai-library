@@ -79,7 +79,6 @@ public class Utils {
 
         var sb = new StringBuilder();
         appendBookDescForAi(book, sb);
-        sb.append("\n\n");
         return sb.toString();
     }
 

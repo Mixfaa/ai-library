@@ -1,12 +1,11 @@
 package com.mixfa.ailibrary.service;
 
 import com.mixfa.ailibrary.model.Book;
-import reactor.core.publisher.Flux;
 
 public interface BookChatBotService {
-    BookChatBot createBookChatBot(Book book);
+    ChatBot createBookChatBot(Book book);
 
-    interface BookChatBot {
+    interface ChatBot {
         String talk(String message);
     }
 }
