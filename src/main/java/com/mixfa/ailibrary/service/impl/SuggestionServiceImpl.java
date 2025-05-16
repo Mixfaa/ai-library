@@ -54,7 +54,6 @@ public class SuggestionServiceImpl implements SuggestionService {
 
     private final Retry retry = Retry.of("suggestionService",
             RetryConfig.<SuggestedBook[]>custom()
-                    .failAfterMaxAttempts(true)
                     .waitDuration(Duration.ofMillis(250))
                     .retryOnResult(ArrayUtils::isEmpty)
                     .build());

@@ -5,6 +5,8 @@ import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.ReadBook;
 import com.mixfa.ailibrary.service.AiBookDescriptionService;
+import com.mixfa.ailibrary.service.BookService;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
@@ -16,14 +18,16 @@ import java.util.List;
 @Service
 public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionService {
     private final ValueOperations<String, String> valueOps;
+    private final RedisTemplate<String, String> redisTemplate;
 
     public CachedAiBookDescriptionServiceImpl(RedisTemplate<String, String> redisTemplate) {
         this.valueOps = redisTemplate.opsForValue();
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     public String bookDescription(Book book) {
-        var bookKey = Utils.makeBookDescriptionKey(book);
+        var bookKey = makeBookDescriptionKey(book);
 
         var description = valueOps.get(bookKey);
         if (description == null) {
@@ -36,7 +40,7 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
 
     @Override
     public String bookDescriptionAndMark(ReadBook readBook) {
-        var bookKey = Utils.makeBookDescriptionKey(readBook.book());
+        var bookKey = makeBookDescriptionKey(readBook.book());
 
         var description = valueOps.get(bookKey);
         if (description == null) {
@@ -52,7 +56,7 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
 
     @Override
     public List<String> bookDescriptionList(List<Book> books) {
-        var descriptions = valueOps.multiGet(books.stream().map(Utils::makeBookDescriptionKey).toList());
+        var descriptions = valueOps.multiGet(books.stream().map(CachedAiBookDescriptionServiceImpl::makeBookDescriptionKey).toList());
 
         if (books.size() != descriptions.size())
             throw new RuntimeException("Book description count mismatch (valueOps multiGet)");
@@ -64,7 +68,7 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
 
             if (description == null) {
                 description = Utils.makeBookDescription(book);
-                toSetValues.put(Utils.makeBookDescriptionKey(book), description);
+                toSetValues.put(makeBookDescriptionKey(book), description);
             }
         }
 
@@ -88,5 +92,35 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
         });
 
         return descriptionsWithMarks;
+    }
+
+    @Override
+    public void evictCache(Object bookId) {
+        valueOps.getAndDelete(makeBookDescriptionKey(Utils.idToStr(bookId)));
+    }
+
+    @Override
+    public void evictCache(List<Object> booksIds) {
+        var keys = booksIds.stream().map(id -> makeBookDescriptionKey(Utils.idToStr(id))).toList();
+        redisTemplate.delete(keys);
+    }
+
+    public static String makeBookDescriptionKey(Book book) {
+        return makeBookDescriptionKey(book.id().toHexString());
+    }
+
+    public static String makeBookDescriptionKey(String id) {
+        return id + ":book-desc";
+    }
+
+    @EventListener(BookService.Event.class)
+    public void onEvent(BookService.Event event) {
+        System.out.println(event);
+        System.out.println(event.getClass());
+        switch (event) {
+            case BookService.Event.OnBookAdded onAdded -> evictCache(onAdded.book().id());
+            case BookService.Event.OnBookEdited onEdited -> evictCache(onEdited.book().id());
+            case BookService.Event.OnBookDeleted onRemoved -> evictCache(onRemoved.bookId());
+        }
     }
 }

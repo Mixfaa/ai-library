@@ -9,6 +9,7 @@ import com.mixfa.ailibrary.model.user.UserData;
 import com.mixfa.ailibrary.service.UserDataService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.concurrent.locks.LockingVisitors;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Query;
@@ -106,6 +107,7 @@ public class UserDataServiceImpl implements UserDataService {
     }
 
     private class ReadBooksImpl implements ReadBooks {
+        private final LockingVisitors.ReadWriteLockVisitor<ReadBooksImpl> lockVisitor;
         private AtomicReference<ReadBook[]> readBooksRef;
 
         private static Predicate<ReadBook> makePredicate(Book book) {
@@ -114,6 +116,7 @@ public class UserDataServiceImpl implements UserDataService {
 
         public ReadBooksImpl(ReadBook[] readBooks) {
             this.readBooksRef = new AtomicReference<>(readBooks);
+            this.lockVisitor = LockingVisitors.reentrantReadWriteLockVisitor(this);
         }
 
         @Override
@@ -123,63 +126,78 @@ public class UserDataServiceImpl implements UserDataService {
 
         @Override
         public void setMark(Book book, ReadBook.Mark mark) {
-            var readBooks = readBooksRef.get();
+            lockVisitor.acceptWriteLocked(target -> {
+                var readBooks = target.readBooksRef.get();
 
-            Predicate<ReadBook> predicate = makePredicate(book);
-            var exists = Utils.anyMatch(readBooks, predicate);
-            if (exists) {
-                if (Utils.anyMatch(readBooks, rb -> predicate.test(rb) && rb.mark() == mark))
-                    return;
+                Predicate<ReadBook> predicate = makePredicate(book);
+                var exists = Utils.anyMatch(readBooks, predicate);
+                if (exists) {
+                    if (Utils.anyMatch(readBooks, rb -> predicate.test(rb) && rb.mark() == mark))
+                        return;
 
-                readBooks = Utils.replace(readBooks, new ReadBook(book, mark), predicate);
-            } else
-                readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
+                    readBooks = Utils.replace(readBooks, new ReadBook(book, mark), predicate);
+                } else
+                    readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
 
-            readBooksRef.set(readBooks);
-            setField(UserData.Fields.readBooks, readBooks, UserData::new);
+                target.readBooksRef.set(readBooks);
+                setField(UserData.Fields.readBooks, readBooks, UserData::new);
+            });
         }
 
         @Override
         public void unmark(Book book) {
-            var readBooks = readBooksRef.get();
+            lockVisitor.acceptWriteLocked(target -> {
+                var readBooks = target.readBooksRef.get();
 
-            Predicate<ReadBook> predicate = makePredicate(book);
-            var exists = Utils.anyMatch(readBooks, predicate);
-            if (!exists)
-                return;
-            readBooks = Utils.filter(readBooks, predicate.negate());
-            readBooksRef.set(readBooks);
-            setField(UserData.Fields.readBooks, readBooks, UserData::new);
+                Predicate<ReadBook> predicate = makePredicate(book);
+                var exists = Utils.anyMatch(readBooks, predicate);
+                if (!exists)
+                    return;
+                readBooks = Utils.filter(readBooks, predicate.negate());
+                target.readBooksRef.set(readBooks);
+                setField(UserData.Fields.readBooks, readBooks, UserData::new);
+            });
+
         }
 
         @Override
         public boolean addRemove(Book book, ReadBook.Mark mark) {
-            var readBooks = readBooksRef.get();
-            Predicate<ReadBook> predicate = makePredicate(book);
-            var exists = Utils.anyMatch(readBooks, predicate);
-            if (exists) {
-                readBooks = Utils.filter(readBooks, predicate.negate());
-            } else {
-                readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
-            }
-            readBooksRef.set(readBooks);
-            setField(UserData.Fields.readBooks, readBooks, UserData::new);
+            return lockVisitor.applyWriteLocked(target -> {
+                var readBooks = target.readBooksRef.get();
+                Predicate<ReadBook> predicate = makePredicate(book);
+                var exists = Utils.anyMatch(readBooks, predicate);
+                if (exists) {
+                    readBooks = Utils.filter(readBooks, predicate.negate());
+                } else {
+                    readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
+                }
+                target.readBooksRef.set(readBooks);
+                setField(UserData.Fields.readBooks, readBooks, UserData::new);
 
-            return !exists; // true if added
+                return !exists; // true if added
+            });
         }
 
         @Override
         public ReadBook.Mark getMark(Book book) {
-            var readBooks = readBooksRef.get();
-            for (ReadBook readBook : readBooks) {
-                if (readBook.book().compareById(book))
-                    return readBook.mark();
-            }
-            return null;
+            return lockVisitor.applyReadLocked(target -> {
+                var readBooks = target.readBooksRef.get();
+                for (ReadBook readBook : readBooks) {
+                    if (readBook.book().compareById(book))
+                        return readBook.mark();
+                }
+                return null;
+            });
+        }
+
+        @Override
+        public LockingVisitors.ReadWriteLockVisitor getReadWriteLockVisitor() {
+            return lockVisitor;
         }
     }
 
     private class WaitListImpl implements WaitList {
+        private final LockingVisitors.ReadWriteLockVisitor<WaitListImpl> lockingVisitor;
         private final AtomicReference<Book[]> waitListRef;
 
         private static Predicate<Book> makePredicate(Book book) {
@@ -188,6 +206,7 @@ public class UserDataServiceImpl implements UserDataService {
 
         private WaitListImpl(Book[] waitList) {
             this.waitListRef = new AtomicReference<>(waitList);
+            this.lockingVisitor = LockingVisitors.reentrantReadWriteLockVisitor(this);
         }
 
         @Override
@@ -197,27 +216,46 @@ public class UserDataServiceImpl implements UserDataService {
 
         @Override
         public boolean addRemove(Book book) {
-            var waitListedBooks = waitListRef.get();
-            var predicate = makePredicate(book);
+            return lockingVisitor.applyWriteLocked(target -> {
+                var waitListedBooks = target.waitListRef.get();
+                var predicate = makePredicate(book);
 
-            var exists = Utils.anyMatch(waitListedBooks, predicate);
+                var exists = Utils.anyMatch(waitListedBooks, predicate);
 
-            if (exists)
-                waitListedBooks = Utils.filter(waitListedBooks, predicate.negate());
-            else
-                waitListedBooks = ArrayUtils.add(waitListedBooks, book);
+                if (exists)
+                    waitListedBooks = Utils.filter(waitListedBooks, predicate.negate());
+                else
+                    waitListedBooks = ArrayUtils.add(waitListedBooks, book);
 
-            waitListRef.set(waitListedBooks);
-            setField(UserData.Fields.waitList, waitListedBooks, UserData::new);
-            return !exists;
+                target.waitListRef.set(waitListedBooks);
+                setField(UserData.Fields.waitList, waitListedBooks, UserData::new);
+
+
+                return !exists;
+            });
         }
 
         @Override
         public boolean isInList(Book book) {
-            var readBooks = waitListRef.get();
-            var predicate = makePredicate(book);
+            return lockingVisitor.applyReadLocked(target -> {
+                var readBooks = target.waitListRef.get();
+                var predicate = makePredicate(book);
 
-            return Utils.anyMatch(readBooks, predicate);
+                return Utils.anyMatch(readBooks, predicate);
+            });
+        }
+
+        @Override
+        public boolean isInList(Predicate<Book> predicate) {
+            return lockingVisitor.applyReadLocked(target -> {
+                var readBooks = target.waitListRef.get();
+                return Utils.anyMatch(readBooks, predicate);
+            });
+        }
+
+        @Override
+        public LockingVisitors.ReadWriteLockVisitor getReadWriteLockVisitor() {
+            return lockingVisitor;
         }
     }
 }

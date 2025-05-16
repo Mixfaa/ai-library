@@ -87,6 +87,7 @@ public class AiFunctionsImpl implements AiFunctions {
                             Arrays.stream(usersReadBooks).limit(10).toList()
                     );
                 })
+                .inputType(Void.class)
                 .description("Returns list of 10 random books and user`s marks, that user have read and marked")
                 .build());
     }
@@ -100,22 +101,51 @@ public class AiFunctionsImpl implements AiFunctions {
                             Arrays.stream(usersWaitList).limit(10).toList()
                     );
                 })
+                .inputType(Void.class)
                 .description("Returns list of 10 random books from user`s wait list")
                 .build());
     }
 
-    private void addBookToWaitListImpl(BookIdArg args) {
+    private void addBookToWaitListImpl(BookIdArg args, boolean add) {
         var waitList = userDataService.waitList();
         var book = bookService.findBookOrThrow(args.bookId());
-        if (!waitList.isInList(book))
-            waitList.addRemove(book);
+
+        waitList.acceptWriteLocked(target -> {
+            if (add != target.isInList(book))
+                target.addRemove(book);
+        });
     }
 
     @Override
     public FunctionToolCallback<BookIdArg, Void> addBookToWaitList() {
         return (FunctionToolCallback<BookIdArg, Void>) cache.getOrPut("addBookToWaitList", _ ->
-                FunctionToolCallback.builder("addBookToUserWaitList", this::addBookToWaitListImpl)
+                FunctionToolCallback.builder("addBookToUserWaitList", (BookIdArg arg) -> addBookToWaitListImpl(arg, true))
+                        .inputType(BookIdArg.class)
                         .description("Adds book to users wait list, parameter: bookId (string)")
+                        .build());
+    }
+
+
+    @Override
+    public FunctionToolCallback<BookIdArg, Void> removeBookFromWaitList() {
+        return (FunctionToolCallback<BookIdArg, Void>) cache.getOrPut("removeBookFromWaitList", _ ->
+                FunctionToolCallback.builder("removeBookFromWaitList", (BookIdArg arg) -> addBookToWaitListImpl(arg, false))
+                        .inputType(BookIdArg.class)
+                        .description("Removes book to users wait list, parameter: bookId (string)")
+                        .build());
+    }
+
+    private boolean isBookInWaitListImpl(BookIdArg args) {
+        var waitList = userDataService.waitList();
+        return waitList.isInList(book -> book.id().toHexString().equals(args.bookId()));
+    }
+
+    @Override
+    public FunctionToolCallback<BookIdArg, Boolean> isBookInWaitList() {
+        return (FunctionToolCallback<BookIdArg, Boolean>) cache.getOrPut("isBookInWaitList", _ ->
+                FunctionToolCallback.builder("isBookInWaitList", this::isBookInWaitListImpl)
+                        .inputType(BookIdArg.class)
+                        .description("Checks if book is in user`s wait list, parameter: bookId (string)")
                         .build());
     }
 }

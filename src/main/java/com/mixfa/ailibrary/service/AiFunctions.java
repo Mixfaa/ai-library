@@ -3,13 +3,12 @@ package com.mixfa.ailibrary.service;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 
-import java.util.function.Function;
-
 public interface AiFunctions {
     record SearchArgs(String query, int page) {
     }
 
-    record BookIdArg(String bookId) {}
+    record BookIdArg(String bookId) {
+    }
 
     FunctionToolCallback<SearchArgs, String> searchFunction();
 
@@ -17,7 +16,12 @@ public interface AiFunctions {
 
     FunctionToolCallback<Void, String> usersReadBooks();
 
-    FunctionToolCallback<Void,String> usersWaitList();
+    FunctionToolCallback<Void, String> usersWaitList();
 
     FunctionToolCallback<BookIdArg, Void> addBookToWaitList();
+
+    FunctionToolCallback<BookIdArg, Void> removeBookFromWaitList();
+
+    FunctionToolCallback<BookIdArg, Boolean> isBookInWaitList();
+
 }

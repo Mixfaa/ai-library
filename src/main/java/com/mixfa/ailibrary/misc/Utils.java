@@ -46,20 +46,18 @@ public class Utils {
         var value = map.get(key);
         if (value == null)
             value = map.get(DEFAULT_LOCALE);
-        if (value == null) {
-            var firstKey = map.keySet().stream().findFirst().orElse(null);
-            return map.get(firstKey);
-        }
+        if (value == null)
+            for (Locale locale : map.keySet())
+                return map.get(locale);
 
         return value;
     }
 
     public static <V> V getFromLocalizedMap(Map<Locale, V> map) {
         var value = map.get(DEFAULT_LOCALE);
-        if (value == null) {
-            var firstKey = map.keySet().stream().findFirst().orElse(null);
-            return map.get(firstKey);
-        }
+        if (value == null)
+            for (Locale locale : map.keySet())
+                return map.get(locale);
 
         return value;
     }
@@ -250,14 +248,4 @@ public class Utils {
         }
         return copy;
     }
-
-    public static String makeBookDescriptionKey(Book book) {
-        return makeBookDescriptionKey(book.id().toHexString());
-    }
-
-    public static String makeBookDescriptionKey(String id) {
-        return id + ":book-desc";
-    }
-
-
 }

@@ -53,7 +53,7 @@ public class AiLibraryApplication implements AppShellConfigurator {
 
         return template;
     }
-  
+
     @Bean
     public RedisTemplate<String, ?> redisTemplate(RedisConnectionFactory rcf) {
         RedisTemplate<String, ?> template = new RedisTemplate<>();
@@ -69,6 +69,7 @@ public class AiLibraryApplication implements AppShellConfigurator {
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(DeserializationFeature.USE_JAVA_ARRAY_FOR_JSON_ARRAY, false);
     }
+
 
 //    @Bean
 //    public CommandLineRunner filler(BookService bookService, OfflineLibService offlineLibService, SearchEngine.ForBooks booksSearch, SearchEngine.ForLibraries librariesSearch) {

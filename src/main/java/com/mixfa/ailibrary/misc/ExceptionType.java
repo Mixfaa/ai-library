@@ -18,6 +18,8 @@ public enum ExceptionType {
     COMMENT_NOT_FOUND, //
     INVALID_BOOK_RATE, // rate - Double
     BOOK_ORDER_CANT_BE_CANCELLED, // object status id
+    RATE_LIMIT_EXCEEDED,
+    INVALID_COMMENT,
     BOOK_ALREADY_RATED; // bookId - Object, username - String
 
     private final String TEMPLATE_CODE = this.name().toLowerCase();
@@ -43,6 +45,14 @@ public enum ExceptionType {
 
     public static AccessDeniedException accessDenied() {
         return new AccessDeniedException("Authenticated user does not have access to requested resource");
+    }
+
+    public static UserFriendlyException invalidComment() {
+        return INVALID_COMMENT.make();
+    }
+
+    public static UserFriendlyException rateLimitExceeded() {
+        return RATE_LIMIT_EXCEEDED.make();
     }
 
     // Static creator methods

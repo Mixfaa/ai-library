@@ -6,13 +6,13 @@ import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.service.BookService;
 import com.mixfa.ailibrary.service.repo.BookRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -22,6 +22,8 @@ import java.util.Optional;
 public class BookServiceImpl implements BookService {
     private final BookRepo bookRepo;
     private final MongoTemplate template;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final Update INC_TOOK_UPD = new Update().inc(Book.Fields.tookCount, 1);
     private static final Update INC_READ_UPD = new Update().inc(Book.Fields.readCount, 1);
@@ -33,15 +35,17 @@ public class BookServiceImpl implements BookService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public Book addBook(Book.AddRequest request) {
-        var book = new Book(
+       var book = bookRepo.save(new Book(
                 request.localizedTitle(),
                 request.authors(),
                 request.genres(),
                 request.images(),
                 request.localizedDescription()
-        );
+        ));
 
-        return bookRepo.save(book);
+        eventPublisher.publishEvent(new BookService.Event.OnBookAdded(book));
+
+        return book;
     }
 
     @Override
@@ -59,13 +63,18 @@ public class BookServiceImpl implements BookService {
                 book.tookCount(), book.readCount()
         );
 
-        return bookRepo.save(newBook);
+        newBook = bookRepo.save(newBook);
+
+        eventPublisher.publishEvent(new BookService.Event.OnBookEdited(newBook));
+        return newBook;
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public void removeBook(Object id) {
         bookRepo.deleteById(Utils.idToStr(id));
+
+        eventPublisher.publishEvent(new BookService.Event.OnBookDeleted(id));
     }
 
     @Override

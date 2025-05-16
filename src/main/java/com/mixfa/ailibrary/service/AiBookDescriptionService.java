@@ -12,5 +12,9 @@ public interface AiBookDescriptionService {
 
     List<String> bookDescriptionList(List<Book> books);
 
-    List<String > bookDescriptionAndMarkList(List<ReadBook> readBooks);
+    List<String> bookDescriptionAndMarkList(List<ReadBook> readBooks);
+
+    void evictCache(Object bookId);
+
+    void evictCache(List<Object> booksIds);
 }
