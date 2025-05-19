@@ -5,9 +5,9 @@ import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Genre;
 import com.mixfa.ailibrary.model.user.Role;
-import com.mixfa.ailibrary.route.comp.CustomMultiSelectComboBox;
-import com.mixfa.ailibrary.route.comp.LocalizedDetails;
-import com.mixfa.ailibrary.route.comp.SideBarInitializer;
+import com.mixfa.ailibrary.route.components.CustomMultiSelectComboBox;
+import com.mixfa.ailibrary.route.components.LocalizedDetails;
+import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.BookService;
 import com.mixfa.ailibrary.service.FileStorageService;
 import com.vaadin.flow.component.Component;
@@ -24,6 +24,7 @@ import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -60,9 +61,7 @@ public class EditBookRoute extends AppLayout implements HasUrlParameter<String> 
     };
 
     private final LocalizedDetails localizedDetails = new LocalizedDetails();
-
-
-    private List<String> imagesList = new ArrayList<>();
+    private final List<String> imagesList = new ArrayList<>();
 
 
     public EditBookRoute(BookService bookService, FileStorageService fileStorageService) {
@@ -87,6 +86,7 @@ public class EditBookRoute extends AppLayout implements HasUrlParameter<String> 
                     localizedDetails.getDescriptions());
             try {
                 bookService.editBook(book.id(), updRequest);
+                Notification.show("Book successfully edited!");
             } catch (Exception e) {
                 System.out.println(e.getLocalizedMessage());
                 Notification.show("Error during updating book");
@@ -104,7 +104,7 @@ public class EditBookRoute extends AppLayout implements HasUrlParameter<String> 
             localeSelect.setValue(book.localizedTitle().keySet());
             genresSelect.setValue(book.genres());
             localizedDetails.setLocales(book);
-            imagesList = new ArrayList<>(List.of(book.images()));
+            imagesList.addAll(Arrays.asList(book.images()));
         } catch (Exception ex) {
 
         }

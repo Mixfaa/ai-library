@@ -45,8 +45,12 @@ public class UserDataServiceImpl implements UserDataService {
     }
 
     private <T> T fetchField(String field, Class<T> tClass, Function<UserData, T> fallbackSelector) {
+        return fetchField(field, tClass, fallbackSelector, Account.getAuthenticated().id());
+    }
+
+    private <T> T fetchField(String field, Class<T> tClass, Function<UserData, T> fallbackSelector, long userID) {
         var match = Aggregation.match(
-                UserData.ownerCriteria()
+                UserData.ownerCriteriaBy(userID)
         );
         var projection = Aggregation.project().and(field).as(CachedRuntimeWrapperClassGen.FIELD_NAME);
 
@@ -68,7 +72,11 @@ public class UserDataServiceImpl implements UserDataService {
     }
 
     private <T> void setField(String field, T value, Function<T, UserData> fallback) {
-        var q = Query.query(UserData.ownerCriteria());
+        setField(field, value, fallback, Account.getAuthenticated().id());
+    }
+
+    private <T> void setField(String field, T value, Function<T, UserData> fallback, long userId) {
+        var q = Query.query(UserData.ownerCriteriaBy(userId));
         var exists = mongoTemplate.exists(q, UserData.class);
         if (!exists) {
             saveUserData(fallback.apply(value));
@@ -97,16 +105,19 @@ public class UserDataServiceImpl implements UserDataService {
     @Override
     public ReadBooks readBooks() {
         var accountId = Account.getAuthenticated().id();
-        return readBooksCache.computeIfAbsent(accountId, key -> new ReadBooksImpl(fetchField(UserData.Fields.readBooks, ReadBook[].class, UserData::readBooks)));
+        var readBooks = fetchField(UserData.Fields.readBooks, ReadBook[].class, UserData::readBooks, accountId);
+        return readBooksCache.computeIfAbsent(accountId, key -> new ReadBooksImpl(accountId, readBooks));
     }
 
     @Override
     public WaitList waitList() {
         var accountId = Account.getAuthenticated().id();
-        return waitListCache.computeIfAbsent(accountId, key -> new WaitListImpl(fetchField(UserData.Fields.waitList, Book[].class, UserData::waitList)));
+        var waitList = fetchField(UserData.Fields.waitList, Book[].class, UserData::waitList, accountId);
+        return waitListCache.computeIfAbsent(accountId, key -> new WaitListImpl(accountId, waitList));
     }
 
     private class ReadBooksImpl implements ReadBooks {
+        private final long userID;
         private final LockingVisitors.ReadWriteLockVisitor<ReadBooksImpl> lockVisitor;
         private AtomicReference<ReadBook[]> readBooksRef;
 
@@ -114,7 +125,8 @@ public class UserDataServiceImpl implements UserDataService {
             return rb -> rb.book().compareById(book);
         }
 
-        public ReadBooksImpl(ReadBook[] readBooks) {
+        public ReadBooksImpl(long userID, ReadBook[] readBooks) {
+            this.userID = userID;
             this.readBooksRef = new AtomicReference<>(readBooks);
             this.lockVisitor = LockingVisitors.reentrantReadWriteLockVisitor(this);
         }
@@ -140,7 +152,7 @@ public class UserDataServiceImpl implements UserDataService {
                     readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
 
                 target.readBooksRef.set(readBooks);
-                setField(UserData.Fields.readBooks, readBooks, UserData::new);
+                setField(UserData.Fields.readBooks, readBooks, UserData::new, target.userID);
             });
         }
 
@@ -155,7 +167,7 @@ public class UserDataServiceImpl implements UserDataService {
                     return;
                 readBooks = Utils.filter(readBooks, predicate.negate());
                 target.readBooksRef.set(readBooks);
-                setField(UserData.Fields.readBooks, readBooks, UserData::new);
+                setField(UserData.Fields.readBooks, readBooks, UserData::new, target.userID);
             });
 
         }
@@ -172,7 +184,7 @@ public class UserDataServiceImpl implements UserDataService {
                     readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
                 }
                 target.readBooksRef.set(readBooks);
-                setField(UserData.Fields.readBooks, readBooks, UserData::new);
+                setField(UserData.Fields.readBooks, readBooks, UserData::new, target.userID);
 
                 return !exists; // true if added
             });
@@ -197,6 +209,7 @@ public class UserDataServiceImpl implements UserDataService {
     }
 
     private class WaitListImpl implements WaitList {
+        private final long userId;
         private final LockingVisitors.ReadWriteLockVisitor<WaitListImpl> lockingVisitor;
         private final AtomicReference<Book[]> waitListRef;
 
@@ -204,7 +217,8 @@ public class UserDataServiceImpl implements UserDataService {
             return bk -> bk.compareById(book);
         }
 
-        private WaitListImpl(Book[] waitList) {
+        private WaitListImpl(long userId, Book[] waitList) {
+            this.userId = userId;
             this.waitListRef = new AtomicReference<>(waitList);
             this.lockingVisitor = LockingVisitors.reentrantReadWriteLockVisitor(this);
         }
@@ -228,7 +242,7 @@ public class UserDataServiceImpl implements UserDataService {
                     waitListedBooks = ArrayUtils.add(waitListedBooks, book);
 
                 target.waitListRef.set(waitListedBooks);
-                setField(UserData.Fields.waitList, waitListedBooks, UserData::new);
+                setField(UserData.Fields.waitList, waitListedBooks, UserData::new, userId);
 
 
                 return !exists;

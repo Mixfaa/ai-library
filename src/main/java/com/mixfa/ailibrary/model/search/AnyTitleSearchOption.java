@@ -10,6 +10,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 
 import java.util.List;
 
+/**
+ * Search for books
+ */
 @RequiredArgsConstructor
 public class AnyTitleSearchOption implements SearchOption {
     private final String query;

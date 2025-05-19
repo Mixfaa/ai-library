@@ -16,6 +16,9 @@ public class ReadBooksHint implements SuggsetionHint {
     }
 
     public static String makeHint(ReadBook[] books) {
+        if (books == null || books.length == 0)
+            return "";
+
         var sb = new StringBuilder();
 
         sb.append("User read next books:\n");

@@ -1,5 +1,6 @@
 package com.mixfa.ailibrary.service.impl;
 
+import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
 import com.mixfa.ailibrary.service.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -23,4 +24,5 @@ public class Services {
     private final BookChatBotService bookChatBotService;
     private final AiFunctions aiFunctions;
     private final AiBookDescriptionService aiBookDescriptionService;
+    private final CacheMaintainer cacheMaintainer;
 }

@@ -1,7 +1,9 @@
 package com.mixfa.ailibrary.misc;
 
-import lombok.experimental.StandardException;
 
-@StandardException
-public class AccessDeniedException extends RuntimeException {
+public class AccessDeniedException extends UserFriendlyException {
+
+    public AccessDeniedException(ExceptionType type, Object[] args) {
+        super(type.name(), type, args);
+    }
 }

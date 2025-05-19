@@ -1,21 +1,29 @@
 package com.mixfa.ailibrary.misc;
 
+import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
+import com.mixfa.ailibrary.misc.cache.MaintainableCache;
 import com.mixfa.ailibrary.model.user.Account;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
-import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.collections.ManagedConcurrentWeakHashMap;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-@RequiredArgsConstructor
-public class PerUserRateLimiter {
+public class PerUserRateLimiter implements MaintainableCache {
     private final RateLimiterConfig rateLimiterConfig;
-    private final Map<Long, RateLimiter> rateLimiters = new ConcurrentHashMap<>();
+    private final ManagedConcurrentWeakHashMap<Long, RateLimiter> rateLimiters = new ManagedConcurrentWeakHashMap<>();
+
+    public PerUserRateLimiter(RateLimiterConfig rateLimiterConfig, CacheMaintainer cacheMaintainer) {
+        this.rateLimiterConfig = rateLimiterConfig;
+        cacheMaintainer.register(this);
+    }
+
+    @Override
+    public void maintainCache() {
+        rateLimiters.maintain();
+    }
 
     public boolean acquirePermission() {
         var userID = Account.getAuthenticated().id();
-        var limiter = rateLimiters.computeIfAbsent(userID, key -> RateLimiter.of("rateLimiter:" + key, rateLimiterConfig));
+        var limiter = rateLimiters.computeIfAbsent(userID, key -> RateLimiter.of("PerUserRateLimiter:" + key, rateLimiterConfig));
 
         return limiter.acquirePermission();
     }

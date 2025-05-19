@@ -1,9 +1,9 @@
 package com.mixfa.ailibrary.route;
 
 import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.route.comp.BookCommentsComponent;
-import com.mixfa.ailibrary.route.comp.BookDetailsComponent;
-import com.mixfa.ailibrary.route.comp.SideBarInitializer;
+import com.mixfa.ailibrary.route.components.BookCommentsComponent;
+import com.mixfa.ailibrary.route.components.BookDetailsComponent;
+import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.*;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;

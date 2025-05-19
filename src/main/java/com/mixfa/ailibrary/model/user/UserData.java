@@ -29,6 +29,10 @@ public record UserData(
         return Criteria.where("_id").is(Account.getAuthenticatedAccount().getId());
     }
 
+    public static Criteria ownerCriteriaBy(Long userID) {
+        return Criteria.where("_id").is(userID);
+    }
+
     public UserData(Account owner) {
         this(owner.getId(), owner, new Book[0], new ReadBook[0], DEFAULT_LOCALE);
     }

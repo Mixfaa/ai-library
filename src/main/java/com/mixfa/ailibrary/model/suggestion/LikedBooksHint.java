@@ -7,6 +7,10 @@ public class LikedBooksHint implements SuggsetionHint {
     private final String hint;
 
     public LikedBooksHint(String[] books) {
+        if (books == null || books.length == 0) {
+            hint = "";
+            return;
+        }
         var sb = new StringBuilder();
 
         sb.append("User LIKED next books:\n");

@@ -3,6 +3,7 @@ package com.mixfa.ailibrary.service.impl;
 import com.mixfa.ailibrary.misc.ExceptionType;
 import com.mixfa.ailibrary.misc.PerUserRateLimiter;
 import com.mixfa.ailibrary.misc.Utils;
+import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Comment;
 import com.mixfa.ailibrary.model.search.SearchOption;
@@ -17,7 +18,6 @@ import com.mixfa.ailibrary.service.repo.CommentsRepo;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
-import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -40,26 +40,45 @@ import java.util.function.Function;
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
 @Service
-@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
     private final CommentsRepo commentsRepo;
     private final SearchEngine.ForComments commentSearchEngine;
     private final BookRepo bookRepo;
     private final MongoTemplate mongoTemplate;
     private final BookService bookService;
-
     private final ChatModel chatModel;
     private final AiBookDescriptionService aiBookDescriptionService;
-
-    private final PerUserRateLimiter rateLimiter = new PerUserRateLimiter(
-            RateLimiterConfig.custom()
-                    .limitForPeriod(1)
-                    .timeoutDuration(Duration.ofMillis(250))
-                    .limitRefreshPeriod(Duration.ofSeconds(3))
-                    .build()
-    );
+    private final PerUserRateLimiter rateLimiter;
 
     private final AiCommentChecker aiCommentChecker = new AiCommentChecker();
+
+    public CommentServiceImpl(CacheMaintainer cacheMaintainer,
+                              CommentsRepo commentsRepo,
+                              SearchEngine.ForComments commentSearchEngine,
+                              BookRepo bookRepo,
+                              MongoTemplate mongoTemplate,
+                              BookService bookService,
+                              ChatModel chatModel,
+                              AiBookDescriptionService aiBookDescriptionService) {
+        this.commentsRepo = commentsRepo;
+        this.commentSearchEngine = commentSearchEngine;
+        this.bookRepo = bookRepo;
+        this.mongoTemplate = mongoTemplate;
+        this.bookService = bookService;
+        this.chatModel = chatModel;
+        this.aiBookDescriptionService = aiBookDescriptionService;
+
+
+        this.rateLimiter = new PerUserRateLimiter(
+                RateLimiterConfig.custom()
+                        .limitForPeriod(1)
+                        .timeoutDuration(Duration.ofMillis(250))
+                        .limitRefreshPeriod(Duration.ofSeconds(3))
+                        .build(),
+                cacheMaintainer
+        );
+
+    }
 
     @Override
     public Comment addComment(Comment.AddRequest request) {
@@ -158,15 +177,9 @@ public class CommentServiceImpl implements CommentService {
                         .build()
         );
 
-        private record Params(String comment, Book book) {
-        }
 
-        private Optional<Boolean> commentValidationSuccess(Params params) {
-            var comment = params.comment;
-            var book = params.book;
-            List<Message> messages = List.of(CONFIG_MESSAGE, makeRequestMessage(comment, book));
-
-            var response = chatModel.call(new Prompt(messages));
+        private Optional<Boolean> commentValidationSuccess(Prompt prompt) {
+            var response = chatModel.call(prompt);
             var aiResponse = response.getResult().getOutput().getText();
 
             if (aiResponse.contains("OK"))
@@ -176,10 +189,13 @@ public class CommentServiceImpl implements CommentService {
             return Optional.empty();
         }
 
-        private Function<Params, Optional<Boolean>> commentValidationPassed = Retry.decorateFunction(retry, this::commentValidationSuccess);
+        private Function<Prompt, Optional<Boolean>> commentValidationPassed = Retry.decorateFunction(retry, this::commentValidationSuccess);
 
         private boolean checkComment(String comment, Book book) {
-            var result = commentValidationPassed.apply(new Params(comment, book));
+            List<Message> messages = List.of(CONFIG_MESSAGE, makeRequestMessage(comment, book));
+            var prompt = new Prompt(messages);
+
+            var result = commentValidationPassed.apply(prompt);
             if (result.isEmpty()) return true;
             return result.get();
         }

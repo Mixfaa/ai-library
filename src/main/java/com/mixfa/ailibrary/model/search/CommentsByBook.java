@@ -10,7 +10,7 @@ import java.util.List;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
-public class CommentsByBook implements SearchOption {
+public class CommentsByBook extends SearchOption.SimpleBase {
     private final List<AggregationOperation> pipeline;
 
     public CommentsByBook(ObjectId bookId) {
@@ -21,12 +21,7 @@ public class CommentsByBook implements SearchOption {
     }
 
     @Override
-    public List<AggregationOperation> makePipeline() {
+    List<AggregationOperation> pipeline() {
         return pipeline;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return pipeline.isEmpty();
     }
 }

@@ -7,6 +7,10 @@ public class DislikedBooksHint implements SuggsetionHint {
     private final String hint;
 
     public DislikedBooksHint(String[] books) {
+        if (books == null || books.length == 0) {
+            hint = "";
+            return;
+        }
         var sb = new StringBuilder();
 
         sb.append("User DISLIKED next books:\n");

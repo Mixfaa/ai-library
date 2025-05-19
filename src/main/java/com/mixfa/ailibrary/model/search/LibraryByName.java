@@ -10,20 +10,15 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class LibraryByName implements SearchOption {
+public class LibraryByName extends SearchOption.SimpleBase {
     private final String query;
 
     @Override
-    public List<AggregationOperation> makePipeline() {
+    public List<AggregationOperation> pipeline() {
         return StringUtils.isBlank(query) ? List.of() : List.of(
                 Aggregation.match(
                         Criteria.where(Library.Fields.name).regex(query, "i")
                 )
         );
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return StringUtils.isBlank(query);
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.CriteriaDefinition;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -22,7 +23,7 @@ public interface SearchOption {
             return new SimpleSearchRequestOption(request);
         }
 
-        public static SearchOption presentInLibs(Iterable<String> libsNames) {
+        public static SearchOption presentInLibs(Collection<String> libsNames) {
             return new PresentInLibraries(libsNames);
         }
 
@@ -33,11 +34,19 @@ public interface SearchOption {
         public static SearchOption byTitle(String query) {
             return new AnyTitleSearchOption(query);
         }
+
+        public static SearchOption byAuthor(Collection<String> authors) {
+            return new ByAuthorsSearch(authors);
+        }
+
+        public static SearchOption byGenre(Collection<String> genres) {
+            return new ByGenresSearch(genres);
+        }
     }
 
     final class Libraries {
         public static SearchOption containsBook(Book book) {
-            return new LibContainsBook(book);
+            return new LibContainsBook(book.id());
         }
 
         public static SearchOption byName(String query) {
@@ -114,5 +123,22 @@ public interface SearchOption {
         }
 
         static final EmptyOption instance = new EmptyOption();
+    }
+
+    abstract class SimpleBase implements SearchOption {
+        private final List<AggregationOperation> pipeline = pipeline();
+
+        abstract List<AggregationOperation> pipeline();
+
+        @Override
+        public List<AggregationOperation> makePipeline() {
+            if (pipeline == null) return List.of();
+            return pipeline;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return pipeline == null || pipeline.isEmpty();
+        }
     }
 }

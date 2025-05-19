@@ -6,12 +6,12 @@ import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.aggregation.LookupOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
-public class PresentInLibraries implements SearchOption {
+public class PresentInLibraries extends SearchOption.SimpleBase {
     protected static final LookupOperation LOOKUP_OPERATION = LookupOperation.newLookup()
             .from(Library.TABLE_NAME)
             .localField("_id")
@@ -22,10 +22,6 @@ public class PresentInLibraries implements SearchOption {
 
     private final List<AggregationOperation> pipeline;
 
-    protected static <T> AggregationOperation makeMatchAggregation(T v) {
-        return Aggregation.match(Criteria.where("libraries._id").in(v));
-    }
-
     public PresentInLibraries(String... names) {
         if (names == null || names.length == 0) {
             this.pipeline = List.of();
@@ -33,29 +29,24 @@ public class PresentInLibraries implements SearchOption {
         }
         this.pipeline = List.of(
                 LOOKUP_OPERATION,
-                makeMatchAggregation(names)
+                Aggregation.match(Criteria.where("libraries._id").in((Object[]) names))
         );
     }
 
-    public PresentInLibraries(Iterable<String> names) {
-        if (names == null || !names.iterator().hasNext()) {
+    public PresentInLibraries(Collection<String> names) {
+        if (names == null || names.isEmpty()) {
             this.pipeline = List.of();
             return;
         }
         this.pipeline = List.of(
                 LOOKUP_OPERATION,
-                makeMatchAggregation(names)
+                Aggregation.match(Criteria.where("libraries._id").in(names))
         );
     }
 
     @Override
-    public List<AggregationOperation> makePipeline() {
+    List<AggregationOperation> pipeline() {
         return pipeline;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return pipeline.isEmpty();
     }
 }
 
