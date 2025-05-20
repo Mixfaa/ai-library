@@ -17,6 +17,9 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Route;
@@ -59,7 +62,8 @@ public class EditBookRoute extends AppLayout implements HasUrlParameter<String> 
             setItems(Genre.values());
         }
     };
-
+    private final TextField isbnField = new TextField("ISBN");
+    private final IntegerField publishYearField = new IntegerField("First publish year");
     private final LocalizedDetails localizedDetails = new LocalizedDetails();
     private final List<String> imagesList = new ArrayList<>();
 
@@ -76,14 +80,16 @@ public class EditBookRoute extends AppLayout implements HasUrlParameter<String> 
         var addImagesDialog = VaadinCommons.editImagesDialog(imagesList, fileStorageService);
         var editImagesBtn = new Button("Add images", _ -> addImagesDialog.open());
 
-        var formLayout = new FormLayout(authorsSelect, localeSelect, genresSelect, addImagesDialog, editImagesBtn,
+        var formLayout = new FormLayout(authorsSelect, localeSelect, genresSelect,isbnField, publishYearField, addImagesDialog, editImagesBtn,
                 localizedDetails.getComponent(), new Button("Save", _ -> {
             var updRequest = new Book.AddRequest(
                     localizedDetails.getTitles(),
                     authorsSelect.getValue().toArray(String[]::new),
                     genresSelect.getValue().toArray(Genre[]::new),
                     imagesList.toArray(String[]::new),
-                    localizedDetails.getDescriptions());
+                    localizedDetails.getDescriptions(),
+                    Long.parseLong(isbnField.getValue()),
+                    publishYearField.getValue());
             try {
                 bookService.editBook(book.id(), updRequest);
                 Notification.show("Book successfully edited!");

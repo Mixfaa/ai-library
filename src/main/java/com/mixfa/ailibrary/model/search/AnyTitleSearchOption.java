@@ -2,7 +2,6 @@ package com.mixfa.ailibrary.model.search;
 
 import com.mixfa.ailibrary.model.Book;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.aggregation.ObjectOperators;
@@ -14,11 +13,13 @@ import java.util.List;
  * Search for books
  */
 @RequiredArgsConstructor
-public class AnyTitleSearchOption implements SearchOption {
-    private final String query;
+public class AnyTitleSearchOption extends SearchOption.ImmutableAdapter {
 
-    @Override
-    public List<AggregationOperation> makePipeline() {
+    public AnyTitleSearchOption(String query) {
+        super(makePipeline(query));
+    }
+
+    public static List<AggregationOperation> makePipeline(String query) {
         if (query == null || query.isBlank()) return List.of();
         var baseProjection = Book.baseProjection()
                 .and(ObjectOperators.ObjectToArray.valueOfToArray(Book.Fields.localizedTitle)).as("titles");
@@ -29,10 +30,5 @@ public class AnyTitleSearchOption implements SearchOption {
                         Criteria.where("titles").exists(true).and("titles.v").regex(query, "i")
                 )
         );
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return StringUtils.isBlank(query);
     }
 }

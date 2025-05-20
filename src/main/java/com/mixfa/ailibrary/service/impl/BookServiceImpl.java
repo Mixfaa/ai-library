@@ -35,12 +35,14 @@ public class BookServiceImpl implements BookService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public Book addBook(Book.AddRequest request) {
-       var book = bookRepo.save(new Book(
+        var book = bookRepo.save(new Book(
                 request.localizedTitle(),
                 request.authors(),
                 request.genres(),
                 request.images(),
-                request.localizedDescription()
+                request.localizedDescription(),
+                request.isbn(),
+                request.firstPublishYear()
         ));
 
         eventPublisher.publishEvent(new BookService.Event.OnBookAdded(book));
@@ -60,7 +62,9 @@ public class BookServiceImpl implements BookService {
                 Objects.requireNonNullElse(request.genres(), book.genres()),
                 Objects.requireNonNullElse(request.images(), book.images()),
                 Objects.requireNonNullElse(request.localizedDescription(), book.localizedDescription()),
-                book.tookCount(), book.readCount()
+                book.tookCount(), book.readCount(),
+                Objects.requireNonNullElse(request.isbn(),book.isbn()),
+                Objects.requireNonNullElse(request.firstPublishYear(),book.firstPublishYear())
         );
 
         newBook = bookRepo.save(newBook);

@@ -10,18 +10,13 @@ import java.util.List;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
-public class CommentsByBook extends SearchOption.SimpleBase {
-    private final List<AggregationOperation> pipeline;
-
+public class CommentsByBook extends SearchOption.ImmutableAdapter {
     public CommentsByBook(ObjectId bookId) {
-        if (bookId == null)
-            this.pipeline = List.of();
-        else
-            this.pipeline = List.of(Aggregation.match(Criteria.where(fmt("{0}.$id", Comment.Fields.book)).is(bookId)));
+        super(makePipeline(bookId));
     }
 
-    @Override
-    List<AggregationOperation> pipeline() {
-        return pipeline;
+    public static List<AggregationOperation> makePipeline(ObjectId bookId) {
+        if (bookId == null) return List.of();
+        return List.of(Aggregation.match(Criteria.where(fmt("{0}.$id", Comment.Fields.book)).is(bookId)));
     }
 }

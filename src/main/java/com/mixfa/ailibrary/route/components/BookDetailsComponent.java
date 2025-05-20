@@ -80,6 +80,8 @@ public class BookDetailsComponent extends VerticalLayout {
                 createTitleWithButtons(),
                 createAuthorSection(),
                 createGenreSection(),
+                createPublishYearSection(),
+                createIsbnSection(),
                 createRatingSection(),
                 createStatsSection()
         );
@@ -192,6 +194,22 @@ public class BookDetailsComponent extends VerticalLayout {
         Icon genreIcon = VaadinIcon.TAGS.create();
         genreIcon.setColor("var(--lumo-primary-color)");
         HorizontalLayout genresLayout = new HorizontalLayout(genreIcon, new Span(genres));
+        genresLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        return genresLayout;
+    }
+
+    private Component createIsbnSection() {
+        Icon icon = VaadinIcon.BARCODE.create();
+        icon.setColor("var(--lumo-primary-color)");
+        HorizontalLayout genresLayout = new HorizontalLayout(icon, new Span("ISBN: " + book.isbn()));
+        genresLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        return genresLayout;
+    }
+
+    private Component createPublishYearSection() {
+        Icon icon = VaadinIcon.DATE_INPUT.create();
+        icon.setColor("var(--lumo-primary-color)");
+        HorizontalLayout genresLayout = new HorizontalLayout(icon, new Span("Publish year: " + book.firstPublishYear()));
         genresLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         return genresLayout;
     }

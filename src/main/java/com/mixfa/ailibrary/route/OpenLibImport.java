@@ -45,7 +45,8 @@ public class OpenLibImport extends AppLayout {
     }
 
     public static Optional<String> searchBooks(String query) {
-        String url = OPEN_LIBRARY_API_URL + "?q=" + URLEncoder.encode(query);
+        final String fields = "title,author_name,cover_i,isbn,publish_year";
+        String url = OPEN_LIBRARY_API_URL + "?q=" + URLEncoder.encode(query) + "&fields=" + URLEncoder.encode(fields);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -101,6 +102,21 @@ public class OpenLibImport extends AppLayout {
             return new String[]{"https://covers.openlibrary.org/b/id/" + coverId + "-L.jpg"};
         };
 
+        Function<JsonNode, Long> isbnProvider = node -> {
+            var isbnEl = node.get("isbn");
+            if (isbnEl == null || !isbnEl.isArray()) return null;
+
+            return isbnEl.get(0).asLong();
+        };
+
+        Function<JsonNode, Integer> publishYearProvider = node -> {
+            var publishYearEl = node.get("publish_year");
+            if (publishYearEl == null) return null;
+            if (publishYearEl.isArray()) return publishYearEl.get(0).asInt();
+            if (publishYearEl.isNumber()) return publishYearEl.intValue();
+            return null;
+        };
+
         final var random = new Random();
         final var allGenres = new ArrayList<>(List.of(Genre.values()));
         Function<JsonNode, Genre[]> genresProvider = _ -> {
@@ -126,13 +142,21 @@ public class OpenLibImport extends AppLayout {
 
             var genres = genresProvider.apply(doc);
 
+            var isbn = isbnProvider.apply(doc);
+            if (isbn == null) continue;
+
+            var publishYear = publishYearProvider.apply(doc);
+            if (publishYear == null) continue;
+
             addRequests.add(
                     new Book.AddRequest(
                             Map.of(Utils.DEFAULT_LOCALE, title),
                             authors,
                             genres,
                             images,
-                            Map.of()
+                            Map.of(),
+                            isbn,
+                            publishYear
                     )
             );
         }

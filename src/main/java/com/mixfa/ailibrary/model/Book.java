@@ -29,10 +29,12 @@ public record Book(
         String[] images,
         Map<Locale, String> localizedDescription,
         long tookCount,
-        long readCount
+        long readCount,
+        long isbn,
+        int firstPublishYear
 ) {
-    public Book(Map<Locale, String> localizedTitle, String[] authors, Genre[] genres, String[] images, Map<Locale, String> localizedDescription) {
-        this(ObjectId.get(), localizedTitle, authors, genres, images, localizedDescription, 0, 0);
+    public Book(Map<Locale, String> localizedTitle, String[] authors, Genre[] genres, String[] images, Map<Locale, String> localizedDescription, long isbn, int firstPublishYear) {
+        this(ObjectId.get(), localizedTitle, authors, genres, images, localizedDescription, 0, 0, isbn, firstPublishYear);
     }
 
     public record AddRequest(
@@ -40,7 +42,9 @@ public record Book(
             String[] authors,
             Genre[] genres,
             String[] images,
-            Map<Locale, String> localizedDescription
+            Map<Locale, String> localizedDescription,
+            Long isbn,
+            Integer firstPublishYear
     ) {
     }
 

@@ -9,20 +9,15 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.util.Collection;
 import java.util.List;
 
-public class ByAuthorsSearch implements SearchOption {
-    private final AggregationOperation operation;
-
+public class ByAuthorsSearch extends SearchOption.ImmutableAdapter {
     public ByAuthorsSearch(Collection<String> authors) {
-        if (authors == null || authors.isEmpty()) {
-            operation = null;
-            return;
-        }
-        operation = Aggregation.match(Criteria.where(Book.Fields.authors).in(authors));
+        super(makePipeline(authors));
     }
 
-    @Override
-    public List<AggregationOperation> makePipeline() {
-        if (operation == null) return List.of();
-        return List.of(operation);
+    public static List<AggregationOperation> makePipeline(Collection<String> authors) {
+        if (authors == null || authors.isEmpty())
+            return List.of();
+
+        return List.of(Aggregation.match(Criteria.where(Book.Fields.authors).in(authors)));
     }
 }

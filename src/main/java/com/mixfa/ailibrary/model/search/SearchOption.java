@@ -2,11 +2,13 @@ package com.mixfa.ailibrary.model.search;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Book;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.CriteriaDefinition;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -15,7 +17,8 @@ public interface SearchOption {
     List<AggregationOperation> makePipeline();
 
     default boolean isEmpty() {
-        return false;
+        var pipeline = makePipeline();
+        return pipeline == null || pipeline.isEmpty();
     }
 
     final class Books {
@@ -41,6 +44,10 @@ public interface SearchOption {
 
         public static SearchOption byGenre(Collection<String> genres) {
             return new ByGenresSearch(genres);
+        }
+
+        public static SearchOption byISBN(long isbn) {
+            return new ISBNSearch(isbn);
         }
     }
 
@@ -69,7 +76,7 @@ public interface SearchOption {
     }
 
     static SearchOption composition(SearchOption... options) {
-        return new SearchOptionComposition(options);
+        return new SearchOptionComposition(Arrays.asList(options));
     }
 
     static SearchOption composition(Iterable<SearchOption> options) {
@@ -125,19 +132,17 @@ public interface SearchOption {
         static final EmptyOption instance = new EmptyOption();
     }
 
-    abstract class SimpleBase implements SearchOption {
-        private final List<AggregationOperation> pipeline = pipeline();
-
-        abstract List<AggregationOperation> pipeline();
+    @RequiredArgsConstructor
+    public static abstract class ImmutableAdapter implements SearchOption {
+        private final List<AggregationOperation> pipeline;
 
         @Override
-        public List<AggregationOperation> makePipeline() {
-            if (pipeline == null) return List.of();
-            return pipeline;
+        final public List<AggregationOperation> makePipeline() {
+            return pipeline == null ? List.of() : pipeline;
         }
 
         @Override
-        public boolean isEmpty() {
+        final public boolean isEmpty() {
             return pipeline == null || pipeline.isEmpty();
         }
     }

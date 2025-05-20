@@ -15,6 +15,7 @@ import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.*;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -26,6 +27,7 @@ import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
@@ -83,6 +85,8 @@ public class BooksEditRoute extends AppLayout {
 
         var localizedTitles = new HashMap<Locale, String>();
         var localizedDescriptions = new HashMap<Locale, String>();
+        var isbnField = new TextField("ISBN");
+        var publishYearField = new IntegerField("Publish Year");
 
         List<String> imagesList = new ArrayList<>();
         var addImagesDialog = VaadinCommons.editImagesDialog(imagesList, fileStorageService);
@@ -129,7 +133,9 @@ public class BooksEditRoute extends AppLayout {
                     authorsSelect.getSelectedItems().toArray(String[]::new),
                     genresSelect.getSelectedItems().toArray(Genre[]::new),
                     imagesList.toArray(String[]::new),
-                    localizedDescriptions);
+                    localizedDescriptions,
+                    Long.parseLong(isbnField.getValue()),
+                    publishYearField.getValue());
 
             try {
                 bookService.addBook(addRequest);
@@ -146,7 +152,7 @@ public class BooksEditRoute extends AppLayout {
 
         return new FormLayout() {
             {
-                add(authorsSelect, localeSelect, genresSelect, editLocalizedDataBtn, editImagesBtn, submit);
+                add(authorsSelect, localeSelect, genresSelect,isbnField, publishYearField, editLocalizedDataBtn, editImagesBtn, submit);
                 setResponsiveSteps(new ResponsiveStep("0", 4));
                 setColspan(authorsSelect, 1);
                 setColspan(localeSelect, 1);

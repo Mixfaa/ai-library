@@ -8,21 +8,13 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.util.Collection;
 import java.util.List;
 
-public class ByGenresSearch implements SearchOption {
-
-    private final AggregationOperation operation;
-
+public class ByGenresSearch extends SearchOption.ImmutableAdapter {
     public ByGenresSearch(Collection<String> genres) {
-        if (genres == null || genres.isEmpty()) {
-            operation = null;
-            return;
-        }
-        operation = Aggregation.match(Criteria.where(Book.Fields.genres).in(genres));
+        super(makePipeline(genres));
     }
 
-    @Override
-    public List<AggregationOperation> makePipeline() {
-        if (operation == null) return List.of();
-        return List.of(operation);
+    public static List<AggregationOperation> makePipeline(Collection<String> genres) {
+        if (genres == null || genres.isEmpty()) return List.of();
+        return List.of(Aggregation.match(Criteria.where(Book.Fields.genres).in(genres)));
     }
 }

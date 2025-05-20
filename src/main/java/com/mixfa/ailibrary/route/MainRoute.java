@@ -89,6 +89,15 @@ class SearchParamsDialog extends Dialog {
             searchOptions.add(new AnyTitleSearchOption(textField.getValue()));
         });
 
+        var isbnField = new TextField("Search by ISBN");
+        isbnField.setPattern("[0-9]*");
+        isbnField.addValueChangeListener(e -> {
+            searchOptions.removeIf(ISBNSearch.class::isInstance);
+            var isbnStr = e.getValue();
+            if (!isbnStr.isBlank())
+                searchOptions.add(new ISBNSearch(Long.parseLong(isbnField.getValue())));
+        });
+
         MultiSelectComboBox<Genre> genresSelect = new MultiSelectComboBox<>("Search by genres");
         genresSelect.setItems(Genre.values());
         genresSelect.setItemLabelGenerator(Genre::name);
@@ -113,7 +122,7 @@ class SearchParamsDialog extends Dialog {
                 searchOptions.add(new ByAuthorsSearch(authorsToSearch));
         });
 
-        return new VerticalLayout(textField, genresSelect, new HorizontalLayout(authorTextField, authorsSearch) {{
+        return new VerticalLayout(textField, isbnField, genresSelect, new HorizontalLayout(authorTextField, authorsSearch) {{
             setDefaultVerticalComponentAlignment(Alignment.BASELINE);
         }}, searchByAuthorsGrid);
     }
