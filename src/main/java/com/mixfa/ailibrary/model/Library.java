@@ -39,7 +39,7 @@ public record Library(
     @FieldNameConstants
     public record BookAvailability(
             @DBRef Book book,
-            Map<Locale, Long> localeToAmount) {
+            int amount) {
     }
 
     public record AddRequest(

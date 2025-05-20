@@ -6,7 +6,6 @@ import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Library;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.user.Role;
-import com.mixfa.ailibrary.route.components.CustomMultiSelectComboBox;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
 import com.mixfa.ailibrary.route.components.GridWithPagination;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
@@ -20,7 +19,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
@@ -32,7 +31,10 @@ import lombok.experimental.Accessors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -67,7 +69,7 @@ class LibraryBuilder {
 
     public Library create() {
         var avails = bookAvailabilityBuilders.stream()
-                .map(it -> new Library.BookAvailability(it.book, it.localeToAmount))
+                .map(it -> new Library.BookAvailability(it.book, it.amount))
                 .toArray(Library.BookAvailability[]::new);
         return new Library(name, address, avails);
     }
@@ -77,18 +79,16 @@ class LibraryBuilder {
     @Accessors(fluent = true)
     static class BookAvailabilityBuilder {
         private final Book book;
-        private final Map<Locale, Long> localeToAmount;
+        private int amount;
 
         public BookAvailabilityBuilder(Library.BookAvailability bookAvailability) {
             this.book = bookAvailability.book();
-            this.localeToAmount = new HashMap<>(bookAvailability.localeToAmount());
+            this.amount = bookAvailability.amount();
         }
 
         public BookAvailabilityBuilder(Book book) {
             this.book = book;
-            this.localeToAmount = new HashMap<>();
-            for (Locale locale : book.localizedTitle().keySet())
-                localeToAmount.put(locale, 1L);
+            this.amount = 1;
         }
     }
 }
@@ -122,34 +122,18 @@ public class EditLibRoute extends AppLayout implements HasUrlParameter<String> {
 
         var booksGrid = new GridWithPagination<>(Book.class, 10, fetchFunc);
 
-        VaadinCommons.configureDefaultBookGrid(booksGrid, userLocale);
+        VaadinCommons.configureDefaultBookGrid(booksGrid);
 
         booksGrid.addComponentColumn(book -> new Button("edit", _ -> {
-            var dialog = new Dialog(Utils.fmt("Edit book availability ({0})", Utils.getFromLocalizedMap(book.localizedTitle())));
+            var dialog = new Dialog(Utils.fmt("Edit book availability ({0})", book.title()));
 
-            var localesSelect = new CustomMultiSelectComboBox<>("Locales", Locale::of);
-
-            var bookAvailabilityBuilder = libraryBuilder.getForBook(book);
-            var localeAmountLayout = new VerticalLayout();
-            localesSelect.addValueChangeListener(event -> {
-                localeAmountLayout.removeAll();
-
-                for (var locale : event.getValue()) {
-                    var numberInput = new NumberField(Utils.fmt("Locale ({0})", locale.toString()), numEvent -> {
-                        bookAvailabilityBuilder.localeToAmount().put(locale, numEvent.getValue().longValue());
-                    });
-                    numberInput
-                            .setValue(bookAvailabilityBuilder.localeToAmount().getOrDefault(locale, 0L).doubleValue());
-                    numberInput.setStep(1.0);
-                    localeAmountLayout.add(numberInput);
-                }
-
-            });
-            localesSelect.setValue(bookAvailabilityBuilder.localeToAmount().keySet());
+            var amountField = new IntegerField("Amount");
+            amountField.setValue(libraryBuilder.getForBook(book).amount());
+            amountField.addValueChangeListener(e -> libraryBuilder.getForBook(book).amount(e.getValue()));
 
             dialog.getFooter().add(new Button("Remove", _ -> libraryBuilder.removeForBook(book)), new CloseDialogButton(dialog));
 
-            dialog.add(new VerticalLayout(localesSelect, localeAmountLayout));
+            dialog.add(new VerticalLayout(amountField));
 
             dialog.open();
         }));

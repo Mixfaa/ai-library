@@ -21,6 +21,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.popover.Popover;
 import com.vaadin.flow.component.popover.PopoverPosition;
 import com.vaadin.flow.component.popover.PopoverVariant;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -96,7 +97,7 @@ public class BookDetailsComponent extends VerticalLayout {
         header.setSpacing(true);
         header.setPadding(false);
 
-        H1 bookTitle = new H1(book.titleString(userLocale));
+        H1 bookTitle = new H1(book.title());
         bookTitle.getStyle()
                 .set("margin", "0")
                 .set("font-size", "2.5rem")
@@ -242,8 +243,8 @@ public class BookDetailsComponent extends VerticalLayout {
     }
 
     private Component createDescriptionSection() {
-        var description = Utils.getFromLocalizedMap(book.localizedDescription(), userLocale);
-        if (description == null) description = "No description yet";
+        var description = book.description();
+        if (StringUtils.isBlank(description)) description = "No description yet";
 
         Div descriptionSection = new Div();
         descriptionSection.setWidthFull();

@@ -76,17 +76,17 @@ public class LibraryRoute extends AppLayout implements HasUrlParameter<String> {
             return booksSearch.find(searchOptions, PageRequest.of(page, 10));
         };
         var booksGrid = new GridWithPagination<>(Book.class, 10, fetchFunc);
-        booksGrid.addColumn(book -> book.titleString(userLocale)).setHeader("Title");
+        booksGrid.addColumn(Book::title).setHeader("Title");
         booksGrid.addColumn(Book::authorsString).setHeader("Authors");
         booksGrid.addColumn(book -> fmt("took/count {0}/{1}", book.tookCount(), book.readCount())).setHeader("Took/Count");
 
         var dialogCache = new LinkedHashMap<Book, Dialog>();
         booksGrid.addComponentColumn(book -> new Button("Preview", _ -> {
-            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, userLocale, services));
+            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, services));
             dialog.open();
         }));
 
-        booksGrid.addComponentColumn(book -> VaadinCommons.orderBookComboBox(library, book, libraryService, userLocale));
+        booksGrid.addComponentColumn(book -> VaadinCommons.orderBookButton(library, book, libraryService, userLocale));
 
         var searchButton = new Button("Search", _ -> booksGrid.setItems(fetchFunc.apply(0).getContent()));
 

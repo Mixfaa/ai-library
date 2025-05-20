@@ -10,7 +10,6 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
-import java.util.Locale;
 
 @Document
 @With
@@ -18,7 +17,6 @@ import java.util.Locale;
 public record BookStatus(
         @Id ObjectId id,
         @DBRef Book book,
-        Locale locale,
         @DBRef Library library,
         @DBRef Account owner,
         Status status,
@@ -27,13 +25,12 @@ public record BookStatus(
 
     public BookStatus(
             Book book,
-            Locale locale,
             Library library,
             Account owner,
             Status status,
             LocalDate tookDate,
             LocalDate returnDate) {
-        this(ObjectId.get(), book, locale, library, owner, status, tookDate, returnDate);
+        this(ObjectId.get(), book, library, owner, status, tookDate, returnDate);
     }
 
     public enum Status {

@@ -57,7 +57,7 @@ public class LibraryFinderButton extends Button {
         pageableGrid.addColumn(Library::name).setHeader("Name");
         pageableGrid.addColumn(Library::address).setHeader("Address");
 
-        pageableGrid.addComponentColumn(lib -> VaadinCommons.orderBookComboBox(lib, book, libraryService, userLocale));
+        pageableGrid.addComponentColumn(lib -> VaadinCommons.orderBookButton(lib, book, libraryService, userLocale));
 
         pageableGrid.setItems(libs.getContent());
         dialog.add(searchField, pageableGrid.component());

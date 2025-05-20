@@ -36,11 +36,11 @@ public class BookServiceImpl implements BookService {
     @PreAuthorize("hasRole('ADMIN')")
     public Book addBook(Book.AddRequest request) {
         var book = bookRepo.save(new Book(
-                request.localizedTitle(),
+                request.title(),
                 request.authors(),
                 request.genres(),
                 request.images(),
-                request.localizedDescription(),
+                request.description(),
                 request.isbn(),
                 request.firstPublishYear()
         ));
@@ -57,11 +57,11 @@ public class BookServiceImpl implements BookService {
 
         var newBook = new Book(
                 book.id(),
-                Objects.requireNonNullElse(request.localizedTitle(), book.localizedTitle()),
+                Objects.requireNonNullElse(request.title(), book.title()),
                 Objects.requireNonNullElse(request.authors(), book.authors()),
                 Objects.requireNonNullElse(request.genres(), book.genres()),
                 Objects.requireNonNullElse(request.images(), book.images()),
-                Objects.requireNonNullElse(request.localizedDescription(), book.localizedDescription()),
+                Objects.requireNonNullElse(request.description(), book.description()),
                 book.tookCount(), book.readCount(),
                 Objects.requireNonNullElse(request.isbn(),book.isbn()),
                 Objects.requireNonNullElse(request.firstPublishYear(),book.firstPublishYear())

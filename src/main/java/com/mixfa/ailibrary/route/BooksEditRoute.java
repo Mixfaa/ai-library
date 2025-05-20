@@ -15,7 +15,6 @@ import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.*;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -39,9 +38,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import java.io.IOException;
-import java.util.*;
-
-import static com.mixfa.ailibrary.misc.Utils.fmt;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @Route("books-edit")
@@ -83,8 +83,6 @@ public class BooksEditRoute extends AppLayout {
             }
         };
 
-        var localizedTitles = new HashMap<Locale, String>();
-        var localizedDescriptions = new HashMap<Locale, String>();
         var isbnField = new TextField("ISBN");
         var publishYearField = new IntegerField("Publish Year");
 
@@ -92,48 +90,16 @@ public class BooksEditRoute extends AppLayout {
         var addImagesDialog = VaadinCommons.editImagesDialog(imagesList, fileStorageService);
         var editImagesBtn = new Button("Add images", _ -> addImagesDialog.open());
 
-        var editLocalizedDataBtn = new Button("Edit localized data", _ -> {
-            var editLocalizedDataDialog = new Dialog("Localized data") {
-                {
-                    var closeBtn = new Button("Close", _ -> close());
-
-                    var locales = localeSelect.getSelectedItems();
-
-                    var dialogLayout = new FormLayout();
-                    for (Locale locale : locales) {
-                        var localeName = locale.toString();
-                        var titleField = new TextField(fmt("Title ({0})", localeName),
-                                event -> localizedTitles.put(locale, event.getValue()));
-                        titleField.setValue(localizedTitles.getOrDefault(locale, ""));
-                        dialogLayout.add(titleField);
-
-                        var descriptionField = new TextField(fmt("Description ({0})", localeName),
-                                event -> localizedDescriptions.put(locale, event.getValue()));
-                        descriptionField.setValue(localizedDescriptions.getOrDefault(locale, ""));
-                        dialogLayout.add(descriptionField);
-
-                        dialogLayout.setColspan(titleField, 1);
-                        dialogLayout.setColspan(descriptionField, 1);
-                    }
-
-                    dialogLayout.setResponsiveSteps(
-                            new FormLayout.ResponsiveStep("0", 2));
-
-                    add(dialogLayout);
-
-                    getFooter().add(closeBtn);
-                }
-            };
-            editLocalizedDataDialog.open();
-        });
+        var titleField = new TextField("Title");
+        var descriptionField = new TextField("Description");
 
         var submit = new Button("Submit", VaadinIcon.MAGIC.create(), _ -> {
             var addRequest = new Book.AddRequest(
-                    localizedTitles,
+                    titleField.getValue(),
                     authorsSelect.getSelectedItems().toArray(String[]::new),
                     genresSelect.getSelectedItems().toArray(Genre[]::new),
                     imagesList.toArray(String[]::new),
-                    localizedDescriptions,
+                    descriptionField.getValue(),
                     Long.parseLong(isbnField.getValue()),
                     publishYearField.getValue());
 
@@ -152,7 +118,7 @@ public class BooksEditRoute extends AppLayout {
 
         return new FormLayout() {
             {
-                add(authorsSelect, localeSelect, genresSelect,isbnField, publishYearField, editLocalizedDataBtn, editImagesBtn, submit);
+                add(titleField, descriptionField, authorsSelect, localeSelect, genresSelect, isbnField, publishYearField, editImagesBtn, submit);
                 setResponsiveSteps(new ResponsiveStep("0", 4));
                 setColspan(authorsSelect, 1);
                 setColspan(localeSelect, 1);
@@ -226,7 +192,7 @@ public class BooksEditRoute extends AppLayout {
         this.userLocale = userDataService.getLocale();
         SideBarInitializer.init(this);
 
-        foundBooksGrid.addColumn(book -> Utils.getFromLocalizedMap(book.localizedTitle())).setHeader("Title");
+        foundBooksGrid.addColumn(Book::title).setHeader("Title");
         foundBooksGrid.addColumn(book -> String.join(", ", book.authors())).setHeader("Author");
         foundBooksGrid.addComponentColumn(book -> new Button("Delete", _ -> {
             try {
@@ -239,7 +205,7 @@ public class BooksEditRoute extends AppLayout {
                 _ -> UI.getCurrent().navigate(EditBookRoute.class, book.id().toHexString())));
         var dialogCache = new LinkedHashMap<Book, Dialog>();
         foundBooksGrid.addComponentColumn(book -> new Button("Preview", _ -> {
-            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, userLocale, services));
+            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, services));
             dialog.open();
         }));
 

@@ -8,12 +8,13 @@ import com.mixfa.ailibrary.route.components.BookCommentsComponent;
 import com.mixfa.ailibrary.route.components.BookDetailsComponent;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
 import com.mixfa.ailibrary.route.components.GridWithPagination;
-import com.mixfa.ailibrary.service.*;
+import com.mixfa.ailibrary.service.FileStorageService;
+import com.mixfa.ailibrary.service.LibraryService;
+import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
@@ -42,19 +43,16 @@ import static com.mixfa.ailibrary.misc.Utils.fmt;
 @Slf4j
 @UtilityClass
 public class VaadinCommons {
-    public static ComboBox<Locale> orderBookComboBox(Library lib, Book book, LibraryService libraryService, Locale userLocale) {
+    public static Button orderBookButton(Library lib, Book book, LibraryService libraryService, Locale locale) {
         var bookAvail = lib.findBookAvailability(book).orElseThrow();
-        return new ComboBox<Locale>("Order book (choose locale)", bookAvail.localeToAmount().keySet()) {{
-            setItemLabelGenerator(Locale::getDisplayLanguage);
-            addValueChangeListener(e -> {
-                try {
-                    libraryService.tryOrderBook(lib.name(), book.id(), e.getValue());
-                    Notification.show("Book successfully ordered");
-                } catch (UserFriendlyException ex) {
-                    Notification.show("Error: " + ex.format(userLocale));
-                }
-            });
-        }};
+        return new Button("Order book", _ -> {
+            try {
+                libraryService.tryOrderBook(lib.name(), book.id());
+                Notification.show("Book successfully ordered");
+            } catch (UserFriendlyException ex) {
+                Notification.show(ex.format(locale));
+            }
+        });
     }
 
     public static <T extends Component> T applyMainStyle(T component) {
@@ -102,9 +100,9 @@ public class VaadinCommons {
         }};
     }
 
-    public static Dialog bookPreviewDialog(Book book, Locale locale, Services services) {
+    public static Dialog bookPreviewDialog(Book book, Services services) {
         var commentService = services.commentService();
-        var dialog = new Dialog("Book preview " + book.titleString(locale));
+        var dialog = new Dialog("Book preview " + book.title());
 
         var content = new HorizontalLayout();
         content.setSpacing(true);
@@ -114,7 +112,7 @@ public class VaadinCommons {
         image.setWidth("200px");
 
         var details = new VerticalLayout(
-                new H3(book.titleString(locale)),
+                new H3(book.title()),
                 new Div(new Text("Authors: " + book.authorsString())),
                 new Div(new Text("Genres: " + book.genresString())),
                 new Div(new Text("Rating: " + commentService.getBookRate(book.id()))),
@@ -128,26 +126,26 @@ public class VaadinCommons {
         return dialog;
     }
 
-    public static <T> void configureDefaultBookGridEx(Grid<T> grid, Function<T, Book> tranformer, Locale userLocale) {
-        grid.addColumn(b -> tranformer.apply(b).titleString(userLocale)).setHeader("Title");
+    public static <T> void configureDefaultBookGridEx(Grid<T> grid, Function<T, Book> tranformer) {
+        grid.addColumn(b -> tranformer.apply(b).title()).setHeader("Title");
         grid.addColumn(b -> tranformer.apply(b).authorsString()).setHeader("Authors");
     }
 
-    public static <T> void configureBookGridPreviewEx(Grid<T> grid, Function<T, Book> tranformer, Locale locale,Services services) {
+    public static <T> void configureBookGridPreviewEx(Grid<T> grid, Function<T, Book> tranformer, Services services) {
         var bookPreviewDialogCache = new LinkedHashMap<Book, Dialog>();
         grid.addComponentColumn(b -> new Button("Preview", _ -> {
             var book = tranformer.apply(b);
-            var dialog = bookPreviewDialogCache.computeIfAbsent(book, key -> bookPreviewDialog(key, locale, services));
+            var dialog = bookPreviewDialogCache.computeIfAbsent(book, key -> bookPreviewDialog(key, services));
             dialog.open();
         })).setHeader("Preview");
     }
 
-    public static void configureDefaultBookGrid(Grid<Book> grid, Locale userLocale) {
-        configureDefaultBookGridEx(grid, Utils::value, userLocale);
+    public static void configureDefaultBookGrid(Grid<Book> grid) {
+        configureDefaultBookGridEx(grid, Utils::value);
     }
 
-    public static void configureBookGridPreview(Grid<Book> grid, Locale locale, Services services) {
-        configureBookGridPreviewEx(grid, Utils::value, locale, services);
+    public static void configureBookGridPreview(Grid<Book> grid, Services services) {
+        configureBookGridPreviewEx(grid, Utils::value, services);
     }
 
     public static IntFunction<Page<Library>> makeLibrariesSearchFunc(SearchEngine.ForLibraries librariesSearchEngine, TextField queryField) {

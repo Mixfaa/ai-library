@@ -20,7 +20,7 @@ public class SimpleSearchRequestOption implements SearchOption {
         var title = req.title();
         if (!StringUtils.isBlank(title)) {
             // Search across all locales for the title
-            Criteria titleCriteria = Criteria.where(Book.Fields.localizedTitle).elemMatch(
+            Criteria titleCriteria = Criteria.where(Book.Fields.title).elemMatch(
                     Criteria.where("value").regex(title, "i")
             );
             criteriaList.add(titleCriteria);

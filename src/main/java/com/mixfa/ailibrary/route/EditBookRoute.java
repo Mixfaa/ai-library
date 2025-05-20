@@ -6,7 +6,6 @@ import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.Genre;
 import com.mixfa.ailibrary.model.user.Role;
 import com.mixfa.ailibrary.route.components.CustomMultiSelectComboBox;
-import com.mixfa.ailibrary.route.components.LocalizedDetails;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.BookService;
 import com.mixfa.ailibrary.service.FileStorageService;
@@ -18,7 +17,6 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
@@ -29,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 @Slf4j
 @Route("edit-book")
@@ -46,16 +43,6 @@ public class EditBookRoute extends AppLayout implements HasUrlParameter<String> 
         }
     };
 
-    private final CustomMultiSelectComboBox<Locale> localeSelect = new CustomMultiSelectComboBox<>("Locales",
-            Locale::of) {
-        {
-            setItemLabelGenerator(Locale::toString);
-            addValueChangeListener(event -> {
-                localizedDetails.setLocales(event.getValue(), book);
-            });
-        }
-    };
-
     private final MultiSelectComboBox<Genre> genresSelect = new MultiSelectComboBox<>("Genres") {
         {
             setItemLabelGenerator(Genre::name);
@@ -64,7 +51,8 @@ public class EditBookRoute extends AppLayout implements HasUrlParameter<String> 
     };
     private final TextField isbnField = new TextField("ISBN");
     private final IntegerField publishYearField = new IntegerField("First publish year");
-    private final LocalizedDetails localizedDetails = new LocalizedDetails();
+    private final TextField titleField = new TextField("Title");
+    private final TextField descriptionField = new TextField("Description");
     private final List<String> imagesList = new ArrayList<>();
 
 
@@ -80,14 +68,13 @@ public class EditBookRoute extends AppLayout implements HasUrlParameter<String> 
         var addImagesDialog = VaadinCommons.editImagesDialog(imagesList, fileStorageService);
         var editImagesBtn = new Button("Add images", _ -> addImagesDialog.open());
 
-        var formLayout = new FormLayout(authorsSelect, localeSelect, genresSelect,isbnField, publishYearField, addImagesDialog, editImagesBtn,
-                localizedDetails.getComponent(), new Button("Save", _ -> {
+        var formLayout = new FormLayout(titleField, descriptionField, authorsSelect, genresSelect, isbnField, publishYearField, addImagesDialog, editImagesBtn, new Button("Save", _ -> {
             var updRequest = new Book.AddRequest(
-                    localizedDetails.getTitles(),
+                    titleField.getValue(),
                     authorsSelect.getValue().toArray(String[]::new),
                     genresSelect.getValue().toArray(Genre[]::new),
                     imagesList.toArray(String[]::new),
-                    localizedDetails.getDescriptions(),
+                    descriptionField.getValue(),
                     Long.parseLong(isbnField.getValue()),
                     publishYearField.getValue());
             try {
@@ -107,9 +94,9 @@ public class EditBookRoute extends AppLayout implements HasUrlParameter<String> 
         try {
             book = bookService.findBookOrThrow(parameter);
             authorsSelect.setValue(book.authors());
-            localeSelect.setValue(book.localizedTitle().keySet());
+            titleField.setValue(book.title());
             genresSelect.setValue(book.genres());
-            localizedDetails.setLocales(book);
+            descriptionField.setValue(book.description());
             imagesList.addAll(Arrays.asList(book.images()));
         } catch (Exception ex) {
 

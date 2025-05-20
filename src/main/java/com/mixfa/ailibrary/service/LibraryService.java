@@ -16,7 +16,7 @@ public interface LibraryService {
 
     Library.BookAvailability[] getBooksAvailability(String libname);
 
-    BookStatus tryOrderBook(String libname, Object bookId, Locale locale);
+    BookStatus tryOrderBook(String libname, Object bookId);
 
     void cancelBookOrder(Object bookStatusId);
 
@@ -31,7 +31,7 @@ public interface LibraryService {
     Library findOrThrow(String libname);
 
     Library.BookAvailability[] setBookAvailability(String libname, Object bookId,
-                                                   Map<Locale, Long> localeToCount);
+                                                   int amount);
 
     void deleteOfflineLib(String libname);
 }

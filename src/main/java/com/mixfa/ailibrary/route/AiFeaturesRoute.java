@@ -184,9 +184,9 @@ public class AiFeaturesRoute extends AppLayout {
                     suggestionsGrid.addColumn(SuggestedBook::title).setHeader("Title");
                     suggestionsGrid.addColumn(SuggestedBook::reason).setHeader("Reason");
 
-                    VaadinCommons.configureBookGridPreviewEx(suggestionsGrid, sb -> {
+                    VaadinCommons.<SuggestedBook>configureBookGridPreviewEx(suggestionsGrid, sb -> {
                         return bookRepo.findById(sb.bookId()).orElseThrow();
-                    }, userLocale, services);
+                    }, services);
 
                     suggestionsGrid.setItems(suggestions);
                     suggestionsDialog.add(suggestionsGrid);

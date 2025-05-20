@@ -1,6 +1,5 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.service.impl.Services;
 import com.mixfa.ailibrary.misc.UserFriendlyException;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.BookStatus;
@@ -10,6 +9,7 @@ import com.mixfa.ailibrary.route.components.GridWithPagination;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.LibraryService;
 import com.mixfa.ailibrary.service.UserDataService;
+import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -48,7 +48,7 @@ public class ManageLibraryOrders extends AppLayout implements HasUrlParameter<St
         IntFunction<Page<BookStatus>> fetchFunc = page -> libraryService.findAllTakenBooks(library.name(), PageRequest.of(page, 10));
         var takenBooksGrid = new GridWithPagination<>(BookStatus.class, 10, fetchFunc);
         takenBooksGrid.refresh();
-        VaadinCommons.configureDefaultBookGridEx(takenBooksGrid, BookStatus::book, userLocale);
+        VaadinCommons.configureDefaultBookGridEx(takenBooksGrid, BookStatus::book);
         takenBooksGrid.addColumn(bookStatus -> bookStatus.owner().getUsername()).setHeader("Owner");
         takenBooksGrid.addColumn(BookStatus::tookDate).setHeader("Took Date");
         takenBooksGrid.addColumn(BookStatus::returnDate).setHeader("Return Date");

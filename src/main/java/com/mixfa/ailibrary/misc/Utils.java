@@ -42,26 +42,6 @@ public class Utils {
         return null;
     }
 
-    public static <V> V getFromLocalizedMap(Map<Locale, V> map, Locale key) {
-        var value = map.get(key);
-        if (value == null)
-            value = map.get(DEFAULT_LOCALE);
-        if (value == null)
-            for (Locale locale : map.keySet())
-                return map.get(locale);
-
-        return value;
-    }
-
-    public static <V> V getFromLocalizedMap(Map<Locale, V> map) {
-        var value = map.get(DEFAULT_LOCALE);
-        if (value == null)
-            for (Locale locale : map.keySet())
-                return map.get(locale);
-
-        return value;
-    }
-
     public static <K, V> V getOrGetFirst(Map<K, V> map, K key) {
         var value = map.get(key);
         if (value == null) {
@@ -73,7 +53,7 @@ public class Utils {
 
     public static String makeBookDescription(Book book) {
         var id = book.id().toHexString();
-        var title = book.titleString(Utils.DEFAULT_LOCALE);
+        var title = book.title();
 
         var sb = new StringBuilder();
         appendBookDescForAi(book, sb);
@@ -85,7 +65,7 @@ public class Utils {
         var mark = readBook.mark();
 
         var id = book.id().toHexString();
-        var title = book.titleString(Utils.DEFAULT_LOCALE);
+        var title = book.title();
 
         var sb = new StringBuilder();
 
@@ -98,10 +78,8 @@ public class Utils {
     public static void appendBookDescForAi(Book book, StringBuilder sb) {
         sb.append("Book description").append('\n');
         sb.append("ID = ").append(book.id().toHexString()).append('\n');
-        sb.append("Title = ").append(
-                Utils.getFromLocalizedMap(book.localizedTitle())
-        ).append("\n");
-        var desc = book.localizedDescription().getOrDefault(Utils.DEFAULT_LOCALE, null);
+        sb.append("Title = ").append(book.title()).append("\n");
+        var desc = book.description();
         if (desc != null)
             sb.append("Description = \n").append(desc).append('\n');
         sb.append("Authors = ");

@@ -23,26 +23,26 @@ import java.util.stream.Collectors;
 @FieldNameConstants
 public record Book(
         @Id ObjectId id,
-        Map<Locale, String> localizedTitle,
+        String title,
         String[] authors,
         Genre[] genres,
         String[] images,
-        Map<Locale, String> localizedDescription,
+        String description,
         long tookCount,
         long readCount,
         long isbn,
         int firstPublishYear
 ) {
-    public Book(Map<Locale, String> localizedTitle, String[] authors, Genre[] genres, String[] images, Map<Locale, String> localizedDescription, long isbn, int firstPublishYear) {
-        this(ObjectId.get(), localizedTitle, authors, genres, images, localizedDescription, 0, 0, isbn, firstPublishYear);
+    public Book(String title, String[] authors, Genre[] genres, String[] images, String description, long isbn, int firstPublishYear) {
+        this(ObjectId.get(), title, authors, genres, images, description, 0, 0, isbn, firstPublishYear);
     }
 
     public record AddRequest(
-            Map<Locale, String> localizedTitle,
+            String title,
             String[] authors,
             Genre[] genres,
             String[] images,
-            Map<Locale, String> localizedDescription,
+            String description,
             Long isbn,
             Integer firstPublishYear
     ) {
@@ -70,12 +70,6 @@ public record Book(
     @JsonIgnore
     public String genresString() {
         return Arrays.stream(genres).map(Genre::toString).collect(Collectors.joining(", "));
-    }
-
-    @Transient
-    @JsonIgnore
-    public String titleString(Locale locale) {
-        return Utils.getFromLocalizedMap(localizedTitle, locale);
     }
 
     @Transient

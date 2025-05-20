@@ -31,7 +31,7 @@ public class BookCard extends Card {
         image.addClickListener(_ -> navigateToBook(book));
         this.setMedia(image);
         this.setWidth("350px");
-        this.setTitle(book.titleString(locale));
+        this.setTitle(book.title());
         this.setSubtitle(new Span(String.join(", ", book.authors())));
         this.add(new Span("Took/Read %d/%d".formatted(book.tookCount(), book.readCount())));
     }

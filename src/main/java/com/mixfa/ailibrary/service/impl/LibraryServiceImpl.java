@@ -17,7 +17,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,10 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
@@ -65,7 +61,7 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public Library.BookAvailability[] setBookAvailability(String libname, Object bookId,
-                                                          Map<Locale, Long> localeToCount) {
+                                                          int amount) {
         var library = findOrThrow(libname);
         var bookIdObj = Utils.idToObj(bookId);
 
@@ -77,16 +73,16 @@ public class LibraryServiceImpl implements LibraryService {
         if (bookAvailabilityOpt.isPresent()) {
             var bookAvailability = bookAvailabilityOpt.get();
 
-            if (bookAvailability.localeToAmount().equals(localeToCount))
+            if (bookAvailability.amount() == amount)
                 return bookAvailabilities;
 
-            var updBookAvailability = bookAvailability.withLocaleToAmount(localeToCount);
+            var updBookAvailability = bookAvailability.withAmount(amount);
 
             bookAvailabilities = Utils.replace(bookAvailabilities, bookAvailability, updBookAvailability);
         } else {
             var book = bookService.findBookOrThrow(bookId);
             bookAvailabilities = ArrayUtils.add(bookAvailabilities,
-                    new Library.BookAvailability(book, localeToCount));
+                    new Library.BookAvailability(book, amount));
         }
 
         return libraryRepo.save(library.withBooksAvailabilities(bookAvailabilities)).booksAvailabilities();
@@ -105,23 +101,20 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     @Transactional
-    public BookStatus tryOrderBook(String libname, Object bookId, Locale locale) {
+    public BookStatus tryOrderBook(String libname, Object bookId) {
         var bookIdObj = Utils.idToObj(bookId);
         var library = findOrThrow(libname);
         var bookAvailability = Utils.find(library.booksAvailabilities(), avail -> avail.book().id().equals(bookIdObj))
-                .orElseThrow(() -> ExceptionType.NO_BOOKS_AVAILABLE.make(libname, bookId));
+                .orElseThrow(() -> ExceptionType.noBooksAvailable(libname, bookId));
 
-        var localeToAmount = bookAvailability.localeToAmount();
+        var availableAmout = bookAvailability.amount();
 
-        var availableAmout = localeToAmount.get(locale);
-
-        if (availableAmout == null || availableAmout == 0)
-            throw ExceptionType.NO_BOOK_LOCALE.make(libname, bookId, locale);
+        if (availableAmout == 0)
+            throw ExceptionType.noBooksAvailable(libname, bookId);
 
         var nowDate = LocalDate.now();
         var bookStatusData = new BookStatus(
                 bookAvailability.book(),
-                locale,
                 library,
                 Account.getAuthenticatedAccount(),
                 BookStatus.Status.BOOKED,
@@ -129,12 +122,7 @@ public class LibraryServiceImpl implements LibraryService {
                 nowDate.plusMonths(1));
 
         var updLibrary = library.withBooksAvailabilities(
-                Utils.replace(library.booksAvailabilities(), bookAvailability, bookAvailability.withLocaleToAmount(
-                        new HashMap<>(localeToAmount) {
-                            {
-                                computeIfPresent(locale, (_, amount) -> amount - 1L);
-                            }
-                        })));
+                Utils.replace(library.booksAvailabilities(), bookAvailability, bookAvailability.withAmount(availableAmout - 1)));
 
         libraryRepo.save(updLibrary);
 
@@ -167,12 +155,7 @@ public class LibraryServiceImpl implements LibraryService {
 
         var bookAvailability = bookAvailabilityOpt.get();
 
-        var updBookAvailability = bookAvailability.withLocaleToAmount(
-                new HashMap<>(bookAvailability.localeToAmount()) {
-                    {
-                        computeIfPresent(bookStatus.locale(), (_, amount) -> amount + 1);
-                    }
-                });
+        var updBookAvailability = bookAvailability.withAmount(bookAvailability.amount() + 1);
 
         libraryRepo.save(
                 library.withBooksAvailabilities(

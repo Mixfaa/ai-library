@@ -150,11 +150,11 @@ public class OpenLibImport extends AppLayout {
 
             addRequests.add(
                     new Book.AddRequest(
-                            Map.of(Utils.DEFAULT_LOCALE, title),
+                            title,
                             authors,
                             genres,
                             images,
-                            Map.of(),
+                            "No description",
                             isbn,
                             publishYear
                     )
@@ -168,7 +168,7 @@ public class OpenLibImport extends AppLayout {
         var searchField = new TextField("Search in open lib");
         var grid = new Grid<Book.AddRequest>(Book.AddRequest.class, false);
         var requestItems = new AtomicReference<List<Book.AddRequest>>(List.of());
-        grid.addColumn(req -> Utils.getFromLocalizedMap(req.localizedTitle())).setHeader("title");
+        grid.addColumn(req -> req.title()).setHeader("title");
         grid.addColumn(req -> Arrays.toString(req.authors())).setHeader("authors");
         grid.addComponentColumn(req -> new Button("Add", _ -> {
             try {

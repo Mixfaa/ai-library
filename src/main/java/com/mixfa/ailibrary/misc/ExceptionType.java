@@ -13,7 +13,6 @@ public enum ExceptionType {
     BOOK_NOT_FOUND, // bookId - Object
     BOOK_STATUS_NOT_FOUND, // booKStatusId - Object
     LIBRARY_NOT_FOUND, // id - Object
-    NO_BOOK_LOCALE, // libId - Object, bookId - Object, locale - Locale
     NO_BOOKS_AVAILABLE, // libId - Object, bookid - Object
     COMMENT_NOT_FOUND, //
     INVALID_BOOK_RATE, // rate - Double
@@ -75,10 +74,6 @@ public enum ExceptionType {
 
     public static UserFriendlyException libraryNotFound(String id) {
         return LIBRARY_NOT_FOUND.make(id);
-    }
-
-    public static UserFriendlyException noBookLocale(String libId, Object bookId, Locale locale) {
-        return NO_BOOK_LOCALE.make(libId, Utils.idToStr(bookId), locale);
     }
 
     public static UserFriendlyException noBooksAvailable(String libId, Object bookId) {
