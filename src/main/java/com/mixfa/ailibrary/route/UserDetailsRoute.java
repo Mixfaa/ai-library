@@ -6,6 +6,7 @@ import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.BookStatus;
 import com.mixfa.ailibrary.model.Comment;
 import com.mixfa.ailibrary.model.ReadBook;
+import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.route.components.GridWithPagination;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.CommentService;
@@ -19,8 +20,10 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
@@ -38,6 +41,7 @@ public class UserDetailsRoute extends AppLayout {
     private final LibraryService libService;
     private final CommentService commentService;
     private final UserDataService userDataService;
+    private final Account account;
     private final Services services;
 
     public UserDetailsRoute(Services services) {
@@ -46,6 +50,7 @@ public class UserDetailsRoute extends AppLayout {
         this.userLocale = userDataService.getLocale();
         this.libService = services.libService();
         this.services = services;
+        this.account = Account.getAuthenticatedAccount();
         SideBarInitializer.init(this);
 
         setContent(makeContent());
@@ -133,10 +138,20 @@ public class UserDetailsRoute extends AppLayout {
         return commentsGrid;
     }
 
+    private Component makeProfileSection() {
+
+        return new HorizontalLayout(
+                new Span("Username: " + account.getUsername()),
+                new Span("Email: " + account.getEmail()),
+                new Span("Role: " + account.getRole().name().toLowerCase())
+        );
+    }
+
     private Component makeContent() {
         Accordion accordion = new Accordion();
         accordion.setWidthFull();
 
+        accordion.add("Profile", makeProfileSection());
         accordion.add("My Orders", makeMyOrders());
         accordion.add("Wait List", makeWaitList());
         accordion.add("Read List", makeReadList());

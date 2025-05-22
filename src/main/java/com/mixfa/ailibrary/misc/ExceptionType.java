@@ -20,6 +20,7 @@ public enum ExceptionType {
     RATE_LIMIT_EXCEEDED, //
     INVALID_COMMENT, //
     ACCESS_DENIED, //
+    USER_ALREADY_WORKER,
     BOOK_ALREADY_RATED; // bookId - Object, username - String
 
     private final String TEMPLATE_CODE = this.name().toLowerCase();
@@ -33,6 +34,10 @@ public enum ExceptionType {
             log.error(e.getMessage());
             return "Exception: " + this.name();
         }
+    }
+
+    public static UserFriendlyException userAlreadyWorker() {
+        return USER_ALREADY_WORKER.make();
     }
 
     public UserFriendlyException make(Object... args) {

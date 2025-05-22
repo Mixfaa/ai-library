@@ -10,7 +10,7 @@ import java.util.function.Function;
 
 
 public class ByUserCache<T> implements MaintainableCache {
-    private final Map<String, ManagedConcurrentWeakHashMap<Long, T>> cache = new ConcurrentHashMap<>();
+    private final Map<String, ManagedConcurrentWeakHashMap<String, T>> cache = new ConcurrentHashMap<>();
 
     public ByUserCache(CacheMaintainer maintainer) {
         Objects.requireNonNull(maintainer);
@@ -23,11 +23,11 @@ public class ByUserCache<T> implements MaintainableCache {
             entry.getValue().maintain();
     }
 
-    public Map<Long, T> getCache(String cacheName) {
+    public Map<String, T> getCache(String cacheName) {
         return cache.computeIfAbsent(cacheName, _ -> new ManagedConcurrentWeakHashMap<>());
     }
 
-    public T getOrPut(String cacheName, Function<Long, T> supplier) {
+    public T getOrPut(String cacheName, Function<String, T> supplier) {
         var cache = getCache(cacheName);
         var usersId = Account.getAuthenticated().id();
 

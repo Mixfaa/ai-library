@@ -6,8 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public interface LibraryService {
     Library registerOfflineLib(Library.AddRequest request);
@@ -20,18 +18,18 @@ public interface LibraryService {
 
     void cancelBookOrder(Object bookStatusId);
 
-    BookStatus updateBookStatusData(Object bookStatusId,
-                                    BookStatus.Status status);
+    BookStatus updateBookStatusData(Object bookStatusId, BookStatus.Status status);
 
     @Deprecated
     List<BookStatus> findAllMyTakenBooks();
 
     Page<BookStatus> findAllTakenBooks(String libraryId, Pageable pageable);
 
+    Page<BookStatus> findTakenBooks(String query, String libId, Pageable pageable);
+
     Library findOrThrow(String libname);
 
-    Library.BookAvailability[] setBookAvailability(String libname, Object bookId,
-                                                   int amount);
+    Library.BookAvailability[] setBookAvailability(String libname, Object bookId, int amount);
 
     void deleteOfflineLib(String libname);
 }

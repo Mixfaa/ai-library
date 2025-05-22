@@ -2,12 +2,14 @@ package com.mixfa.ailibrary.service.impl;
 
 import com.mixfa.ailibrary.misc.ExceptionType;
 import com.mixfa.ailibrary.misc.Utils;
+import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.BookStatus;
 import com.mixfa.ailibrary.model.BookStatus.Status;
 import com.mixfa.ailibrary.model.Library;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.model.user.HasOwner;
+import com.mixfa.ailibrary.model.user.Role;
 import com.mixfa.ailibrary.service.BookService;
 import com.mixfa.ailibrary.service.LibraryService;
 import com.mixfa.ailibrary.service.SearchEngine;
@@ -46,6 +48,15 @@ public class LibraryServiceImpl implements LibraryService {
         bookStatusSearchEngine = new GenericSearchEngineImpl<>(mongoTemplate, BookStatus.class);
     }
 
+    /// TODO
+    private static void checkWorker(Library library) {
+        var authenticated = Account.getAuthenticated();
+        if (authenticated.role() == Role.ADMIN) return;
+        if (!authenticated.isWorkerOfLibrary(library))
+            throw new RuntimeException("You are not authorized to access this library");
+    }
+
+
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public Library registerOfflineLib(Library.AddRequest request) {
@@ -59,10 +70,11 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasRole('ADMIN')")
-    public Library.BookAvailability[] setBookAvailability(String libname, Object bookId,
-                                                          int amount) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'WORKER')")
+    public Library.BookAvailability[] setBookAvailability(String libname, Object bookId, int amount) {
         var library = findOrThrow(libname);
+        checkWorker(library);
+
         var bookIdObj = Utils.idToObj(bookId);
 
         var bookAvailabilities = library.booksAvailabilities();
@@ -164,11 +176,12 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyRole('ADMIN','WORKER')")
     public BookStatus updateBookStatusData(Object bookStatusId, Status newStatus) {
-
         var bookStatus = bookStatusSearchEngine.findOne(
-                SearchOption.Match.all(Criteria.where("_id").is(Utils.idToObj(bookStatusId)), HasOwner.ownerCriteria())
+                SearchOption.match(Criteria.where("_id").is(Utils.idToObj(bookStatusId)))
         );
+        checkWorker(bookStatus.library());
         if (newStatus == BookStatus.Status.RETURNED) {
             bookService.markRead(bookStatus.book().id());
             returnBookToLibrary(bookStatus);
@@ -195,7 +208,23 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
+    public Page<BookStatus> findTakenBooks(String query, String libId, Pageable pageable) {
+        return bookStatusSearchEngine
+                .find(
+                        SearchOption.composition(
+                                SearchOption.match(Criteria.where(fmt("{0}.$id", BookStatus.Fields.library)).is(libId)),
+                                SearchOption.Match.any(
+                                        Criteria.where(fmt("{0}.{1}", BookStatus.Fields.book, Book.Fields.title)).regex(query, "i"),
+                                        Criteria.where(fmt("{0}.{1}", BookStatus.Fields.owner, Account.Fields.username)).regex(query, "i")
+                                )
+                        ),
+                        pageable
+                );
+    }
+
+    @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void editOfflineLib(String libname, Library library) {
         if (libname.equals(library.name())) {
             libraryRepo.save(library);

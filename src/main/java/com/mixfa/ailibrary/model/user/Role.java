@@ -9,6 +9,7 @@ import java.util.List;
 
 public enum Role {
     USER,
+    WORKER,
     ADMIN;
 
     @Getter
@@ -19,6 +20,7 @@ public enum Role {
     }
 
     public static final String ADMIN_ROLE = "ROLE_ADMIN";
+    public static final String WORKER_ROLE = "ROLE_WORKER";
     public static final String USER_ROLE = "ROLE_USER";
     public final Collection<? extends GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(this.roleName));
 }

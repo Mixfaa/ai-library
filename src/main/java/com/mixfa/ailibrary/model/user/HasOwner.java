@@ -21,7 +21,7 @@ public interface HasOwner {
     }
 
     static Criteria ownerCriteria() {
-        return ownerCriteria(Account.getAuthenticated().account());
+        return ownerCriteria(Account.getAuthenticated().getAccount());
     }
 
     static SearchOption ownerSearchOption() {

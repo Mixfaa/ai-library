@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.MongoLocaleConverter;
 import com.mixfa.ailibrary.misc.cache.ByUserCache;
 import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
-import com.mixfa.ailibrary.service.AdminAuthenticator;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.server.PWA;
@@ -18,8 +17,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
-import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -28,10 +25,23 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.ResourceBundle;
 
 @Slf4j
 @EnableScheduling
@@ -39,33 +49,7 @@ import java.util.ResourceBundle;
 @EnableMongoRepositories
 @PWA(name = "ai-library", shortName = "ailib")
 @Theme(variant = Lumo.DARK)
-@Push
 public class AiLibraryApplication implements AppShellConfigurator {
-    @Bean
-    public AdminAuthenticator adminAuthenticator() {
-        var adminEmails = new HashMap<String, String>();
-        try {
-            var bundle = ResourceBundle.getBundle("adminemails");
-            var adminNameIter = bundle.getKeys().asIterator();
-            while (adminNameIter.hasNext()) {
-                var name = adminNameIter.next();
-                var email = bundle.getString(name);
-
-                adminEmails.put(name, email);
-            }
-        } catch (Exception e) {
-            log.error("Failed to load admin emails", e);
-        }
-        return (email) -> {
-            var isAdmin = adminEmails.values().stream().anyMatch(adminEmail -> adminEmail.equals(email));
-
-            if (isAdmin)
-                log.info("Admin authenticated: {}", email);
-
-            return isAdmin;
-        };
-    }
-
     @Bean
     public MongoCustomConversions customConversions() {
         return new MongoCustomConversions(

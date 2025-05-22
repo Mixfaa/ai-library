@@ -18,7 +18,7 @@ import static com.mixfa.ailibrary.misc.Utils.DEFAULT_LOCALE;
 @With
 @FieldNameConstants
 public record UserData(
-        @Id long id,
+        @Id String id,
         @DBRef
         Account owner,
         @DBRef Book[] waitList,
@@ -29,7 +29,7 @@ public record UserData(
         return Criteria.where("_id").is(Account.getAuthenticatedAccount().getId());
     }
 
-    public static Criteria ownerCriteriaBy(Long userID) {
+    public static Criteria ownerCriteriaBy(String userID) {
         return Criteria.where("_id").is(userID);
     }
 

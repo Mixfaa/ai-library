@@ -2,6 +2,7 @@ package com.mixfa.ailibrary.route.components;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.user.Account;
+import com.mixfa.ailibrary.model.user.Role;
 import com.mixfa.ailibrary.route.*;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
@@ -9,7 +10,6 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
-
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -19,7 +19,7 @@ public class SideBarInitializer {
         var sideNav = new SideNav();
         var authentication = Account.getAuthenticated();
 
-        var authTestItem = new SideNavItem(Utils.fmt("Authenticated as {0}", authentication.role().name()));
+        var authTestItem = new SideNavItem(Utils.fmt("Authenticated as {0} ({1})", authentication.getUsername(), authentication.role().getRoleName()));
         sideNav.addItem(authTestItem);
         sideNav.addItem(
                 new SideNavItem("Catalog", MainRoute.class, VaadinIcon.BOOK.create()),
@@ -32,7 +32,14 @@ public class SideBarInitializer {
             sideNav.addItem(
                     new SideNavItem("Edit books", BooksEditRoute.class, VaadinIcon.BOOK.create()),
                     new SideNavItem("Edit libraries", LibsEditRoute.class, VaadinIcon.HOME.create()),
-                    new SideNavItem("Import from open lib", OpenLibImport.class, VaadinIcon.MAGIC.create())
+                    new SideNavItem("Import from open lib", OpenLibImport.class, VaadinIcon.MAGIC.create()),
+                    new SideNavItem("Edit Libraries workers", EditLibraryWorkerRoute.class, VaadinIcon.TOOLBOX.create())
+            );
+        }
+
+        if (authentication.role() == Role.WORKER) {
+            sideNav.addItem(
+                    new SideNavItem("My Library", MyLibraryRoute.class, VaadinIcon.HEART.create())
             );
         }
 

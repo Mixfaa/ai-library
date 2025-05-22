@@ -1,18 +1,33 @@
 package com.mixfa.ailibrary.model.user;
 
-import org.bson.types.ObjectId;
+import com.mixfa.ailibrary.model.Library;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import java.util.Collection;
 import java.util.Map;
 
+@RequiredArgsConstructor
+@Getter
+public class AuthenticatedAccount implements OidcUser, UserDetails {
+    private final Account account;
+    private final OidcUser user;
 
-public record AuthenticatedAccount(
-        Account account,
-        OAuth2User oAuth2User
-) implements UserDetails, OAuth2User {
+    public boolean isWorkerOfLibrary(Library library) {
+        if (account instanceof LibraryWorker libraryWorker)
+            return libraryWorker.getLibrary().name().equals(library.name());
+        return false;
+    }
+
+    public String id() {
+        return account.getId();
+    }
+
     public Role role() {
         return account.getRole();
     }
@@ -21,22 +36,33 @@ public record AuthenticatedAccount(
         return account.getUsername();
     }
 
-    public long id() {
-        return account.getId();
-    }
-
     public String email() {
         return account.getEmail();
     }
 
     @Override
     public String getName() {
-        return oAuth2User.getName();
+        return user.getName();
+    }
+
+    @Override
+    public Map<String, Object> getClaims() {
+        return user.getClaims();
+    }
+
+    @Override
+    public OidcUserInfo getUserInfo() {
+        return user.getUserInfo();
+    }
+
+    @Override
+    public OidcIdToken getIdToken() {
+        return user.getIdToken();
     }
 
     @Override
     public Map<String, Object> getAttributes() {
-        return oAuth2User.getAttributes();
+        return user.getAttributes();
     }
 
     @Override

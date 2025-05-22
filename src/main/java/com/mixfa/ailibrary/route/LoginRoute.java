@@ -13,7 +13,10 @@ public class LoginRoute extends VerticalLayout {
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
         setAlignItems(Alignment.CENTER);
-        add(new Anchor("/oauth2/authorization/github", "Authorize with github") {{
+//        add(new Anchor("/oauth2/authorization/github", "Authorize with github") {{
+//            setRouterIgnore(true);
+//        }});
+        add(new Anchor("/oauth2/authorization/google", "Authorize with google") {{
             setRouterIgnore(true);
         }});
     }

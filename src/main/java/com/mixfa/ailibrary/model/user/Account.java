@@ -1,9 +1,11 @@
 package com.mixfa.ailibrary.model.user;
 
 import com.mixfa.ailibrary.misc.Utils;
+import com.mixfa.ailibrary.model.Library;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
+import lombok.With;
+import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,15 +13,21 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
-@Document
+@Document("account")
 @Getter
 @RequiredArgsConstructor
+@With
+@FieldNameConstants
 public class Account implements UserDetails {
     @Id
-    private final long id;
+    private final String id;
     private final String username;
     private final String email;
     private final Role role;
+
+    public boolean isWorkerOfLibrary(Library library) {
+        return false;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -37,7 +45,7 @@ public class Account implements UserDetails {
     }
 
     public static Account getAuthenticatedAccount() {
-        return getAuthenticated().account();
+        return getAuthenticated().getAccount();
     }
 
     public static AuthenticatedAccount getAuthenticated() {

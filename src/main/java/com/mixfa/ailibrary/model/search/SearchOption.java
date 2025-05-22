@@ -97,7 +97,7 @@ public interface SearchOption {
 
         public static SearchOption any(Criteria... criterias) {
             return withOperator(
-                    Criteria::andOperator,
+                    Criteria::orOperator,
                     criterias
             );
         }

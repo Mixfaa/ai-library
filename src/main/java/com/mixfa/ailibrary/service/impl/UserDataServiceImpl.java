@@ -48,7 +48,7 @@ public class UserDataServiceImpl implements UserDataService {
         return fetchField(field, tClass, fallbackSelector, Account.getAuthenticated().id());
     }
 
-    private <T> T fetchField(String field, Class<T> tClass, Function<UserData, T> fallbackSelector, long userID) {
+    private <T> T fetchField(String field, Class<T> tClass, Function<UserData, T> fallbackSelector, String userID) {
         var match = Aggregation.match(
                 UserData.ownerCriteriaBy(userID)
         );
@@ -75,7 +75,7 @@ public class UserDataServiceImpl implements UserDataService {
         setField(field, value, fallback, Account.getAuthenticated().id());
     }
 
-    private <T> void setField(String field, T value, Function<T, UserData> fallback, long userId) {
+    private <T> void setField(String field, T value, Function<T, UserData> fallback, String userId) {
         var q = Query.query(UserData.ownerCriteriaBy(userId));
         var exists = mongoTemplate.exists(q, UserData.class);
         if (!exists) {
@@ -99,8 +99,8 @@ public class UserDataServiceImpl implements UserDataService {
         return locale;
     }
 
-    private final Map<Long, ReadBooks> readBooksCache = new ConcurrentHashMap<>();
-    private final Map<Long, WaitList> waitListCache = new ConcurrentHashMap<>();
+    private final Map<String, ReadBooks> readBooksCache = new ConcurrentHashMap<>();
+    private final Map<String, WaitList> waitListCache = new ConcurrentHashMap<>();
 
     @Override
     public ReadBooks readBooks() {
@@ -117,7 +117,7 @@ public class UserDataServiceImpl implements UserDataService {
     }
 
     private class ReadBooksImpl implements ReadBooks {
-        private final long userID;
+        private final String userID;
         private final LockingVisitors.ReadWriteLockVisitor<ReadBooksImpl> lockVisitor;
         private AtomicReference<ReadBook[]> readBooksRef;
 
@@ -125,7 +125,7 @@ public class UserDataServiceImpl implements UserDataService {
             return rb -> rb.book().compareById(book);
         }
 
-        public ReadBooksImpl(long userID, ReadBook[] readBooks) {
+        public ReadBooksImpl(String userID, ReadBook[] readBooks) {
             this.userID = userID;
             this.readBooksRef = new AtomicReference<>(readBooks);
             this.lockVisitor = LockingVisitors.reentrantReadWriteLockVisitor(this);
@@ -209,7 +209,7 @@ public class UserDataServiceImpl implements UserDataService {
     }
 
     private class WaitListImpl implements WaitList {
-        private final long userId;
+        private final String userId;
         private final LockingVisitors.ReadWriteLockVisitor<WaitListImpl> lockingVisitor;
         private final AtomicReference<Book[]> waitListRef;
 
@@ -217,7 +217,7 @@ public class UserDataServiceImpl implements UserDataService {
             return bk -> bk.compareById(book);
         }
 
-        private WaitListImpl(long userId, Book[] waitList) {
+        private WaitListImpl(String userId, Book[] waitList) {
             this.userId = userId;
             this.waitListRef = new AtomicReference<>(waitList);
             this.lockingVisitor = LockingVisitors.reentrantReadWriteLockVisitor(this);
