@@ -1,17 +1,19 @@
 package com.mixfa.ailibrary.route.components;
 
-import com.mixfa.ailibrary.misc.Utils;
+import com.mixfa.ailibrary.misc.ExceptionType;
+import com.mixfa.ailibrary.misc.UserFriendlyException;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Genre;
 import com.mixfa.ailibrary.model.ReadBook;
+import com.mixfa.ailibrary.route.BookContentRoute;
+import com.mixfa.ailibrary.service.BookBorrowingService;
 import com.mixfa.ailibrary.service.BookChatBotService;
-import com.mixfa.ailibrary.service.LibraryService;
-import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.UserDataService;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -23,7 +25,6 @@ import com.vaadin.flow.component.popover.PopoverPosition;
 import com.vaadin.flow.component.popover.PopoverVariant;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.function.Consumer;
 
@@ -34,17 +35,16 @@ public class BookDetailsComponent extends VerticalLayout {
     private final double rating;
     private final UserDataService.WaitList waitList;
     private final UserDataService.ReadBooks readBooks;
-    private final SearchEngine.ForLibraries libSearchEngine;
-    private final LibraryService libraryService;
     private final BookChatBotService bookChatBotService;
+
+    private final BookBorrowingService bookBorrowingService;
 
     public BookDetailsComponent(Book book, Services services) {
         this.book = book;
         this.bookChatBotService = services.bookChatBotService();
-        this.libSearchEngine = services.librariesSearchEngine();
-        this.libraryService = services.libService();
         this.rating = services.commentService().getBookRate(book.id());
         this.userDataService = services.userDataService();
+        this.bookBorrowingService = services.bookBorrowingService();
         this.userLocale = userDataService.getLocale();
         this.waitList = userDataService.waitList();
         this.readBooks = userDataService.readBooks();
@@ -109,10 +109,29 @@ public class BookDetailsComponent extends VerticalLayout {
                 createWaitListButton(),
                 createReadBookButton(),
                 createTalkToButton(),
-                new LibraryFinderButton(book, libSearchEngine, libraryService, userLocale)
+                createBorrowBookButton()
         );
 
         return header;
+    }
+
+    private Button createBorrowBookButton() {
+        return new Button(VaadinIcon.MONEY.create(), e -> {
+            try {
+                var invoice = bookBorrowingService.borrowBook(book.id());
+                var paymentUrl = invoice.pageUrl();
+                var dialog = new Dialog("Payment url");
+                dialog.add(new Anchor(paymentUrl, "Pay") {{
+                    setRouterIgnore(true);
+                }});
+                dialog.open();
+            } catch (UserFriendlyException ex) {
+                if (ex.getType() == ExceptionType.BOOK_ALREADY_BORROWED)
+                    UI.getCurrent().navigate(BookContentRoute.class, book.id().toHexString());
+            }
+
+            return;
+        });
     }
 
     private Button createWaitListButton() {
@@ -189,12 +208,12 @@ public class BookDetailsComponent extends VerticalLayout {
     }
 
     private Component createGenreSection() {
-        var genres = String.join(", ", Arrays.stream(book.genres()).map(Genre::name).toList());
-        if (genres.isBlank()) return new Div();
+        var subjects = book.subjectsString();
+        if (subjects.isBlank()) return new Div();
 
         Icon genreIcon = VaadinIcon.TAGS.create();
         genreIcon.setColor("var(--lumo-primary-color)");
-        HorizontalLayout genresLayout = new HorizontalLayout(genreIcon, new Span(genres));
+        HorizontalLayout genresLayout = new HorizontalLayout(genreIcon, new Span(subjects));
         genresLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         return genresLayout;
     }

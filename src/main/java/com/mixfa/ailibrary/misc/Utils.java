@@ -1,8 +1,9 @@
 package com.mixfa.ailibrary.misc;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Genre;
 import com.mixfa.ailibrary.model.ReadBook;
 import com.mixfa.ailibrary.model.user.AuthenticatedAccount;
 import jakarta.annotation.Nullable;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.lang.reflect.Array;
+import java.net.http.HttpResponse;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Function;
@@ -27,6 +29,15 @@ public class Utils {
 
     public static Locale DEFAULT_LOCALE = Locale.ENGLISH;
     public static int PAGE_SIZE = 15;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<Map<String, Object>>() {
+    };
+
+    public static HttpResponse.BodyHandler<Map<String, Object>> mapBodyHandler() {
+        return new JsonMappingBodyHandler<>(MAP_TYPE_REFERENCE, MAPPER);
+    }
+
 
     public static <T> Sinks.Many<T> sink() {
         return Sinks.many().multicast().onBackpressureBuffer();
@@ -87,8 +98,8 @@ public class Utils {
             sb.append(author).append(", ");
 
         sb.append("\nGenres = ");
-        for (Genre genre : book.genres())
-            sb.append(genre.name()).append(", ");
+        for (String subject : book.subjects())
+            sb.append(subject).append(", ");
         sb.append("\n");
     }
 

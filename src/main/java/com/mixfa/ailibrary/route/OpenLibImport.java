@@ -3,10 +3,9 @@ package com.mixfa.ailibrary.route;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Genre;
+import com.mixfa.ailibrary.model.content_provider.GoogleBookContentProvider;
 import com.mixfa.ailibrary.model.user.Role;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.BookService;
@@ -28,11 +27,12 @@ import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Route("open-lib-import")
 @RolesAllowed(Role.ADMIN_ROLE)
 public class OpenLibImport extends AppLayout {
-    private static final String OPEN_LIBRARY_API_URL = "https://openlibrary.org/search.json";
+    private static final String GOOGLE_BOOKS_API = "https://www.googleapis.com/books/v1/volumes";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final HttpClient httpClient = HttpClient.newHttpClient();
     private final BookService bookService;
@@ -45,10 +45,10 @@ public class OpenLibImport extends AppLayout {
     }
 
     public static Optional<String> searchBooks(String query) {
-        final String fields = "title,author_name,cover_i,isbn,publish_year";
-        String url = OPEN_LIBRARY_API_URL + "?q=" + URLEncoder.encode(query) + "&fields=" + URLEncoder.encode(fields);
+        String url = GOOGLE_BOOKS_API + "?q=intitle:" + URLEncoder.encode(query);
 
         HttpRequest request = HttpRequest.newBuilder()
+                .GET()
                 .uri(URI.create(url))
                 .build();
 
@@ -65,28 +65,24 @@ public class OpenLibImport extends AppLayout {
         JsonNode root = null;
         try {
             root = objectMapper.readTree(jsonResponse);
-            System.out.println(root.toString());
+            System.out.println(root);
         } catch (JsonProcessingException e) {
             return List.of();
         }
-        JsonNode docs = root.get("docs");
+        JsonNode docs = root.get("items");
 
         if (docs == null || !docs.isArray()) {
             return Collections.emptyList();
         }
 
+        Predicate<JsonNode> isSuitable = node -> {
+            return node.get("accessInfo").get("embeddable").equals("true");
+        };
         Function<JsonNode, String> titleProvider = node -> {
-            var titleEl = node.get("title");
-            if (titleEl == null) return null;
-            if (!titleEl.isTextual()) return null;
-            return titleEl.asText();
+            return node.get("volumeInfo").get("title").asText();
         };
         Function<JsonNode, String[]> authorsProvider = node -> {
-            var authorEl = node.get("author_name");
-            if (authorEl == null) return null;
-            if (!authorEl.isArray()) return null;
-            if (authorEl.size() == 0) return null;
-
+            var authorEl = node.get("volumeInfo").get("authors");
             try {
                 return objectMapper.treeToValue(authorEl, String[].class);
             } catch (Exception _) {
@@ -94,71 +90,55 @@ public class OpenLibImport extends AppLayout {
             }
         };
         Function<JsonNode, String[]> imagesProvider = node -> {
-            var coverEl = node.get("cover_i");
-            if (coverEl == null) return null;
-
-            var coverId = coverEl.asText();
-            if (coverId.isBlank()) return null;
-            return new String[]{"https://covers.openlibrary.org/b/id/" + coverId + "-L.jpg"};
+            return new String[]{node.get("volumeInfo").get("imageLinks").get("thumbnail").asText()};
         };
 
         Function<JsonNode, Long> isbnProvider = node -> {
-            var isbnEl = node.get("isbn");
-            if (isbnEl == null || !isbnEl.isArray()) return null;
-
-            return isbnEl.get(0).asLong();
-        };
-
-        Function<JsonNode, Integer> publishYearProvider = node -> {
-            var publishYearEl = node.get("publish_year");
-            if (publishYearEl == null) return null;
-            if (publishYearEl.isArray()) return publishYearEl.get(0).asInt();
-            if (publishYearEl.isNumber()) return publishYearEl.intValue();
+            for (var isbnEl : node.get("volumeInfo").get("industryIdentifiers")) {
+                if (isbnEl.get("type").asText().equals("ISBN_13"))
+                    return isbnEl.get("identifier").asLong();
+            }
             return null;
         };
 
-        final var random = new Random();
-        final var allGenres = new ArrayList<>(List.of(Genre.values()));
-        Function<JsonNode, Genre[]> genresProvider = _ -> {
-            Collections.shuffle(allGenres);
-            return allGenres.stream()
-                    .limit(random.nextInt(1, 4))
-                    .toArray(Genre[]::new);
+        Function<JsonNode, Integer> publishYearProvider = node -> {
+            return Integer.parseInt(node.get("volumeInfo").get("publishedDate").asText().substring(0, 4));
+        };
+
+        Function<JsonNode, String> descriptionProvider = node -> {
+            return node.get("volumeInfo").get("description").asText();
         };
 
         List<Book.AddRequest> addRequests = new ArrayList<>();
 
         for (JsonNode doc : docs) {
-            var title = titleProvider.apply(doc);
-            if (title == null) continue;
+//            if (!isSuitable.test(doc)) continue;
 
-            String[] authors = null;
-            authors = authorsProvider.apply(doc);
+            try {
+                var title = titleProvider.apply(doc);
+                var authors = authorsProvider.apply(doc);
+                var description = descriptionProvider.apply(doc);
+                var images = imagesProvider.apply(doc);
+                var isbn = isbnProvider.apply(doc);
+                var publishYear = publishYearProvider.apply(doc);
+                var bookContentProvider = new GoogleBookContentProvider(isbn);
 
-            if (authors == null) continue;
-
-            String[] images = imagesProvider.apply(doc);
-            if (images == null) continue;
-
-            var genres = genresProvider.apply(doc);
-
-            var isbn = isbnProvider.apply(doc);
-            if (isbn == null) continue;
-
-            var publishYear = publishYearProvider.apply(doc);
-            if (publishYear == null) continue;
-
-            addRequests.add(
-                    new Book.AddRequest(
-                            title,
-                            authors,
-                            genres,
-                            images,
-                            "No description",
-                            isbn,
-                            publishYear
-                    )
-            );
+                addRequests.add(
+                        new Book.AddRequest(
+                                title,
+                                authors,
+                                new String[0],
+                                images,
+                                description,
+                                isbn,
+                                publishYear,
+                                bookContentProvider
+                        )
+                );
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                continue;
+            }
         }
 
         return addRequests;

@@ -1,11 +1,11 @@
 package com.mixfa.ailibrary.route;
 
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Genre;
-import com.mixfa.ailibrary.model.Library;
-import com.mixfa.ailibrary.model.search.*;
+import com.mixfa.ailibrary.model.search.AnyTitleSearchOption;
+import com.mixfa.ailibrary.model.search.ByAuthorsSearch;
+import com.mixfa.ailibrary.model.search.ISBNSearch;
+import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.route.components.BookGrid;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
 import com.mixfa.ailibrary.route.components.OpenDialogButton;
@@ -17,7 +17,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
@@ -53,7 +52,6 @@ class SearchParamsDialog extends Dialog {
 
         var accordion = new Accordion();
         accordion.add("Simple Options", makeSimpleOptions());
-        accordion.add("Search in libraries", makeSearchInLibrariesSection());
 
         add(accordion);
         setWidth("1200px");
@@ -98,13 +96,6 @@ class SearchParamsDialog extends Dialog {
                 searchOptions.add(new ISBNSearch(Long.parseLong(isbnField.getValue())));
         });
 
-        MultiSelectComboBox<Genre> genresSelect = new MultiSelectComboBox<>("Search by genres");
-        genresSelect.setItems(Genre.values());
-        genresSelect.setItemLabelGenerator(Genre::name);
-        genresSelect.addValueChangeListener(e -> {
-            searchOptions.removeIf(ByGenresSearch.class::isInstance);
-            searchOptions.add(new ByGenresSearch(e.getValue().stream().map(Genre::name).toList()));
-        });
 
         var authorTextField = new TextField("Search by author");
         var searchByAuthorsGrid = new Grid<String>(String.class, false);
@@ -122,30 +113,11 @@ class SearchParamsDialog extends Dialog {
                 searchOptions.add(new ByAuthorsSearch(authorsToSearch));
         });
 
-        return new VerticalLayout(textField, isbnField, genresSelect, new HorizontalLayout(authorTextField, authorsSearch) {{
+        return new VerticalLayout(textField, isbnField, new HorizontalLayout(authorTextField, authorsSearch) {{
             setDefaultVerticalComponentAlignment(Alignment.BASELINE);
         }}, searchByAuthorsGrid);
     }
 
-    private Component makeSearchInLibrariesSection() {
-        var searchField = new TextField("Search for libraries");
-        var librariesGrid = VaadinCommons.makeLibrariesPageableGrid(
-                VaadinCommons.makeLibrariesSearchFunc(services.librariesSearchEngine(), searchField)
-        );
-        searchField.addValueChangeListener(_ -> librariesGrid.refresh());
-        librariesGrid.setSelectionMode(Grid.SelectionMode.MULTI);
-        librariesGrid.refresh();
-        librariesGrid.addSelectionListener(e -> {
-            searchOptions.removeIf(PresentInLibraries.class::isInstance);
-            var selectedLibs = e.getAllSelectedItems();
-            if (!selectedLibs.isEmpty())
-                searchOptions.add(
-                        new PresentInLibraries(selectedLibs.stream().map(Library::name).toArray(String[]::new))
-                );
-        });
-
-        return new VerticalLayout(searchField, librariesGrid.component());
-    }
 
     public SearchOption getSearchOption() {
         return searchOptions.isEmpty() ? SearchOption.empty() : SearchOption.composition(searchOptions);

@@ -2,15 +2,10 @@ package com.mixfa.ailibrary.misc;
 
 import com.mixfa.ailibrary.controller.FileStorageContoller;
 import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Library;
-import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.route.components.BookCommentsComponent;
 import com.mixfa.ailibrary.route.components.BookDetailsComponent;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
-import com.mixfa.ailibrary.route.components.GridWithPagination;
 import com.mixfa.ailibrary.service.FileStorageService;
-import com.mixfa.ailibrary.service.LibraryService;
-import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
@@ -23,37 +18,21 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.FileBuffer;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Function;
-import java.util.function.IntFunction;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
 @Slf4j
 @UtilityClass
 public class VaadinCommons {
-    public static Button orderBookButton(Library lib, Book book, LibraryService libraryService, Locale locale) {
-        var bookAvail = lib.findBookAvailability(book).orElseThrow();
-        return new Button("Order book", _ -> {
-            try {
-                libraryService.tryOrderBook(lib.name(), book.id());
-                Notification.show("Book successfully ordered");
-            } catch (UserFriendlyException ex) {
-                Notification.show(ex.format(locale));
-            }
-        });
-    }
 
     public static <T extends Component> T applyMainStyle(T component) {
         component.getStyle().set("max-width", "1500px")
@@ -114,7 +93,7 @@ public class VaadinCommons {
         var details = new VerticalLayout(
                 new H3(book.title()),
                 new Div(new Text("Authors: " + book.authorsString())),
-                new Div(new Text("Genres: " + book.genresString())),
+                new Div(new Text("Genres: " + book.subjectsString())),
                 new Div(new Text("Rating: " + commentService.getBookRate(book.id()))),
                 new Div(new Text("Took/Read: " + fmt("{0}/{1}", book.tookCount(), book.readCount())))
         );
@@ -148,25 +127,4 @@ public class VaadinCommons {
         configureBookGridPreviewEx(grid, Utils::value, services);
     }
 
-    public static IntFunction<Page<Library>> makeLibrariesSearchFunc(SearchEngine.ForLibraries librariesSearchEngine, TextField queryField) {
-        return page -> librariesSearchEngine.find(
-                SearchOption.Libraries.byName(queryField.getValue()),
-                PageRequest.of(page, 10)
-        );
-    }
-
-    public static IntFunction<Page<Library>> makeLibrariesFetchFunc(SearchEngine.ForLibraries librariesSearchEngine) {
-        return page -> librariesSearchEngine.find(
-                SearchOption.empty(), PageRequest.of(page, 10)
-        );
-    }
-
-    public static GridWithPagination<Library> makeLibrariesPageableGrid(IntFunction<Page<Library>> fetchFunc) {
-        var grid = new GridWithPagination<>(Library.class, 10, fetchFunc);
-        grid.addColumn(Library::name).setHeader("Name");
-        grid.addColumn(Library::address).setHeader("Address");
-
-
-        return grid;
-    }
 }

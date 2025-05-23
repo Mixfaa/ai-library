@@ -15,6 +15,6 @@ public class ByGenresSearch extends SearchOption.ImmutableAdapter {
 
     public static List<AggregationOperation> makePipeline(Collection<String> genres) {
         if (genres == null || genres.isEmpty()) return List.of();
-        return List.of(Aggregation.match(Criteria.where(Book.Fields.genres).in(genres)));
+        return List.of(Aggregation.match(Criteria.where(Book.Fields.subjects).in(genres)));
     }
 }

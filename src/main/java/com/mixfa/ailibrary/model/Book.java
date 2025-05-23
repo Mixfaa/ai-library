@@ -2,7 +2,6 @@ package com.mixfa.ailibrary.model;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.mixfa.ailibrary.misc.Utils;
 import lombok.Builder;
 import lombok.With;
 import lombok.experimental.FieldNameConstants;
@@ -13,11 +12,6 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @Document
 @With
 @FieldNameConstants
@@ -25,38 +19,25 @@ public record Book(
         @Id ObjectId id,
         String title,
         String[] authors,
-        Genre[] genres,
+        String[] subjects,
         String[] images,
         String description,
+        BookContentProvider contentProvider,
         long tookCount,
         long readCount,
         long isbn,
         int firstPublishYear
 ) {
-    public Book(String title, String[] authors, Genre[] genres, String[] images, String description, long isbn, int firstPublishYear) {
-        this(ObjectId.get(), title, authors, genres, images, description, 0, 0, isbn, firstPublishYear);
-    }
-
+    @Builder
     public record AddRequest(
             String title,
             String[] authors,
-            Genre[] genres,
+            String[] subjects,
             String[] images,
             String description,
             Long isbn,
-            Integer firstPublishYear
-    ) {
-    }
-
-    @Builder
-    public record SearchRequest(
-            String title,
-            String[] authors,
-            Genre[] genres,
-            long minTookCount,
-            long maxTookCount,
-            long minReadCount,
-            long maxReadCount
+            Integer firstPublishYear,
+            BookContentProvider contentProvider
     ) {
     }
 
@@ -68,8 +49,8 @@ public record Book(
 
     @Transient
     @JsonIgnore
-    public String genresString() {
-        return Arrays.stream(genres).map(Genre::toString).collect(Collectors.joining(", "));
+    public String subjectsString() {
+        return String.join(", ", subjects);
     }
 
     @Transient

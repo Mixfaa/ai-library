@@ -1,6 +1,5 @@
 package com.mixfa.ailibrary.model.user;
 
-import com.mixfa.ailibrary.model.Library;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,12 +16,6 @@ import java.util.Map;
 public class AuthenticatedAccount implements OidcUser, UserDetails {
     private final Account account;
     private final OidcUser user;
-
-    public boolean isWorkerOfLibrary(Library library) {
-        if (account instanceof LibraryWorker libraryWorker)
-            return libraryWorker.getLibrary().name().equals(library.name());
-        return false;
-    }
 
     public String id() {
         return account.getId();

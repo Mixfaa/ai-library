@@ -6,6 +6,7 @@ import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.service.BookService;
 import com.mixfa.ailibrary.service.repo.BookRepo;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -36,11 +37,14 @@ public class BookServiceImpl implements BookService {
     @PreAuthorize("hasRole('ADMIN')")
     public Book addBook(Book.AddRequest request) {
         var book = bookRepo.save(new Book(
+                ObjectId.get(),
                 request.title(),
                 request.authors(),
-                request.genres(),
+                request.subjects(),
                 request.images(),
                 request.description(),
+                request.contentProvider(),
+                0, 0,
                 request.isbn(),
                 request.firstPublishYear()
         ));
@@ -59,12 +63,13 @@ public class BookServiceImpl implements BookService {
                 book.id(),
                 Objects.requireNonNullElse(request.title(), book.title()),
                 Objects.requireNonNullElse(request.authors(), book.authors()),
-                Objects.requireNonNullElse(request.genres(), book.genres()),
+                Objects.requireNonNullElse(request.subjects(), book.subjects()),
                 Objects.requireNonNullElse(request.images(), book.images()),
                 Objects.requireNonNullElse(request.description(), book.description()),
+                Objects.requireNonNullElse(request.contentProvider(), book.contentProvider()),
                 book.tookCount(), book.readCount(),
-                Objects.requireNonNullElse(request.isbn(),book.isbn()),
-                Objects.requireNonNullElse(request.firstPublishYear(),book.firstPublishYear())
+                Objects.requireNonNullElse(request.isbn(), book.isbn()),
+                Objects.requireNonNullElse(request.firstPublishYear(), book.firstPublishYear())
         );
 
         newBook = bookRepo.save(newBook);

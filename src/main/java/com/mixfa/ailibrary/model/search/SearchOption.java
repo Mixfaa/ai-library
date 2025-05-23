@@ -22,18 +22,6 @@ public interface SearchOption {
     }
 
     final class Books {
-        public static SearchOption fromRequest(Book.SearchRequest request) {
-            return new SimpleSearchRequestOption(request);
-        }
-
-        public static SearchOption presentInLibs(Collection<String> libsNames) {
-            return new PresentInLibraries(libsNames);
-        }
-
-        public static SearchOption presentInLibs(String... libs) {
-            return new PresentInLibraries(libs);
-        }
-
         public static SearchOption byTitle(String query) {
             return new AnyTitleSearchOption(query);
         }
@@ -48,16 +36,6 @@ public interface SearchOption {
 
         public static SearchOption byISBN(long isbn) {
             return new ISBNSearch(isbn);
-        }
-    }
-
-    final class Libraries {
-        public static SearchOption containsBook(Book book) {
-            return new LibContainsBook(book.id());
-        }
-
-        public static SearchOption byName(String query) {
-            return new LibraryByName(query);
         }
     }
 

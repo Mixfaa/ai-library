@@ -2,11 +2,7 @@ package com.mixfa.ailibrary.route;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
-import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Library;
-import com.mixfa.ailibrary.model.search.PresentInLibraries;
 import com.mixfa.ailibrary.model.search.SearchOption;
-import com.mixfa.ailibrary.model.search.SimpleSearchRequestOption;
 import com.mixfa.ailibrary.model.suggestion.*;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
 import com.mixfa.ailibrary.route.components.CustomMultiSelectComboBox;
@@ -26,10 +22,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.IntegerField;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +39,6 @@ import java.util.concurrent.Executors;
 @Route("ai-features")
 public class AiFeaturesRoute extends AppLayout {
     private final SuggestionService suggestionService;
-    private final SearchEngine.ForLibraries librarySearchEngine;
     private final SearchEngine.ForBooks bookSearchEngine;
     private final UserDataService userDataService;
 
@@ -57,7 +49,6 @@ public class AiFeaturesRoute extends AppLayout {
 
     public AiFeaturesRoute(Services services, BookRepo bookRepo) {
         this.suggestionService = services.suggestionService();
-        this.librarySearchEngine = services.librariesSearchEngine();
         this.bookSearchEngine = services.booksSearchEngine();
         this.userDataService = services.userDataService();
         this.bookRepo = bookRepo;
@@ -68,42 +59,6 @@ public class AiFeaturesRoute extends AppLayout {
         setContent(makeContent());
     }
 
-    private Component makeSearchInLibrariesSection(List<SearchOption> options) {
-        var searchField = new TextField("Search for libraries");
-        var librariesGrid = VaadinCommons.makeLibrariesPageableGrid(
-                VaadinCommons.makeLibrariesSearchFunc(librarySearchEngine, searchField)
-        );
-        searchField.addValueChangeListener(_ -> librariesGrid.refresh());
-        librariesGrid.setSelectionMode(Grid.SelectionMode.MULTI);
-        librariesGrid.refresh();
-        librariesGrid.addSelectionListener(e -> {
-            options.removeIf(searchOption -> PresentInLibraries.class.isInstance(searchField));
-
-            options.add(
-                    new PresentInLibraries(e.getAllSelectedItems().stream().map(Library::name).toArray(String[]::new))
-            );
-        });
-
-        return new VerticalLayout(searchField, librariesGrid.component());
-    }
-
-    private Component makeTookMinCount(List<SearchOption> options) {
-        return new HorizontalLayout(
-                new IntegerField("Enter minnimum took count") {{
-                    this.setMin(0);
-                    this.addValueChangeListener(e -> {
-                        options.removeIf(searchOption -> SimpleSearchRequestOption.class.isInstance(searchOption));
-                        options.add(
-                                new SimpleSearchRequestOption(
-                                        Book.SearchRequest.builder()
-                                                .minTookCount(e.getValue())
-                                                .build()
-                                )
-                        );
-                    });
-                }}
-        );
-    }
 
     private Component makeIncludeHints(List<SuggsetionHint> suggestionHints) {
         final var READ_BOOKS = "Use your read books";
@@ -145,8 +100,6 @@ public class AiFeaturesRoute extends AppLayout {
 
         var optionsAccordion = new Accordion();
 
-        optionsAccordion.add("Search in libraries", makeSearchInLibrariesSection(searchOptions));
-        optionsAccordion.add("Took minnimum count", makeTookMinCount(searchOptions));
         optionsAccordion.add("Include user statistics", makeIncludeHints(suggestionHints));
 
         optionsDialog.add(optionsAccordion);

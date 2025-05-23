@@ -4,7 +4,9 @@ import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.route.components.BookCommentsComponent;
 import com.mixfa.ailibrary.route.components.BookDetailsComponent;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
-import com.mixfa.ailibrary.service.*;
+import com.mixfa.ailibrary.service.BookService;
+import com.mixfa.ailibrary.service.CommentService;
+import com.mixfa.ailibrary.service.UserDataService;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -20,21 +22,17 @@ import java.util.Locale;
 @PermitAll
 public class BookRoute extends AppLayout implements HasUrlParameter<String> {
     private final BookService bookService;
-    private final LibraryService libraryService;
     private final CommentService commentService;
     private final Locale userLocale;
     private final UserDataService userDataService;
-    private final SearchEngine.ForLibraries libSearchEngine;
     private final Services services;
 
     private Book book;
 
     public BookRoute(Services services) {
         this.bookService = services.bookService();
-        this.libraryService = services.libService();
         this.commentService = services.commentService();
         this.userDataService = services.userDataService();
-        this.libSearchEngine = services.librariesSearchEngine();
         this.userLocale = userDataService.getLocale();
         this.services = services;
 

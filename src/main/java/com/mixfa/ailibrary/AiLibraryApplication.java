@@ -6,7 +6,6 @@ import com.mixfa.ailibrary.misc.MongoLocaleConverter;
 import com.mixfa.ailibrary.misc.cache.ByUserCache;
 import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
 import com.vaadin.flow.component.page.AppShellConfigurator;
-import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
@@ -25,21 +24,6 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 
@@ -91,42 +75,6 @@ public class AiLibraryApplication implements AppShellConfigurator {
         return new ByUserCache<>(cacheMaintainer);
     }
 
-//    @Bean
-//    public CommandLineRunner filler(BookService bookService, OfflineLibService offlineLibService, SearchEngine.ForBooks booksSearch, SearchEngine.ForLibraries librariesSearch) {
-//        return (_) -> {
-//            var random = new Random();
-//
-//            var booksPage = booksSearch.findAll(PageRequest.of(0, 15));
-//
-//            var booksList = new ArrayList<Book>();
-//            booksList.addAll(booksPage.getContent());
-//
-//            for (int i = 1; i < booksPage.getTotalPages(); i++) {
-//                booksList.addAll(booksSearch.findAll(PageRequest.of(i, 15)).getContent());
-//            }
-//
-//            var libsPage = librariesSearch.findAll(Pageable.unpaged());
-//            var libs = new ArrayList<>(librariesSearch.findAll(PageRequest.of(random.nextInt(libsPage.getTotalPages()), 15)).getContent());
-//
-//            for (Book book : booksList) {
-//                Collections.shuffle(libs);
-//
-//                for (int i = 0; i < 3; i++) {
-//                    var lib = libs.get(i);
-//
-//                    offlineLibService.setBookAvailability(
-//                            lib.name(),
-//                            book.id(),
-//                            Map.of(
-//                                    Locale.ENGLISH, random.nextLong(25),
-//                                    Locale.FRENCH, random.nextLong(25),
-//                                    Locale.GERMAN, random.nextLong(25)
-//                            )
-//                    );
-//                }
-//            }
-//        };
-//    }
 
     public static void main(String[] args) {
         SpringApplication.run(AiLibraryApplication.class, args);

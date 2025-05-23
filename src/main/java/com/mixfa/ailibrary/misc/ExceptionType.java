@@ -21,6 +21,7 @@ public enum ExceptionType {
     INVALID_COMMENT, //
     ACCESS_DENIED, //
     USER_ALREADY_WORKER,
+    BOOK_ALREADY_BORROWED, // string
     BOOK_ALREADY_RATED; // bookId - Object, username - String
 
     private final String TEMPLATE_CODE = this.name().toLowerCase();
@@ -34,6 +35,10 @@ public enum ExceptionType {
             log.error(e.getMessage());
             return "Exception: " + this.name();
         }
+    }
+
+    public static UserFriendlyException bookAleardyBorrowed(Object bookId) {
+        return BOOK_ALREADY_BORROWED.make(bookId);
     }
 
     public static UserFriendlyException userAlreadyWorker() {

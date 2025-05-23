@@ -1,8 +1,8 @@
 package com.mixfa.ailibrary.service;
 
 import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.BookBorrowing;
 import com.mixfa.ailibrary.model.Comment;
-import com.mixfa.ailibrary.model.Library;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.service.impl.GenericSearchEngineImpl;
 import jakarta.annotation.Nullable;
@@ -31,22 +31,22 @@ public interface SearchEngine<T> {
     }
 
     @Component
-    class ForLibraries implements SearchEngine<Library> {
-        @Delegate
-        private final SearchEngine<Library> eng;
-
-        public ForLibraries(MongoTemplate template) {
-            this.eng = new GenericSearchEngineImpl<>(template, Library.class);
-        }
-    }
-
-    @Component
     class ForComments implements SearchEngine<Comment> {
         @Delegate
         private final SearchEngine<Comment> eng;
 
         public ForComments(MongoTemplate template) {
             this.eng = new GenericSearchEngineImpl<>(template, Comment.class);
+        }
+    }
+
+    @Component
+    class ForBorrowings implements SearchEngine<BookBorrowing> {
+        @Delegate
+        private final SearchEngine<BookBorrowing> eng;
+
+        public ForBorrowings(MongoTemplate template) {
+            this.eng = new GenericSearchEngineImpl<>(template, BookBorrowing.class);
         }
     }
 }

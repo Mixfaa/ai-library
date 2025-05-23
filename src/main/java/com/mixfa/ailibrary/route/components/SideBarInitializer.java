@@ -23,7 +23,6 @@ public class SideBarInitializer {
         sideNav.addItem(authTestItem);
         sideNav.addItem(
                 new SideNavItem("Catalog", MainRoute.class, VaadinIcon.BOOK.create()),
-                new SideNavItem("Libraries", LibrariesRoute.class, VaadinIcon.ARCHIVES.create()),
                 new SideNavItem("My details", UserDetailsRoute.class, VaadinIcon.USER.create()),
                 new SideNavItem("Ai Suggestions", AiFeaturesRoute.class, VaadinIcon.MAGIC.create())
         );
@@ -31,15 +30,7 @@ public class SideBarInitializer {
         if (authentication.role().isAdmin()) {
             sideNav.addItem(
                     new SideNavItem("Edit books", BooksEditRoute.class, VaadinIcon.BOOK.create()),
-                    new SideNavItem("Edit libraries", LibsEditRoute.class, VaadinIcon.HOME.create()),
-                    new SideNavItem("Import from open lib", OpenLibImport.class, VaadinIcon.MAGIC.create()),
-                    new SideNavItem("Edit Libraries workers", EditLibraryWorkerRoute.class, VaadinIcon.TOOLBOX.create())
-            );
-        }
-
-        if (authentication.role() == Role.WORKER) {
-            sideNav.addItem(
-                    new SideNavItem("My Library", MyLibraryRoute.class, VaadinIcon.HEART.create())
+                    new SideNavItem("Import from open lib", OpenLibImport.class, VaadinIcon.MAGIC.create())
             );
         }
 

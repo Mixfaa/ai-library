@@ -1,7 +1,6 @@
 package com.mixfa.ailibrary.model.user;
 
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.Library;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.With;
@@ -24,10 +23,6 @@ public class Account implements UserDetails {
     private final String username;
     private final String email;
     private final Role role;
-
-    public boolean isWorkerOfLibrary(Library library) {
-        return false;
-    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
