@@ -1,20 +1,25 @@
 package com.mixfa.ailibrary.route.components;
 
 
+import com.mixfa.ailibrary.controller.FileStorageContoller;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.BookContentProvider;
 import com.mixfa.ailibrary.model.content_provider.GoogleBookContentProvider;
+import com.mixfa.ailibrary.model.content_provider.PdfFileContentProvider;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.FileBuffer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,6 +63,33 @@ public class EditBookCompontent extends Dialog {
             });
             configurationLayout.add(isbnField, setButton);
             accordion.add("Google content provider", configurationLayout);
+        }
+        {
+            var configurationLayout = new HorizontalLayout();
+
+            var fileBuffer = new FileBuffer();
+            var upload = new Upload(fileBuffer);
+            upload.setAcceptedFileTypes(".pdf");
+
+            upload.addSucceededListener(e -> {
+                var fileUploadService = services.fileStorageService();
+                try {
+                    var fileData = fileUploadService.write(e.getFileName(), fileBuffer.getInputStream());
+                    var url = FileStorageContoller.makeFileStaticURL(fileData);
+
+                    providers[0] = new PdfFileContentProvider(url);
+                    Notification.show("Contnet provider created");
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    Notification.show("Error uploading file");
+                }
+            });
+
+            configurationLayout.add(new Div("Upload file") {{
+                add(upload);
+            }});
+
+            accordion.add("Pdf file provider", configurationLayout);
         }
 
         dialog.add(accordion);

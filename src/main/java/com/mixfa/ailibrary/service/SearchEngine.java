@@ -6,6 +6,7 @@ import com.mixfa.ailibrary.model.Comment;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.service.impl.GenericSearchEngineImpl;
 import jakarta.annotation.Nullable;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,33 +21,30 @@ public interface SearchEngine<T> {
     @Nullable
     T findOne(SearchOption searchOption);
 
-    @Component
-    class ForBooks implements SearchEngine<Book> {
+    @RequiredArgsConstructor
+    static abstract class DelegationBase<T> implements SearchEngine<T> {
         @Delegate
-        private final SearchEngine<Book> eng;
+        private final SearchEngine<T> searchEngine;
+    }
 
+    @Component
+    static class ForBooks extends DelegationBase<Book> {
         public ForBooks(MongoTemplate template) {
-            this.eng = new GenericSearchEngineImpl<>(template, Book.class);
+            super(new GenericSearchEngineImpl<>(template, Book.class));
         }
     }
 
     @Component
-    class ForComments implements SearchEngine<Comment> {
-        @Delegate
-        private final SearchEngine<Comment> eng;
-
+    static class ForComments extends DelegationBase<Comment> {
         public ForComments(MongoTemplate template) {
-            this.eng = new GenericSearchEngineImpl<>(template, Comment.class);
+            super(new GenericSearchEngineImpl<>(template, Comment.class));
         }
     }
 
     @Component
-    class ForBorrowings implements SearchEngine<BookBorrowing> {
-        @Delegate
-        private final SearchEngine<BookBorrowing> eng;
-
+    static class ForBorrowings extends DelegationBase<BookBorrowing> {
         public ForBorrowings(MongoTemplate template) {
-            this.eng = new GenericSearchEngineImpl<>(template, BookBorrowing.class);
+            super(new GenericSearchEngineImpl<>(template, BookBorrowing.class));
         }
     }
 }

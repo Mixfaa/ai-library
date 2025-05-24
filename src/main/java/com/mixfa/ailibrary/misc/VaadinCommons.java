@@ -22,6 +22,7 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.FileBuffer;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.LinkedHashMap;
@@ -50,7 +51,7 @@ public class VaadinCommons {
             this.getFooter().add(new CloseDialogButton(this));
 
             var urlsGrid = new Grid<String>(String.class, false) {{
-                addColumn(Utils::value).setHeader("URL");
+                addColumn(ObjectUtils::CONST).setHeader("URL");
                 addComponentColumn(url ->
                         new Button("remove", _ -> imagesList.remove(url))
                 );
@@ -120,11 +121,11 @@ public class VaadinCommons {
     }
 
     public static void configureDefaultBookGrid(Grid<Book> grid) {
-        configureDefaultBookGridEx(grid, Utils::value);
+        configureDefaultBookGridEx(grid, Function.identity());
     }
 
     public static void configureBookGridPreview(Grid<Book> grid, Services services) {
-        configureBookGridPreviewEx(grid, Utils::value, services);
+        configureBookGridPreviewEx(grid, Function.identity(), services);
     }
 
 }

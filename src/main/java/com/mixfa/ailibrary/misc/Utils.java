@@ -38,7 +38,6 @@ public class Utils {
         return new JsonMappingBodyHandler<>(MAP_TYPE_REFERENCE, MAPPER);
     }
 
-
     public static <T> Sinks.Many<T> sink() {
         return Sinks.many().multicast().onBackpressureBuffer();
     }
@@ -101,10 +100,6 @@ public class Utils {
         for (String subject : book.subjects())
             sb.append(subject).append(", ");
         sb.append("\n");
-    }
-
-    public static <T> T value(T value) {
-        return value;
     }
 
     public static ObjectId idToObj(Object id) {

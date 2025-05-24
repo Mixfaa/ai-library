@@ -26,6 +26,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -100,7 +101,7 @@ class SearchParamsDialog extends Dialog {
         var authorTextField = new TextField("Search by author");
         var searchByAuthorsGrid = new Grid<String>(String.class, false);
         var authorsSearch = new Button("Query authors", _ -> searchByAuthorsGrid.setItems(findAuthors("")));
-        searchByAuthorsGrid.addColumn(Utils::value).setHeader("Author");
+        searchByAuthorsGrid.addColumn(ObjectUtils::CONST).setHeader("Author");
         authorTextField.addValueChangeListener(e -> {
             var authors = findAuthors(e.getValue());
             searchByAuthorsGrid.setItems(authors);

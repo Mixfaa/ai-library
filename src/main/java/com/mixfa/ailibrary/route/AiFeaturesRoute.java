@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 @Slf4j
 @PermitAll
@@ -70,14 +71,14 @@ public class AiFeaturesRoute extends AppLayout {
                 suggestionHints.add(new ReadBooksHint(userDataService.readBooks().get()));
         });
 
-        var likedBookSelect = new CustomMultiSelectComboBox<String>("Liked books", Utils::value);
+        var likedBookSelect = new CustomMultiSelectComboBox<String>("Liked books", Function.identity());
         likedBookSelect.setWidth("50%");
         likedBookSelect.addValueChangeListener(e -> {
             suggestionHints.removeIf(suggsetionHint -> LikedBooksHint.class.isInstance(suggestionHints));
             suggestionHints.add(new LikedBooksHint(e.getValue().toArray(String[]::new)));
         });
 
-        var dislikedBookSelect = new CustomMultiSelectComboBox<String>("Disliked books", Utils::value);
+        var dislikedBookSelect = new CustomMultiSelectComboBox<String>("Disliked books", Function.identity());
         dislikedBookSelect.setWidth("50%");
         dislikedBookSelect.addValueChangeListener(e -> {
             suggestionHints.removeIf(suggsetionHint -> DislikedBooksHint.class.isInstance(suggestionHints));

@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class BookPricingPolicyProviderImpl implements BookPricingPolicyProvider {
-    private final ConstPricePolicy constPrice = new ConstPricePolicy();
+    private final ConstPricePolicy CONST_PRICE_POLICY = new ConstPricePolicy();
     @Override
     public BookPricingPolicy getBookPricingPolicy(Book book) {
-        return constPrice;
+        return CONST_PRICE_POLICY;
     }
 }

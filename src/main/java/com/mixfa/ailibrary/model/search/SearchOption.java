@@ -96,7 +96,7 @@ public interface SearchOption {
         }
     }
 
-    final class EmptyOption implements SearchOption {
+    public static final class EmptyOption implements SearchOption {
         @Override
         public List<AggregationOperation> makePipeline() {
             return List.of();

@@ -4,6 +4,7 @@
   "type": "module",
   "dependencies": {
     "@polymer/polymer": "3.5.2",
+    "@vaadin-component-factory/vcf-pdf-viewer": "3.1.0",
     "@vaadin/bundles": "24.7.6",
     "@vaadin/common-frontend": "0.0.19",
     "@vaadin/polymer-legacy-adapter": "24.7.6",
@@ -16,6 +17,7 @@
     "construct-style-sheets-polyfill": "3.1.0",
     "date-fns": "2.29.3",
     "lit": "3.3.0",
+    "print-js": "1.6.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-router": "7.5.2"
@@ -44,6 +46,7 @@
   "vaadin": {
     "dependencies": {
       "@polymer/polymer": "3.5.2",
+      "@vaadin-component-factory/vcf-pdf-viewer": "3.1.0",
       "@vaadin/bundles": "24.7.6",
       "@vaadin/common-frontend": "0.0.19",
       "@vaadin/polymer-legacy-adapter": "24.7.6",
@@ -56,6 +59,7 @@
       "construct-style-sheets-polyfill": "3.1.0",
       "date-fns": "2.29.3",
       "lit": "3.3.0",
+      "print-js": "1.6.0",
       "react": "18.3.1",
       "react-dom": "18.3.1",
       "react-router": "7.5.2"
@@ -81,7 +85,7 @@
       "workbox-core": "7.3.0",
       "workbox-precaching": "7.3.0"
     },
-    "hash": "79560e4ddc395b0ad64481d9a3f56513be65cec5fb700f13f4c25c4dd181fa94"
+    "hash": "8a15513f9d25afb0a5e4504cbbfab37bc2eb148e6fd34e8858553e351f283905"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -99,6 +103,8 @@
     "@vaadin/react-components": "$@vaadin/react-components",
     "react-dom": "$react-dom",
     "react": "$react",
-    "react-router": "$react-router"
+    "react-router": "$react-router",
+    "print-js": "$print-js",
+    "@vaadin-component-factory/vcf-pdf-viewer": "$@vaadin-component-factory/vcf-pdf-viewer"
   }
 }

@@ -86,6 +86,12 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.vaadin.addons.componentfactory</groupId>
+            <artifactId>vcf-pdf-viewer</artifactId>
+            <version>4.1.0</version>
+        </dependency>
+
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -130,7 +136,6 @@
                     <target>23</target>
                     <compilerArgs>
                         <arg>--enable-preview</arg>
-                        <arg>--add-exports=java.net.http/jdk.internal.net.http=ALL-UNNAMED</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
