@@ -1,7 +1,6 @@
-package com.mixfa.ailibrary.misc;
+package com.mixfa.ailibrary.service.impl;
 
 import com.mixfa.ailibrary.model.user.AuthenticatedAccount;
-import com.mixfa.ailibrary.service.impl.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;

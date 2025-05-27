@@ -96,7 +96,7 @@ public class VaadinCommons {
                 new Div(new Text("Authors: " + book.authorsString())),
                 new Div(new Text("Genres: " + book.subjectsString())),
                 new Div(new Text("Rating: " + commentService.getBookRate(book.id()))),
-                new Div(new Text("Took/Read: " + fmt("{0}/{1}", book.tookCount(), book.readCount())))
+                new Div(new Text("Took: " + book.tookCount()))
         );
 
         content.add(image, details);

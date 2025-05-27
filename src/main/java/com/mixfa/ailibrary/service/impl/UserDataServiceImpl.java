@@ -13,13 +13,13 @@ import org.apache.commons.lang3.concurrent.locks.LockingVisitors;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -27,6 +27,7 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class UserDataServiceImpl implements UserDataService {
     private final MongoTemplate mongoTemplate;
+    private final UserService userService;
 
     @Override
     public UserData getUserData() {
@@ -71,21 +72,26 @@ public class UserDataServiceImpl implements UserDataService {
         return classAndGetter.get(mapped);
     }
 
-    private <T> void setField(String field, T value, Function<T, UserData> fallback) {
-        setField(field, value, fallback, Account.getAuthenticated().id());
+    private <T> void setField(String field, T value, BiFunction<UserData, T, UserData> fallback) {
+        setField(field, value, fallback, Account.getAuthenticatedAccount());
     }
 
-    private <T> void setField(String field, T value, Function<T, UserData> fallback, String userId) {
+    private <T> void setField(String field, T value, BiFunction<UserData, T, UserData> fallback, Account account) {
+        var q = Query.query(UserData.ownerCriteriaBy(account.getId()));
+        var userData = mongoTemplate.findOne(q, UserData.class);
+        if (userData == null)
+            userData = new UserData(account);
+
+        saveUserData(fallback.apply(userData, value));
+    }
+
+    private <T> void setField(String field, T value, BiFunction<UserData, T, UserData> fallback, String userId) {
         var q = Query.query(UserData.ownerCriteriaBy(userId));
-        var exists = mongoTemplate.exists(q, UserData.class);
-        if (!exists) {
-            saveUserData(fallback.apply(value));
-            return;
-        }
+        var userData = mongoTemplate.findOne(q, UserData.class);
+        if (userData == null)
+            userData = new UserData(userService.findOrThrow(userId));
 
-        var upd = new Update().set(field, value);
-
-        mongoTemplate.updateFirst(q, upd, UserData.class);
+        saveUserData(fallback.apply(userData, value));
     }
 
     @Override
@@ -95,7 +101,7 @@ public class UserDataServiceImpl implements UserDataService {
 
     @Override
     public Locale setLocale(Locale locale) {
-        setField(UserData.Fields.targetLocale, locale, UserData::new);
+        setField(UserData.Fields.targetLocale, locale, UserData::withTargetLocale);
         return locale;
     }
 
@@ -152,7 +158,7 @@ public class UserDataServiceImpl implements UserDataService {
                     readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
 
                 target.readBooksRef.set(readBooks);
-                setField(UserData.Fields.readBooks, readBooks, UserData::new, target.userID);
+                setField(UserData.Fields.readBooks, readBooks, UserData::withReadBooks, target.userID);
             });
         }
 
@@ -167,7 +173,7 @@ public class UserDataServiceImpl implements UserDataService {
                     return;
                 readBooks = Utils.filter(readBooks, predicate.negate());
                 target.readBooksRef.set(readBooks);
-                setField(UserData.Fields.readBooks, readBooks, UserData::new, target.userID);
+                setField(UserData.Fields.readBooks, readBooks, UserData::withReadBooks, target.userID);
             });
 
         }
@@ -184,7 +190,7 @@ public class UserDataServiceImpl implements UserDataService {
                     readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
                 }
                 target.readBooksRef.set(readBooks);
-                setField(UserData.Fields.readBooks, readBooks, UserData::new, target.userID);
+                setField(UserData.Fields.readBooks, readBooks, UserData::withReadBooks, target.userID);
 
                 return !exists; // true if added
             });
@@ -242,8 +248,7 @@ public class UserDataServiceImpl implements UserDataService {
                     waitListedBooks = ArrayUtils.add(waitListedBooks, book);
 
                 target.waitListRef.set(waitListedBooks);
-                setField(UserData.Fields.waitList, waitListedBooks, UserData::new, userId);
-
+                setField(UserData.Fields.waitList, waitListedBooks, UserData::withWaitList, userId);
 
                 return !exists;
             });

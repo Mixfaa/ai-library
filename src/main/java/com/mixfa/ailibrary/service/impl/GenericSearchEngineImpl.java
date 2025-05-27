@@ -137,15 +137,13 @@ public final class GenericSearchEngineImpl<T> implements SearchEngine<T> {
         return handleFacetResponse(result.getUniqueMappedResult(), pageable);
     }
 
-    private static final Pageable ONE_ELEMENT_PAGE = PageRequest.of(0, 1);
+    private static final Pageable SINGLE_ELEMENT_PAGE = PageRequest.of(0, 1);
 
     @Nullable
     @Override
     public T findOne(SearchOption searchOption) {
-        try {
-            return find(searchOption, ONE_ELEMENT_PAGE).getContent().getFirst();
-        } catch (Exception e) {
-            return null;
-        }
+        var elements = find(searchOption, SINGLE_ELEMENT_PAGE).getContent();
+        if (elements.isEmpty()) return null;
+        return elements.getFirst();
     }
 }

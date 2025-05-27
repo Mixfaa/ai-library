@@ -15,13 +15,18 @@ public class UserFriendlyException extends RuntimeException {
         this.args = args;
     }
 
-    public String format(Locale locale) {
-        return type.format(locale, args);
-    }
-
     public UserFriendlyException(String message, Throwable cause, ExceptionType type, Object[] args) {
         super(message, cause);
         this.type = type;
         this.args = args;
+    }
+
+    public boolean isTypeOf(ExceptionType type) {
+        return this.type == type;
+    }
+
+    public String format(Locale locale) {
+
+        return type.format(locale, args);
     }
 }

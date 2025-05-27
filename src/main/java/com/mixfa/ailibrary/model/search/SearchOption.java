@@ -30,12 +30,24 @@ public interface SearchOption {
             return new ByAuthorsSearch(authors);
         }
 
-        public static SearchOption byGenre(Collection<String> genres) {
-            return new ByGenresSearch(genres);
+        public static SearchOption bySubject(Collection<String> genres) {
+            return new BySubjectsSearch(genres);
         }
 
         public static SearchOption byISBN(long isbn) {
             return new ISBNSearch(isbn);
+        }
+
+        public static SearchOption byRating(double minRating) {
+            return new RatingSearch(minRating);
+        }
+
+        public static SearchOption byYearGreaterThan(int year) {
+            return new PublishYearSearch.GreaterThan(year);
+        }
+
+        public static SearchOption byYearLessThan(int year) {
+            return new PublishYearSearch.LessThan(year);
         }
     }
 
@@ -65,7 +77,7 @@ public interface SearchOption {
         return () -> List.of(Aggregation.match(criteriaDefinition));
     }
 
-    final class Match {
+    public static final class Match {
         public static SearchOption all(Criteria... criterias) {
             return withOperator(
                     Criteria::andOperator,
@@ -97,6 +109,8 @@ public interface SearchOption {
     }
 
     public static final class EmptyOption implements SearchOption {
+        private EmptyOption() {}
+
         @Override
         public List<AggregationOperation> makePipeline() {
             return List.of();

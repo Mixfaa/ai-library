@@ -12,7 +12,7 @@ public interface HasOwner {
     Account owner();
 
     default void throwIfNotOwned() {
-        if (owner().getId() != Account.getAuthenticatedAccount().getId())
+        if (!owner().getId().equals(Account.getAuthenticated().id()))
             throw ExceptionType.accessDenied();
     }
 

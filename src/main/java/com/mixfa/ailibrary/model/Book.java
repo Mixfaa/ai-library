@@ -24,7 +24,7 @@ public record Book(
         String description,
         BookContentProvider contentProvider,
         long tookCount,
-        long readCount,
+        double rating,
         long isbn,
         int firstPublishYear
 ) {

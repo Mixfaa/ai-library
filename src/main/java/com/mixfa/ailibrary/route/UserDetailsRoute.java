@@ -1,17 +1,19 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.misc.UserFriendlyException;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.BookBorrowing;
 import com.mixfa.ailibrary.model.Comment;
 import com.mixfa.ailibrary.model.ReadBook;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.route.components.GridWithPagination;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
+import com.mixfa.ailibrary.service.BookBorrowingService;
 import com.mixfa.ailibrary.service.CommentService;
 import com.mixfa.ailibrary.service.UserDataService;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -20,15 +22,20 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import org.apache.commons.lang3.function.Functions;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 
 @PermitAll
@@ -38,52 +45,49 @@ public class UserDetailsRoute extends AppLayout {
 
     private final CommentService commentService;
     private final UserDataService userDataService;
+    private final BookBorrowingService borrowingService;
     private final Account account;
     private final Services services;
+
+    private DateTimeFormatter dateTimeFormatter;
 
     public UserDetailsRoute(Services services) {
         this.userDataService = services.userDataService();
         this.commentService = services.commentService();
+        this.borrowingService = services.bookBorrowingService();
         this.userLocale = userDataService.getLocale();
         this.services = services;
         this.account = Account.getAuthenticatedAccount();
         SideBarInitializer.init(this);
 
-        setContent(makeContent());
+        UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> {
+            var timezone = details.getTimeZoneId();
+            ZoneId zoneId;
+            try {
+                zoneId = ZoneId.of(timezone);
+            } catch (DateTimeException e) {
+                zoneId = ZoneId.systemDefault();
+            }
+            dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.of(timezone));
+            setContent(makeContent());
+        });
     }
-//
-//    private Component makeMyOrders() {
-//        var takenBooks = libService.findAllMyTakenBooks();
-//
-//        var layout = new VerticalLayout();
-//        var takenBooksGrid = new Grid<BookStatus>(BookStatus.class, false);
-//
-//        takenBooksGrid.addColumn(bks -> bks.book().title()).setHeader("Book");
-//        takenBooksGrid.addColumn(bks -> bks.library().name()).setHeader("Library");
-//        takenBooksGrid.addColumn(BookStatus::tookDate).setHeader("Took Date");
-//        takenBooksGrid.addColumn(BookStatus::returnDate).setHeader("Return Date");
-//        takenBooksGrid.addColumn(BookStatus::status).setHeader("Status");
-//        takenBooksGrid.addComponentColumn(bks -> {
-//            if (bks.status() != BookStatus.Status.BOOKED)
-//                return null;
-//            else
-//                return new Button("Cancel", _ -> {
-//                    try {
-//                        libService.cancelBookOrder(bks.id());
-//                        Notification.show("Book order cancelled");
-//
-//                        takenBooksGrid.setItems(libService.findAllMyTakenBooks());
-//                    } catch (UserFriendlyException ex) {
-//                        Notification.show(ex.format(userLocale));
-//                    }
-//                });
-//        });
-//
-//        takenBooksGrid.setItems(takenBooks);
-//
-//        layout.add(new Div(new H3("Your ordered books")), takenBooksGrid);
-//        return VaadinCommons.applyMainStyle(new Div(layout));
-//    }
+
+    private Component makeMyOrders() {
+        var layout = new VerticalLayout();
+        IntFunction<Page<BookBorrowing>> fetchFunc = page -> borrowingService.findAllMyBorrowings(PageRequest.of(page, 15));
+
+        var takenBooksGrid = new GridWithPagination<BookBorrowing>(BookBorrowing.class, 15, fetchFunc);
+        VaadinCommons.configureDefaultBookGridEx(takenBooksGrid, BookBorrowing::book);
+        VaadinCommons.configureBookGridPreviewEx(takenBooksGrid, BookBorrowing::book, services);
+
+        takenBooksGrid.addColumn(it -> dateTimeFormatter.format(it.borrowedTime())).setHeader("Borrowed Time");
+        takenBooksGrid.addColumn(it -> dateTimeFormatter.format(it.returnTime())).setHeader("Return Time");
+        takenBooksGrid.refresh();
+
+        layout.add(new Div(new H3("Your ordered books")), takenBooksGrid);
+        return VaadinCommons.applyMainStyle(new Div(layout));
+    }
 
     private Component makeWaitList() {
         var waitList = userDataService.waitList();
@@ -135,7 +139,6 @@ public class UserDetailsRoute extends AppLayout {
     }
 
     private Component makeProfileSection() {
-
         return new HorizontalLayout(
                 new Span("Username: " + account.getUsername()),
                 new Span("Email: " + account.getEmail()),
@@ -148,7 +151,7 @@ public class UserDetailsRoute extends AppLayout {
         accordion.setWidthFull();
 
         accordion.add("Profile", makeProfileSection());
-//        accordion.add("My Orders", makeMyOrders());
+        accordion.add("My Orders", makeMyOrders());
         accordion.add("Wait List", makeWaitList());
         accordion.add("Read List", makeReadList());
         accordion.add("My Comments", makeCommentsSection());

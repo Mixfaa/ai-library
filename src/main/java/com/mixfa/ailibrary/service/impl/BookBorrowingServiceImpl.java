@@ -3,6 +3,9 @@ package com.mixfa.ailibrary.service.impl;
 import com.mixfa.ailibrary.misc.ExceptionType;
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.BookBorrowing;
+import com.mixfa.ailibrary.model.invoice.InvoiceData;
+import com.mixfa.ailibrary.model.invoice.InvoiceStatus;
+import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.model.user.HasOwner;
 import com.mixfa.ailibrary.service.*;
@@ -10,9 +13,13 @@ import com.mixfa.ailibrary.service.repo.BookBorrowingRepo;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -29,18 +36,26 @@ public class BookBorrowingServiceImpl implements BookBorrowingService {
     private final BookService bookService;
     private final SearchEngine.ForBorrowings bookBorrowingSearchEngine;
     private final MongoTemplate mongoTemplate;
+    private final ApplicationEventPublisher eventPublisher;
+
+    private static Criteria IS_PAID_CRITERIA = Criteria.where(BookBorrowing.Fields.isPaid).is(true);
+    private static Criteria IS_NOT_PAID_CRITERIA = Criteria.where(BookBorrowing.Fields.isPaid).is(false);
+
+    private static Criteria makeReturnTimeIsInFututreCriteria() {
+        return Criteria.where(BookBorrowing.Fields.returnTime).gt(Instant.now());
+    }
 
     @PostConstruct
+    @Scheduled(fixedRate = 12 * 60 * 60 * 1000) // every 12 hrs
     public void clearExpired() {
         var expirityTime = Instant.now().minusSeconds(Duration.ofDays(1).toMillis());
-        var notPaid = Criteria.where(BookBorrowing.Fields.isPaid).is(false);
         var expired = Criteria.where(BookBorrowing.Fields.borrowedTime).lt(expirityTime);
 
-        mongoTemplate.remove(new Query().addCriteria(new Criteria().andOperator(notPaid, expired)), BookBorrowing.class);
+        mongoTemplate.remove(new Query().addCriteria(new Criteria().andOperator(IS_NOT_PAID_CRITERIA, expired)), BookBorrowing.class);
     }
 
     @Override
-    public InvoiceProvider.InvoiceData borrowBook(Object bookId) {
+    public InvoiceData borrowBook(Object bookId) {
         if (hasAccessToBook(bookId)) throw ExceptionType.bookAleardyBorrowed(bookId);
 
         var book = bookService.findBookOrThrow(bookId);
@@ -68,8 +83,8 @@ public class BookBorrowingServiceImpl implements BookBorrowingService {
     public boolean hasAccessToBook(Object bookId) {
         var ownerCriteria = HasOwner.ownerCriteria();
         var bookCriteria = Criteria.where(fmt("{0}.$id", BookBorrowing.Fields.book)).is(Utils.idToObj(bookId));
-        var isPaidCriteria = Criteria.where(BookBorrowing.Fields.isPaid).is(true);
-        var timeCriteria = Criteria.where(BookBorrowing.Fields.returnTime).gt(Instant.now());
+        var isPaidCriteria = IS_PAID_CRITERIA;
+        var timeCriteria = makeReturnTimeIsInFututreCriteria();
 
         var isPaidCriteriaComp = new Criteria().andOperator(
                 ownerCriteria,
@@ -92,10 +107,24 @@ public class BookBorrowingServiceImpl implements BookBorrowingService {
 
         var invoiceStatus = invoiceProvider.getInvoiceStatus(borrowing.invoiceId());
 
-        if (invoiceStatus != InvoiceProvider.InvoiceStatus.success)
+        if (invoiceStatus != InvoiceStatus.success)
             return false;
 
-        borrowingDataRepo.save(borrowing.withPaid(true));
+        borrowing = borrowingDataRepo.save(borrowing.withPaid(true));
+        var bookBorrowedEvent = new BookBorrowingService.Event.OnBookBorrowed(borrowing);
+        eventPublisher.publishEvent(bookBorrowedEvent);
         return true;
+    }
+
+    @Override
+    public Page<BookBorrowing> findAllMyBorrowings(Pageable pageable) {
+        var ownerCriteria = HasOwner.ownerCriteria();
+        var timeCrtiaria = makeReturnTimeIsInFututreCriteria();
+
+        var finalCriteria = new Criteria().andOperator(ownerCriteria, IS_PAID_CRITERIA, timeCrtiaria);
+        return bookBorrowingSearchEngine.find(
+                SearchOption.match(finalCriteria),
+                pageable
+        );
     }
 }

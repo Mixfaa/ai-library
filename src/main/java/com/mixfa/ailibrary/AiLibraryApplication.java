@@ -44,15 +44,6 @@ public class AiLibraryApplication implements AppShellConfigurator {
         );
     }
 
-    private static <T> RedisTemplate<String, T> makeRedisTemplate(Class<T> tClass, RedisConnectionFactory rcf) {
-        RedisTemplate<String, T> template = new RedisTemplate<>();
-        template.setConnectionFactory(rcf);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer<T>(tClass));
-
-        return template;
-    }
-
     @Bean
     public RedisTemplate<String, ?> redisTemplate(RedisConnectionFactory rcf) {
         RedisTemplate<String, ?> template = new RedisTemplate<>();

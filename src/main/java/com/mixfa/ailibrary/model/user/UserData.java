@@ -19,53 +19,31 @@ import static com.mixfa.ailibrary.misc.Utils.DEFAULT_LOCALE;
 @FieldNameConstants
 public record UserData(
         @Id String id,
-        @DBRef
-        Account owner,
+        @DBRef Account owner,
         @DBRef Book[] waitList,
         @DBRef ReadBook[] readBooks,
         Locale targetLocale
 ) implements HasOwner {
     public static Criteria ownerCriteria() {
-        return Criteria.where("_id").is(Account.getAuthenticatedAccount().getId());
+        return Criteria.where("_id").is(Account.getAuthenticated().id());
     }
 
     public static Criteria ownerCriteriaBy(String userID) {
         return Criteria.where("_id").is(userID);
     }
 
+    public UserData() {
+        this(
+                Account.getAuthenticatedAccount().getId(),
+                Account.getAuthenticatedAccount(),
+                new Book[0],
+                new ReadBook[0],
+                DEFAULT_LOCALE
+        );
+    }
+
     public UserData(Account owner) {
         this(owner.getId(), owner, new Book[0], new ReadBook[0], DEFAULT_LOCALE);
-    }
-
-    // TODO
-    public UserData(Book[] waitList) {
-        this(
-                Account.getAuthenticatedAccount().getId(),
-                Account.getAuthenticatedAccount(),
-                waitList,
-                new ReadBook[0],
-                DEFAULT_LOCALE
-        );
-    }
-
-    public UserData(ReadBook[] readBooks) {
-        this(
-                Account.getAuthenticatedAccount().getId(),
-                Account.getAuthenticatedAccount(),
-                new Book[0],
-                readBooks,
-                DEFAULT_LOCALE
-        );
-    }
-
-    public UserData(Locale locale) {
-        this(
-                Account.getAuthenticatedAccount().getId(),
-                Account.getAuthenticatedAccount(),
-                new Book[0],
-                new ReadBook[0],
-                locale
-        );
     }
 
     public static final String COLLECTION_NAME = MongoCollectionUtils.getPreferredCollectionName(UserData.class);

@@ -15,4 +15,12 @@ public interface CommentService {
     Page<Comment> listComments(Object bookId, Pageable pageable);
 
     Page<Comment> listMyComments(Pageable pageable);
+
+    public static sealed interface Event {
+        public static record OnCommentAdded(Comment comment, double newRate) implements Event {
+        }
+
+        public static record OnCommentRemoved(Comment comment, double newRate) implements Event {
+        }
+    }
 }

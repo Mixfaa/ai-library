@@ -23,6 +23,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -49,6 +50,7 @@ public class CommentServiceImpl implements CommentService {
     private final ChatModel chatModel;
     private final AiBookDescriptionService aiBookDescriptionService;
     private final PerUserRateLimiter rateLimiter;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final AiCommentChecker aiCommentChecker = new AiCommentChecker();
 
@@ -59,7 +61,7 @@ public class CommentServiceImpl implements CommentService {
                               MongoTemplate mongoTemplate,
                               BookService bookService,
                               ChatModel chatModel,
-                              AiBookDescriptionService aiBookDescriptionService) {
+                              AiBookDescriptionService aiBookDescriptionService, ApplicationEventPublisher eventPublisher) {
         this.commentsRepo = commentsRepo;
         this.commentSearchEngine = commentSearchEngine;
         this.bookRepo = bookRepo;
@@ -67,7 +69,7 @@ public class CommentServiceImpl implements CommentService {
         this.bookService = bookService;
         this.chatModel = chatModel;
         this.aiBookDescriptionService = aiBookDescriptionService;
-
+        this.eventPublisher = eventPublisher;
 
         this.rateLimiter = new PerUserRateLimiter(
                 RateLimiterConfig.custom()
@@ -101,15 +103,19 @@ public class CommentServiceImpl implements CommentService {
         if (!validationPassed)
             throw ExceptionType.invalidComment();
 
-        var comment = new Comment(book, request.text(), request.rate(), remoteUser);
-
-        return commentsRepo.save(comment);
+        var comment = commentsRepo.save(new Comment(book, request.text(), request.rate(), remoteUser));
+        var rate = getBookRate(book.id());
+        eventPublisher.publishEvent(new CommentService.Event.OnCommentAdded(comment, rate));
+        return comment;
     }
 
     @Override
     public void removeComment(Object commentId) {
         var q = Query.query(HasOwner.ownerCriteria().and(Comment.Fields.id).is(Utils.idToObj(commentId)));
+        var comment = mongoTemplate.findOne(q, Comment.class);
         mongoTemplate.remove(q, Comment.class);
+        var rate = getBookRate(comment.book().id());
+        eventPublisher.publishEvent(new CommentService.Event.OnCommentRemoved(comment, rate));
     }
 
     @Override

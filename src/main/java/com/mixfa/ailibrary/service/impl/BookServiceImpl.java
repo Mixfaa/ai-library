@@ -3,11 +3,14 @@ package com.mixfa.ailibrary.service.impl;
 import com.mixfa.ailibrary.misc.ExceptionType;
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.service.BookBorrowingService;
 import com.mixfa.ailibrary.service.BookService;
+import com.mixfa.ailibrary.service.CommentService;
 import com.mixfa.ailibrary.service.repo.BookRepo;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -27,7 +30,7 @@ public class BookServiceImpl implements BookService {
     private final ApplicationEventPublisher eventPublisher;
 
     private static final Update INC_TOOK_UPD = new Update().inc(Book.Fields.tookCount, 1);
-    private static final Update INC_READ_UPD = new Update().inc(Book.Fields.readCount, 1);
+    private final MongoTemplate mongoTemplate;
 
     public Book findBookOrThrow(Object bookId) {
         return bookRepo.findById(Utils.idToStr(bookId)).orElseThrow(() -> ExceptionType.BOOK_NOT_FOUND.make(bookId));
@@ -44,7 +47,7 @@ public class BookServiceImpl implements BookService {
                 request.images(),
                 request.description(),
                 request.contentProvider(),
-                0, 0,
+                0, 0.0,
                 request.isbn(),
                 request.firstPublishYear()
         ));
@@ -59,7 +62,7 @@ public class BookServiceImpl implements BookService {
     public Book editBook(Object id, Book.AddRequest request) throws Exception {
         var book = findBookOrThrow(id);
 
-        var newBook = new Book(
+        var newBook = bookRepo.save(new Book(
                 book.id(),
                 Objects.requireNonNullElse(request.title(), book.title()),
                 Objects.requireNonNullElse(request.authors(), book.authors()),
@@ -67,12 +70,10 @@ public class BookServiceImpl implements BookService {
                 Objects.requireNonNullElse(request.images(), book.images()),
                 Objects.requireNonNullElse(request.description(), book.description()),
                 Objects.requireNonNullElse(request.contentProvider(), book.contentProvider()),
-                book.tookCount(), book.readCount(),
+                book.tookCount(), book.rating(),
                 Objects.requireNonNullElse(request.isbn(), book.isbn()),
                 Objects.requireNonNullElse(request.firstPublishYear(), book.firstPublishYear())
-        );
-
-        newBook = bookRepo.save(newBook);
+        ));
 
         eventPublisher.publishEvent(new BookService.Event.OnBookEdited(newBook));
         return newBook;
@@ -93,16 +94,29 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public void markRead(Object id) {
-        var q = Query.query(
-                Criteria.where(Book.Fields.id).is(Utils.idToObj(id))
-        );
-
-        template.updateFirst(q, INC_READ_UPD, Book.class);
-    }
-
-    @Override
     public Optional<Book> getById(Object id) {
         return bookRepo.findById(Utils.idToStr(id));
+    }
+
+    @EventListener(BookBorrowingService.Event.OnBookBorrowed.class)
+    public void onBookBorrowed(BookBorrowingService.Event.OnBookBorrowed onBookBorrowed) {
+        markTook(onBookBorrowed.bookBorrowing().book().id());
+    }
+
+    private void updateBookRating(Book book, double newRating) {
+        var update = new Update().set(Book.Fields.rating, newRating);
+        var query = Query.query(Criteria.where(Book.Fields.id).is(book.id()));
+
+        mongoTemplate.updateFirst(query, update, Book.class);
+    }
+
+    @EventListener(CommentService.Event.class)
+    public void onCommentServiceEvent(CommentService.Event event) {
+        switch (event) {
+            case CommentService.Event.OnCommentAdded onCommentAdded ->
+                    updateBookRating(onCommentAdded.comment().book(), onCommentAdded.newRate());
+            case CommentService.Event.OnCommentRemoved onCommentRemoved ->
+                    updateBookRating(onCommentRemoved.comment().book(), onCommentRemoved.newRate());
+        }
     }
 }

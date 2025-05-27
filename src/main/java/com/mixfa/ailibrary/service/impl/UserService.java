@@ -13,6 +13,10 @@ public class UserService {
     private final AccountRepo accountRepo;
     private final AdminAuthenticator adminAuthenticator;
 
+    public Account findOrThrow(String id) {
+        return accountRepo.findById(id).orElseThrow();
+    }
+
     public Account getOrCreateAccount(String id, String email, String name) {
         var accountOpt = accountRepo.findById(id);
         if (accountOpt.isPresent()) return accountOpt.get();

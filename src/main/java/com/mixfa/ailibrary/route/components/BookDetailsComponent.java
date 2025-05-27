@@ -126,7 +126,7 @@ public class BookDetailsComponent extends VerticalLayout {
                 }});
                 dialog.open();
             } catch (UserFriendlyException ex) {
-                if (ex.getType() == ExceptionType.BOOK_ALREADY_BORROWED)
+                if (ex.isTypeOf(ExceptionType.BOOK_ALREADY_BORROWED))
                     UI.getCurrent().navigate(BookContentRoute.class, book.id().toHexString());
             }
 
@@ -255,8 +255,7 @@ public class BookDetailsComponent extends VerticalLayout {
         Icon takeIcon = VaadinIcon.BOOK.create();
         Icon readIcon = VaadinIcon.CHECK.create();
         Span takeSpan = new Span(String.format("Taken: %d", book.tookCount()));
-        Span readSpan = new Span(String.format("Read: %d", book.readCount()));
-        statsLayout.add(takeIcon, takeSpan, readIcon, readSpan);
+        statsLayout.add(takeIcon, takeSpan, readIcon);
         statsLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         return statsLayout;
     }

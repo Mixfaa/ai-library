@@ -1,11 +1,7 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.search.AnyTitleSearchOption;
-import com.mixfa.ailibrary.model.search.ByAuthorsSearch;
-import com.mixfa.ailibrary.model.search.ISBNSearch;
-import com.mixfa.ailibrary.model.search.SearchOption;
+import com.mixfa.ailibrary.model.search.*;
 import com.mixfa.ailibrary.route.components.BookGrid;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
 import com.mixfa.ailibrary.route.components.OpenDialogButton;
@@ -23,6 +19,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
@@ -53,32 +50,88 @@ class SearchParamsDialog extends Dialog {
 
         var accordion = new Accordion();
         accordion.add("Simple Options", makeSimpleOptions());
+        accordion.add("By authors search", makeByAuthorsSearch());
+        accordion.add("By subjects search", makeBySubjectsSearch());
 
         add(accordion);
         setWidth("1200px");
     }
 
-    private List<String> findAuthors(String query) {
-        record AuthorResult(String author) {
+    private Component makeBySubjectsSearch() {
+        var subjectTextField = new TextField("Search by subject");
+        var searchBySubjectsGrid = new Grid<String>(String.class, false);
+        var subjectsSearch = new Button("Query subjects", _ -> searchBySubjectsGrid.setItems(findSubjects("")));
+        searchBySubjectsGrid.addColumn(ObjectUtils::CONST).setHeader("Subject");
+        subjectTextField.addValueChangeListener(e -> {
+            var subjects = findSubjects(e.getValue());
+            searchBySubjectsGrid.setItems(subjects);
+        });
+        searchBySubjectsGrid.setSelectionMode(Grid.SelectionMode.MULTI);
+        searchBySubjectsGrid.addSelectionListener(e -> {
+            searchOptions.removeIf(BySubjectsSearch.class::isInstance);
+            var subjects = e.getAllSelectedItems();
+            if (!subjects.isEmpty())
+                searchOptions.add(new BySubjectsSearch(subjects));
+        });
+        return new VerticalLayout(
+                new HorizontalLayout(subjectTextField, subjectsSearch) {{
+                    setAlignItems(Alignment.BASELINE);
+                }},
+                searchBySubjectsGrid
+        );
+    }
+
+    private Component makeByAuthorsSearch() {
+        var authorTextField = new TextField("Search by author");
+        var searchByAuthorsGrid = new Grid<String>(String.class, false);
+        var authorsSearch = new Button("Query authors", _ -> searchByAuthorsGrid.setItems(findAuthors("")));
+        searchByAuthorsGrid.addColumn(ObjectUtils::CONST).setHeader("Author");
+        authorTextField.addValueChangeListener(e -> {
+            var authors = findAuthors(e.getValue());
+            searchByAuthorsGrid.setItems(authors);
+        });
+        searchByAuthorsGrid.setSelectionMode(Grid.SelectionMode.MULTI);
+        searchByAuthorsGrid.addSelectionListener(e -> {
+            searchOptions.removeIf(ByAuthorsSearch.class::isInstance);
+            var authorsToSearch = e.getAllSelectedItems();
+            if (!authorsToSearch.isEmpty())
+                searchOptions.add(new ByAuthorsSearch(authorsToSearch));
+        });
+        return new VerticalLayout(
+                new HorizontalLayout(authorTextField, authorsSearch) {{
+                    setAlignItems(Alignment.BASELINE);
+                }},
+                searchByAuthorsGrid
+        );
+    }
+
+    private List<String> selectDistinct(String field, Criteria criteria) {
+        record Result(String result) {
         }
 
         var aggregations = new ArrayList<AggregationOperation>();
-        aggregations.addLast(Aggregation.unwind(Book.Fields.authors));
-        if (!query.isBlank())
-            aggregations.addLast(Aggregation.match(Criteria.where(Book.Fields.authors).regex(query, "i")));
-
-        aggregations.addLast(Aggregation.group(Book.Fields.authors));
-        aggregations.addLast(Aggregation.limit(10));
-        aggregations.addLast(Aggregation.project().and("_id").as("author"));
+        aggregations.addLast(Aggregation.unwind(field));
+        aggregations.addLast(Aggregation.match(criteria));
+        aggregations.addLast(Aggregation.group(field));
+        aggregations.addLast(Aggregation.limit(20));
+        aggregations.addLast(Aggregation.project().and("_id").as("result"));
 
         var aggregation = Aggregation.newAggregation(aggregations);
 
-        AggregationResults<AuthorResult> results = mongoTemplate.aggregate(aggregation, Book.class, AuthorResult.class);
+        AggregationResults<Result> results = mongoTemplate.aggregate(aggregation, Book.class, Result.class);
 
         return results.getMappedResults().stream()
-                .map(AuthorResult::author)
+                .map(Result::result)
                 .filter(Objects::nonNull)
                 .toList();
+    }
+
+    private List<String> findAuthors(String query) {
+        return selectDistinct(Book.Fields.authors, Criteria.where(Book.Fields.authors).regex(query, "i"));
+    }
+
+    private List<String> findSubjects(String query) {
+        return selectDistinct(Book.Fields.subjects, Criteria.where(Book.Fields.subjects).regex(query, "i"));
     }
 
     private Component makeSimpleOptions() {
@@ -97,26 +150,16 @@ class SearchParamsDialog extends Dialog {
                 searchOptions.add(new ISBNSearch(Long.parseLong(isbnField.getValue())));
         });
 
-
-        var authorTextField = new TextField("Search by author");
-        var searchByAuthorsGrid = new Grid<String>(String.class, false);
-        var authorsSearch = new Button("Query authors", _ -> searchByAuthorsGrid.setItems(findAuthors("")));
-        searchByAuthorsGrid.addColumn(ObjectUtils::CONST).setHeader("Author");
-        authorTextField.addValueChangeListener(e -> {
-            var authors = findAuthors(e.getValue());
-            searchByAuthorsGrid.setItems(authors);
-        });
-        searchByAuthorsGrid.setSelectionMode(Grid.SelectionMode.MULTI);
-        searchByAuthorsGrid.addSelectionListener(e -> {
-            searchOptions.removeIf(ByAuthorsSearch.class::isInstance);
-            var authorsToSearch = e.getAllSelectedItems();
-            if (!authorsToSearch.isEmpty())
-                searchOptions.add(new ByAuthorsSearch(authorsToSearch));
+        var ratingField = new NumberField("Search by Minnimal Rating");
+        ratingField.setMin(0.0);
+        ratingField.setMax(5.0);
+        ratingField.setStep(0.1);
+        ratingField.addValueChangeListener(e -> {
+            searchOptions.removeIf(RatingSearch.class::isInstance);
+            searchOptions.add(new RatingSearch(e.getValue()));
         });
 
-        return new VerticalLayout(textField, isbnField, new HorizontalLayout(authorTextField, authorsSearch) {{
-            setDefaultVerticalComponentAlignment(Alignment.BASELINE);
-        }}, searchByAuthorsGrid);
+        return new VerticalLayout(textField, isbnField, ratingField);
     }
 
 

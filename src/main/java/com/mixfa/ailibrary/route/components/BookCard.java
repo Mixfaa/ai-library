@@ -33,6 +33,6 @@ public class BookCard extends Card {
         this.setWidth("350px");
         this.setTitle(book.title());
         this.setSubtitle(new Span(String.join(", ", book.authors())));
-        this.add(new Span("Took/Read %d/%d".formatted(book.tookCount(), book.readCount())));
+        this.add(new Span("Took count: %d".formatted(book.tookCount())));
     }
 }

@@ -8,8 +8,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.util.Collection;
 import java.util.List;
 
-public class ByGenresSearch extends SearchOption.ImmutableAdapter {
-    public ByGenresSearch(Collection<String> genres) {
+public class BySubjectsSearch extends SearchOption.ImmutableAdapter {
+    public BySubjectsSearch(Collection<String> genres) {
         super(makePipeline(genres));
     }
 

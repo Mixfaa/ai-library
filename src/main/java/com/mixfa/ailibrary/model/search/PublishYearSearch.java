@@ -20,7 +20,6 @@ public class PublishYearSearch {
     }
 
     public static class GreaterThan extends SearchOption.ImmutableAdapter {
-
         public GreaterThan(int year) {
             super(List.of(
                     Aggregation.match(

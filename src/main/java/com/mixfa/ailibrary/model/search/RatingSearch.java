@@ -6,10 +6,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 
 import java.util.List;
 
-public class ISBNSearch extends SearchOption.ImmutableAdapter {
-    public ISBNSearch(long isbn) {
-        super(List.of(
-                Aggregation.match(Criteria.where(Book.Fields.isbn).is(isbn))
-        ));
+public class RatingSearch extends SearchOption.ImmutableAdapter {
+
+    public RatingSearch(double minRating) {
+        super(List.of(Aggregation.match(Criteria.where(Book.Fields.rating).gte(minRating))));
     }
 }

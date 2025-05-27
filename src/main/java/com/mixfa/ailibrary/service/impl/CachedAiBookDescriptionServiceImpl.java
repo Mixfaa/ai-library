@@ -115,8 +115,6 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
 
     @EventListener(BookService.Event.class)
     public void onEvent(BookService.Event event) {
-        System.out.println(event);
-        System.out.println(event.getClass());
         switch (event) {
             case BookService.Event.OnBookAdded onAdded -> evictCache(onAdded.book().id());
             case BookService.Event.OnBookEdited onEdited -> evictCache(onEdited.book().id());
