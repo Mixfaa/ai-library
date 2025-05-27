@@ -23,5 +23,6 @@ public class Services {
     private final AiFunctions aiFunctions;
     private final AiBookDescriptionService aiBookDescriptionService;
     private final BookBorrowingService bookBorrowingService;
+    private final StatisticsService statisticsService;
     private final CacheMaintainer cacheMaintainer;
 }

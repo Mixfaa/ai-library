@@ -30,6 +30,7 @@ public class SideBarInitializer {
         if (authentication.role().isAdmin()) {
             sideNav.addItem(
                     new SideNavItem("Edit books", BooksEditRoute.class, VaadinIcon.BOOK.create()),
+                    new SideNavItem("Statistics", StatisticsRoute.class, VaadinIcon.MONEY_EXCHANGE.create()),
                     new SideNavItem("Import from open lib", OpenLibImport.class, VaadinIcon.MAGIC.create())
             );
         }

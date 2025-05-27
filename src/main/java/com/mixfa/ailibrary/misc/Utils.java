@@ -26,7 +26,6 @@ import java.util.function.Predicate;
 @UtilityClass
 @SuppressWarnings("unchecked")
 public class Utils {
-
     public static Locale DEFAULT_LOCALE = Locale.ENGLISH;
     public static int PAGE_SIZE = 15;
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -44,6 +43,22 @@ public class Utils {
 
     public static <T> Flux<T> sinkToFlux(Sinks.Many<T> sink) {
         return sink.asFlux().share();
+    }
+
+    public static Currency findByCode(int code) {
+        for (Currency currency : Currency.getAvailableCurrencies()) {
+            if (currency.getNumericCode() == code)
+                return currency;
+        }
+        return null;
+    }
+
+    public static Currency findCurrencyByCodeOrThrow(int code) {
+        for (Currency currency : Currency.getAvailableCurrencies()) {
+            if (currency.getNumericCode() == code)
+                return currency;
+        }
+        throw new NoSuchElementException(MessageFormat.format("Currency with code {0} not found", code));
     }
 
     public static @Nullable JsonNode findJsonNode(JsonNode root, Predicate<JsonNode> predicate) {
