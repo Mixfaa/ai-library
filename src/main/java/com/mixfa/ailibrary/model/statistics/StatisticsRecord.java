@@ -9,6 +9,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
+import java.util.Currency;
 import java.util.List;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
@@ -19,16 +20,16 @@ public record StatisticsRecord(
         @Id String title,
         LocalDate from,
         LocalDate to,
-        int curencyCode,
+        Currency curencyCode,
         List<BookStatistics> statistics) {
 
-    public StatisticsRecord(LocalDate from, LocalDate to, int currencyCode, List<BookStatistics> statistics) {
+    public StatisticsRecord(LocalDate from, LocalDate to, Currency currency, List<BookStatistics> statistics) {
         this(
                 fmt("Statistics record: {0} - {1} (currency: {2})",
                         from.format(Utils.getDateTimeFormatter()),
                         to.format(Utils.getDateTimeFormatter()),
-                        Utils.findCurrencyByCodeOrThrow(currencyCode).getDisplayName()),
-                from, to, currencyCode, statistics
+                        currency.getDisplayName()),
+                from, to, currency, statistics
         );
     }
 

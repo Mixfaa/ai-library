@@ -131,7 +131,7 @@ public class StatisticsRoute extends AppLayout {
                     Notification.show("Enter valid period");
                     return;
                 }
-                var statistics = statisticsService.getStatistics(period.startDate(), period.endDate(), currency.getNumericCode());
+                var statistics = statisticsService.getStatistics(period.startDate(), period.endDate(), currency);
 
                 makeShowStatisticsDialog(statistics).open();
             }

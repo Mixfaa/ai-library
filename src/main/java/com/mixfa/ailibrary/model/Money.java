@@ -2,16 +2,19 @@ package com.mixfa.ailibrary.model;
 
 import com.mixfa.ailibrary.misc.Utils;
 
+import java.util.Currency;
+
 public record Money(
-        int currency,
+        Currency currency,
         long amount
 ) {
+    private static final Currency UAH = Currency.getInstance("UAH");
+
     public static Money uah(long amount) {
-        return new Money(980, amount);
+        return new Money(UAH, amount);
     }
 
     public String asString() {
-        var currency = Utils.findCurrencyByCodeOrThrow(currency());
         return Utils.calculateCurrency(amount, currency) + currency.getSymbol();
     }
 }

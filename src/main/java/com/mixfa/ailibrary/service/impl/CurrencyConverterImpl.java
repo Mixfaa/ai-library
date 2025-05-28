@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.util.Currency;
 
 @Slf4j
 @Service
@@ -23,20 +24,18 @@ public class CurrencyConverterImpl implements CurrencyConverter {
     }
 
     @Override
-    public Money convert(Money from, int targetCurrency) {
-        if (from.currency() == targetCurrency)
+    public Money convert(Money from, Currency targetCurrency) {
+        if (from.currency().getNumericCode() == targetCurrency.getNumericCode())
             return from;
 
-        var targetCurrencySymbol = Utils.findCurrencyByCodeOrThrow(targetCurrency);
-        var originCurrencySymbol = Utils.findCurrencyByCodeOrThrow(from.currency());
+        var originCurrency = from.currency();
 
-        var uri = Utils.fmt("https://v6.exchangerate-api.com/v6/{0}/pair/{1}/{2}", apiKey, originCurrencySymbol, targetCurrencySymbol);
+        var uri = Utils.fmt("https://v6.exchangerate-api.com/v6/{0}/pair/{1}/{2}", apiKey, originCurrency.getCurrencyCode(), targetCurrency.getCurrencyCode());
         var ratesRequest = HttpRequest.newBuilder(URI.create(uri)).GET().build();
 
         try {
             var response = httpClient.send(ratesRequest, Utils.mapBodyHandler());
-            if (response.statusCode() != 200)
-            {
+            if (response.statusCode() != 200) {
                 log.error("Error response from API: {}", response.statusCode());
                 throw ExceptionType.currencyConvertionFailed();
             }

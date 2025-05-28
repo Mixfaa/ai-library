@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
@@ -56,7 +57,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public StatisticsRecord getStatistics(LocalDate from, LocalDate to, int targetCurrency) {
+    public StatisticsRecord getStatistics(LocalDate from, LocalDate to, Currency targetCurrency) {
         var booksIds = allBorrowedBooksIds(from, to);
 
         var statisticsBlocks = new ArrayList<StatisticsRecord.BookStatistics>();
