@@ -39,4 +39,9 @@ public record StatisticsRecord(
             Money moneyPaid,
             int borrowingCount) {
     }
+
+    public Money totalMoneyPaid() {
+        var totalAmound = statistics.stream().map(bs -> bs.moneyPaid.amount()).reduce(0L, Long::sum);
+        return new Money(curencyCode, totalAmound);
+    }
 }

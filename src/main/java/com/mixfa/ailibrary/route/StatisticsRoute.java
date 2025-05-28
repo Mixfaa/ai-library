@@ -1,6 +1,5 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.statistics.StatisticsRecord;
 import com.mixfa.ailibrary.model.user.Role;
@@ -9,12 +8,14 @@ import com.mixfa.ailibrary.route.components.DateRangePicker;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.route.components.model.LocalDateRange;
 import com.mixfa.ailibrary.service.StatisticsService;
+import com.mixfa.ailibrary.service.impl.DocxStatisticsWritter;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -22,9 +23,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamResource;
 import jakarta.annotation.security.RolesAllowed;
 import org.apache.commons.lang3.ObjectUtils;
 
+import java.io.ByteArrayInputStream;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Currency;
@@ -48,24 +51,39 @@ public class StatisticsRoute extends AppLayout {
         dialog.setWidth("1200px");
         dialog.getFooter().add(new CloseDialogButton(dialog));
 
-        var statCurrency = Utils.findCurrencyByCodeOrThrow(statistics.curencyCode());
-        var totalPaid = Utils.calculateCurrency(statistics.statistics().stream().map(it -> it.moneyPaid().amount()).reduce(0L, Long::sum), statCurrency);
+        var totalPaid = statistics.totalMoneyPaid();
 
         dialog.add(new Div(statistics.from().format(formatter) + " - " + statistics.to().format(formatter)));
-        dialog.add(new Div("Total paid: " + totalPaid + " " + statCurrency.getSymbol()));
+        dialog.add(new Div("Total paid: " + totalPaid.asString()));
 
         var grid = new Grid<>(StatisticsRecord.BookStatistics.class, false);
         VaadinCommons.configureDefaultBookGridEx(grid, StatisticsRecord.BookStatistics::book);
 
-        grid.addColumn(stat -> {
-            var paidAmount = stat.moneyPaid().amount();
-            var currency = Utils.findCurrencyByCodeOrThrow(stat.moneyPaid().currency());
-
-            return Utils.calculateCurrency(paidAmount, currency);
-        }).setHeader("Money paid");
+        grid.addColumn(stat -> stat.moneyPaid().asString()).setHeader("Money paid");
         grid.addColumn(StatisticsRecord.BookStatistics::borrowingCount).setHeader("Borrowing count");
         grid.setItems(statistics.statistics());
         dialog.add(grid);
+
+        dialog.getFooter().add(
+                new Anchor() {{
+                    var docxResource = new StreamResource(statistics.title() + ".docx", () -> {
+                        try {
+                            // Call your method to generate the DOCX content into a ByteArrayOutputStream
+                            var outputStream = DocxStatisticsWritter.createReport(statistics);
+                            return new ByteArrayInputStream(outputStream.toByteArray());
+                        } catch (Exception e) {
+                            // Log the exception properly in a real application
+                            e.printStackTrace();
+                            Notification.show("Error generating report: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+                            return null;
+                        }
+                    });
+
+                    setHref(docxResource);
+                    setTitle("Download docx report");
+                    setText("Download docx report");
+                }}
+        );
 
         return dialog;
     }
