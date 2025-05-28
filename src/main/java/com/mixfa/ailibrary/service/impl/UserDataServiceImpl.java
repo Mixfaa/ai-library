@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -125,7 +124,7 @@ public class UserDataServiceImpl implements UserDataService {
     private class ReadBooksImpl implements ReadBooks {
         private final String userID;
         private final LockingVisitors.ReadWriteLockVisitor<ReadBooksImpl> lockVisitor;
-        private AtomicReference<ReadBook[]> readBooksRef;
+        private ReadBook[] readBooks;
 
         private static Predicate<ReadBook> makePredicate(Book book) {
             return rb -> rb.book().compareById(book);
@@ -133,19 +132,19 @@ public class UserDataServiceImpl implements UserDataService {
 
         public ReadBooksImpl(String userID, ReadBook[] readBooks) {
             this.userID = userID;
-            this.readBooksRef = new AtomicReference<>(readBooks);
+            this.readBooks = readBooks;
             this.lockVisitor = LockingVisitors.reentrantReadWriteLockVisitor(this);
         }
 
         @Override
         public ReadBook[] get() {
-            return readBooksRef.get();
+            return readBooks;
         }
 
         @Override
         public void setMark(Book book, ReadBook.Mark mark) {
             lockVisitor.acceptWriteLocked(target -> {
-                var readBooks = target.readBooksRef.get();
+                var readBooks = target.readBooks;
 
                 Predicate<ReadBook> predicate = makePredicate(book);
                 var exists = Utils.anyMatch(readBooks, predicate);
@@ -157,7 +156,7 @@ public class UserDataServiceImpl implements UserDataService {
                 } else
                     readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
 
-                target.readBooksRef.set(readBooks);
+                target.readBooks = readBooks;
                 setField(UserData.Fields.readBooks, readBooks, UserData::withReadBooks, target.userID);
             });
         }
@@ -165,14 +164,14 @@ public class UserDataServiceImpl implements UserDataService {
         @Override
         public void unmark(Book book) {
             lockVisitor.acceptWriteLocked(target -> {
-                var readBooks = target.readBooksRef.get();
+                var readBooks = target.readBooks;
 
                 Predicate<ReadBook> predicate = makePredicate(book);
                 var exists = Utils.anyMatch(readBooks, predicate);
                 if (!exists)
                     return;
                 readBooks = Utils.filter(readBooks, predicate.negate());
-                target.readBooksRef.set(readBooks);
+                target.readBooks = readBooks;
                 setField(UserData.Fields.readBooks, readBooks, UserData::withReadBooks, target.userID);
             });
 
@@ -181,7 +180,7 @@ public class UserDataServiceImpl implements UserDataService {
         @Override
         public boolean addRemove(Book book, ReadBook.Mark mark) {
             return lockVisitor.applyWriteLocked(target -> {
-                var readBooks = target.readBooksRef.get();
+                var readBooks = target.readBooks;
                 Predicate<ReadBook> predicate = makePredicate(book);
                 var exists = Utils.anyMatch(readBooks, predicate);
                 if (exists) {
@@ -189,7 +188,7 @@ public class UserDataServiceImpl implements UserDataService {
                 } else {
                     readBooks = ArrayUtils.add(readBooks, new ReadBook(book, mark));
                 }
-                target.readBooksRef.set(readBooks);
+                target.readBooks = readBooks;
                 setField(UserData.Fields.readBooks, readBooks, UserData::withReadBooks, target.userID);
 
                 return !exists; // true if added
@@ -199,7 +198,7 @@ public class UserDataServiceImpl implements UserDataService {
         @Override
         public ReadBook.Mark getMark(Book book) {
             return lockVisitor.applyReadLocked(target -> {
-                var readBooks = target.readBooksRef.get();
+                var readBooks = target.readBooks;
                 for (ReadBook readBook : readBooks) {
                     if (readBook.book().compareById(book))
                         return readBook.mark();
@@ -217,7 +216,7 @@ public class UserDataServiceImpl implements UserDataService {
     private class WaitListImpl implements WaitList {
         private final String userId;
         private final LockingVisitors.ReadWriteLockVisitor<WaitListImpl> lockingVisitor;
-        private final AtomicReference<Book[]> waitListRef;
+        private Book[] waitList;
 
         private static Predicate<Book> makePredicate(Book book) {
             return bk -> bk.compareById(book);
@@ -225,19 +224,19 @@ public class UserDataServiceImpl implements UserDataService {
 
         private WaitListImpl(String userId, Book[] waitList) {
             this.userId = userId;
-            this.waitListRef = new AtomicReference<>(waitList);
+            this.waitList = waitList;
             this.lockingVisitor = LockingVisitors.reentrantReadWriteLockVisitor(this);
         }
 
         @Override
         public Book[] get() {
-            return waitListRef.get();
+            return waitList;
         }
 
         @Override
         public boolean addRemove(Book book) {
             return lockingVisitor.applyWriteLocked(target -> {
-                var waitListedBooks = target.waitListRef.get();
+                var waitListedBooks = target.waitList;
                 var predicate = makePredicate(book);
 
                 var exists = Utils.anyMatch(waitListedBooks, predicate);
@@ -247,7 +246,7 @@ public class UserDataServiceImpl implements UserDataService {
                 else
                     waitListedBooks = ArrayUtils.add(waitListedBooks, book);
 
-                target.waitListRef.set(waitListedBooks);
+                target.waitList = waitListedBooks;
                 setField(UserData.Fields.waitList, waitListedBooks, UserData::withWaitList, userId);
 
                 return !exists;
@@ -257,7 +256,7 @@ public class UserDataServiceImpl implements UserDataService {
         @Override
         public boolean isInList(Book book) {
             return lockingVisitor.applyReadLocked(target -> {
-                var readBooks = target.waitListRef.get();
+                var readBooks = target.waitList;
                 var predicate = makePredicate(book);
 
                 return Utils.anyMatch(readBooks, predicate);
@@ -267,7 +266,7 @@ public class UserDataServiceImpl implements UserDataService {
         @Override
         public boolean isInList(Predicate<Book> predicate) {
             return lockingVisitor.applyReadLocked(target -> {
-                var readBooks = target.waitListRef.get();
+                var readBooks = target.waitList;
                 return Utils.anyMatch(readBooks, predicate);
             });
         }

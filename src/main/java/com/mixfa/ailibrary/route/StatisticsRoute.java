@@ -2,7 +2,6 @@ package com.mixfa.ailibrary.route;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
-import com.mixfa.ailibrary.model.Money;
 import com.mixfa.ailibrary.model.statistics.StatisticsRecord;
 import com.mixfa.ailibrary.model.user.Role;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
@@ -12,11 +11,11 @@ import com.mixfa.ailibrary.route.components.model.LocalDateRange;
 import com.mixfa.ailibrary.service.StatisticsService;
 import com.mixfa.ailibrary.service.impl.Services;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -49,7 +48,11 @@ public class StatisticsRoute extends AppLayout {
         dialog.setWidth("1200px");
         dialog.getFooter().add(new CloseDialogButton(dialog));
 
-        dialog.add(new Text(statistics.from().format(formatter) + " - " + statistics.to().format(formatter)));
+        var statCurrency = Utils.findCurrencyByCodeOrThrow(statistics.curencyCode());
+        var totalPaid = Utils.calculateCurrency(statistics.statistics().stream().map(it -> it.moneyPaid().amount()).reduce(0L, Long::sum), statCurrency);
+
+        dialog.add(new Div(statistics.from().format(formatter) + " - " + statistics.to().format(formatter)));
+        dialog.add(new Div("Total paid: " + totalPaid + " " + statCurrency.getSymbol()));
 
         var grid = new Grid<>(StatisticsRecord.BookStatistics.class, false);
         VaadinCommons.configureDefaultBookGridEx(grid, StatisticsRecord.BookStatistics::book);
@@ -57,9 +60,8 @@ public class StatisticsRoute extends AppLayout {
         grid.addColumn(stat -> {
             var paidAmount = stat.moneyPaid().amount();
             var currency = Utils.findCurrencyByCodeOrThrow(stat.moneyPaid().currency());
-            var digits = currency.getDefaultFractionDigits();
 
-            return digits <= 0 ? paidAmount : paidAmount / Math.pow(10, digits);
+            return Utils.calculateCurrency(paidAmount, currency);
         }).setHeader("Money paid");
         grid.addColumn(StatisticsRecord.BookStatistics::borrowingCount).setHeader("Borrowing count");
         grid.setItems(statistics.statistics());
@@ -107,6 +109,10 @@ public class StatisticsRoute extends AppLayout {
                     return;
                 }
 
+                if (period == null || period.startDate() == null || period.endDate() == null) {
+                    Notification.show("Enter valid period");
+                    return;
+                }
                 var statistics = statisticsService.getStatistics(period.startDate(), period.endDate(), currency.getNumericCode());
 
                 makeShowStatisticsDialog(statistics).open();

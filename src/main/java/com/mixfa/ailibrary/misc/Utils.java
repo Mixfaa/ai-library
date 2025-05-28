@@ -7,6 +7,7 @@ import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.ReadBook;
 import com.mixfa.ailibrary.model.user.AuthenticatedAccount;
 import jakarta.annotation.Nullable;
+import lombok.Getter;
 import lombok.experimental.UtilityClass;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Sinks;
 import java.lang.reflect.Array;
 import java.net.http.HttpResponse;
 import java.text.MessageFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -28,6 +30,8 @@ import java.util.function.Predicate;
 public class Utils {
     public static Locale DEFAULT_LOCALE = Locale.ENGLISH;
     public static int PAGE_SIZE = 15;
+    @Getter
+    public static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<Map<String, Object>>() {
@@ -45,12 +49,8 @@ public class Utils {
         return sink.asFlux().share();
     }
 
-    public static Currency findByCode(int code) {
-        for (Currency currency : Currency.getAvailableCurrencies()) {
-            if (currency.getNumericCode() == code)
-                return currency;
-        }
-        return null;
+    public static double calculateCurrency(long amount, Currency currency) {
+        return currency.getDefaultFractionDigits() <= 0 ? amount : amount / Math.pow(10, currency.getDefaultFractionDigits());
     }
 
     public static Currency findCurrencyByCodeOrThrow(int code) {

@@ -21,7 +21,7 @@ public record UserData(
         @Id String id,
         @DBRef Account owner,
         @DBRef Book[] waitList,
-        @DBRef ReadBook[] readBooks,
+        ReadBook[] readBooks,
         Locale targetLocale
 ) implements HasOwner {
     public static Criteria ownerCriteria() {

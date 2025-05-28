@@ -49,8 +49,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         record Result(
                 Money moneyPaid
-        ) {
-        }
+        ) { }
 
         var res = mongoTemplate.aggregate(Aggregation.newAggregation(match, project), BookBorrowing.class, Result.class);
         return res.getMappedResults().stream().map(Result::moneyPaid).toArray(Money[]::new);
@@ -68,15 +67,13 @@ public class StatisticsServiceImpl implements StatisticsService {
             long moneyPaid = 0;
 
             for (Money money : allPaidMoney) {
-                var amount = money.currency() == targetCurrency ?
-                        money.amount() :
-                        currencyConverter.convert(money, targetCurrency).amount();
+                var amount =  currencyConverter.convert(money, targetCurrency).amount();
                 moneyPaid += amount;
             }
             var money = new Money(targetCurrency, moneyPaid);
             statisticsBlocks.add(new StatisticsRecord.BookStatistics(book, money, allPaidMoney.length));
         }
 
-        return new StatisticsRecord(from, to, statisticsBlocks);
+        return new StatisticsRecord(from, to, targetCurrency, statisticsBlocks);
     }
 }
