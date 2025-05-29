@@ -16,11 +16,11 @@ import java.util.Currency;
 @Slf4j
 @Service
 public class CurrencyConverterImpl implements CurrencyConverter {
-    private final String apiKey;
     private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final String urlTemplate;
 
     public CurrencyConverterImpl(@Value("${currencyconverter.api-key}") String apiKey) {
-        this.apiKey = apiKey;
+        this.urlTemplate = "https://v6.exchangerate-api.com/v6/%s/pair/{0}/{1}".formatted(apiKey);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class CurrencyConverterImpl implements CurrencyConverter {
 
         var originCurrency = from.currency();
 
-        var uri = Utils.fmt("https://v6.exchangerate-api.com/v6/{0}/pair/{1}/{2}", apiKey, originCurrency.getCurrencyCode(), targetCurrency.getCurrencyCode());
+        var uri = Utils.fmt(urlTemplate, originCurrency.getCurrencyCode(), targetCurrency.getCurrencyCode());
         var ratesRequest = HttpRequest.newBuilder(URI.create(uri)).GET().build();
 
         try {

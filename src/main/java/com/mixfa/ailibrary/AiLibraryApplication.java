@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.MongoLocaleConverter;
 import com.mixfa.ailibrary.misc.cache.ByUserCache;
 import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
+import com.mixfa.ailibrary.service.impl.StatisticsServiceImpl;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -24,6 +26,8 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.time.LocalDate;
+import java.util.Currency;
 import java.util.List;
 
 @Slf4j
@@ -58,6 +62,25 @@ public class AiLibraryApplication implements AppShellConfigurator {
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(DeserializationFeature.USE_JAVA_ARRAY_FOR_JSON_ARRAY, false);
     }
+
+//    @Bean
+//    public CommandLineRunner clr(StatisticsServiceImpl statisticsService) {
+//        return args -> {
+//            while (true) {
+//                System.in.read();
+//
+//                try {
+//                    statisticsService.getStatistics(
+//                            LocalDate.now().minusDays(30),
+//                            LocalDate.now().plusDays(1),
+//                            Currency.getInstance("UAH")
+//                    );
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        };
+//    }
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)

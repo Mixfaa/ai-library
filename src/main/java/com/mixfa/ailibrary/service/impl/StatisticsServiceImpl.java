@@ -10,6 +10,8 @@ import com.mixfa.ailibrary.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.GroupOperation;
+import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,15 @@ public class StatisticsServiceImpl implements StatisticsService {
         return mongoTemplate.findDistinct(match, BookBorrowing.Fields.book, BookBorrowing.class, Book.class);
     }
 
+    private static final GroupOperation GROUP_AGGREGATION = Aggregation.group(fmt("{0}.{1}", BookBorrowing.Fields.moneyPaid, Money.Fields.currency))
+            .sum(fmt("{0}.{1}", BookBorrowing.Fields.moneyPaid, Money.Fields.amount))
+            .as(Money.Fields.amount);
+
+    private static final ProjectionOperation PROJECT_AGGREGATION = Aggregation.project()
+            .and("_id").as(Money.Fields.currency)
+            .and(Money.Fields.amount).as(Money.Fields.amount)
+            .andExclude("_id");
+
     public Money[] getAllBorrowings(LocalDate from, LocalDate to, Book book) {
         var match = Aggregation.match(new Criteria().andOperator(
                 Criteria.where(fmt("{0}.$id", BookBorrowing.Fields.book)).is(book.id()),
@@ -46,14 +57,8 @@ public class StatisticsServiceImpl implements StatisticsService {
                 Criteria.where(BookBorrowing.Fields.borrowedTime).lte(to)
         ));
 
-        var project = Aggregation.project(BookBorrowing.Fields.moneyPaid).andExclude("_id");
-
-        record Result(
-                Money moneyPaid
-        ) { }
-
-        var res = mongoTemplate.aggregate(Aggregation.newAggregation(match, project), BookBorrowing.class, Result.class);
-        return res.getMappedResults().stream().map(Result::moneyPaid).toArray(Money[]::new);
+        var res = mongoTemplate.aggregate(Aggregation.newAggregation(match, GROUP_AGGREGATION, PROJECT_AGGREGATION), BookBorrowing.class, Money.class);
+        return res.getMappedResults().toArray(Money[]::new);
     }
 
     @Override
@@ -68,7 +73,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             long moneyPaid = 0;
 
             for (Money money : allPaidMoney) {
-                var amount =  currencyConverter.convert(money, targetCurrency).amount();
+                var amount = currencyConverter.convert(money, targetCurrency).amount();
                 moneyPaid += amount;
             }
             var money = new Money(targetCurrency, moneyPaid);

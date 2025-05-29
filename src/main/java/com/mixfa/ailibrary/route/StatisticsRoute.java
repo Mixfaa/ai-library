@@ -1,5 +1,6 @@
 package com.mixfa.ailibrary.route;
 
+import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.statistics.StatisticsRecord;
 import com.mixfa.ailibrary.model.user.Role;
@@ -26,6 +27,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import jakarta.annotation.security.RolesAllowed;
 import org.apache.commons.lang3.ObjectUtils;
+import oshi.util.Util;
 
 import java.io.ByteArrayInputStream;
 import java.time.format.DateTimeFormatter;
@@ -36,8 +38,6 @@ import java.util.Currency;
 @RolesAllowed(Role.ADMIN_ROLE)
 public class StatisticsRoute extends AppLayout {
     private final StatisticsService statisticsService;
-
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public StatisticsRoute(Services services) {
         this.statisticsService = services.statisticsService();
@@ -53,7 +53,7 @@ public class StatisticsRoute extends AppLayout {
 
         var totalPaid = statistics.totalMoneyPaid();
 
-        dialog.add(new Div(statistics.from().format(formatter) + " - " + statistics.to().format(formatter)));
+        dialog.add(new Div(statistics.from().format(Utils.getDateTimeFormatter()) + " - " + statistics.to().format(Utils.getDateTimeFormatter())));
         dialog.add(new Div("Total paid: " + totalPaid.asString()));
 
         var grid = new Grid<>(StatisticsRecord.BookStatistics.class, false);
@@ -136,7 +136,6 @@ public class StatisticsRoute extends AppLayout {
                 makeShowStatisticsDialog(statistics).open();
             }
         });
-
 
         return new VerticalLayout(new HorizontalLayout(periodPicker, currencySelect), fetchButton);
     }
