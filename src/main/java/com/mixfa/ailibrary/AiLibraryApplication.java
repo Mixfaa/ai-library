@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.MongoLocaleConverter;
 import com.mixfa.ailibrary.misc.cache.ByUserCache;
 import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
+import com.mixfa.ailibrary.service.ai.impl.AiFunctionsImpl;
 import com.mixfa.ailibrary.service.library.CommentService;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.server.PWA;
@@ -12,6 +13,7 @@ import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -61,19 +63,16 @@ public class AiLibraryApplication implements AppShellConfigurator {
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(DeserializationFeature.USE_JAVA_ARRAY_FOR_JSON_ARRAY, false);
     }
-
+//
 //    @Bean
-//    public CommandLineRunner clr(StatisticsServiceImpl statisticsService) {
+//    public CommandLineRunner clr(AiFunctionsImpl aiFunctions) {
 //        return args -> {
 //            while (true) {
 //                System.in.read();
 //
 //                try {
-//                    statisticsService.getStatistics(
-//                            LocalDate.now().minusDays(30),
-//                            LocalDate.now().plusDays(1),
-//                            Currency.getInstance("UAH")
-//                    );
+//                    var index = aiFunctions.booksIndexFuncImpl(0);
+//                    System.out.println(index);
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                }

@@ -11,12 +11,18 @@ import com.mixfa.ailibrary.service.user.UserDataService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.types.ObjectId;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
+import org.springframework.data.mongodb.core.aggregation.StringOperators;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +31,7 @@ public class AiFunctionsImpl implements AiFunctions {
     private final UserDataService userDataService;
     private final BookService bookService;
     private final AiBookDescriptionService aiBookDescriptionService;
+    private final MongoTemplate mongoTemplate;
     private final ByUserCache<FunctionToolCallback<?, ?>> cache;
 
     private final FunctionToolCallback<SearchArgs, String> defaultSearchFunction =
@@ -147,5 +154,43 @@ public class AiFunctionsImpl implements AiFunctions {
                         .inputType(BookIdArg.class)
                         .description("Checks if book is in user`s wait list, parameter: bookId (string)")
                         .build());
+    }
+
+    public String booksIndexFuncImpl(int page) {
+        final int PAGE_SIZE = 150;
+
+        record BookData(String title, String authors, ObjectId _id) {
+            public String string() {
+                return "title: " + title + ", authors: " + authors + ", id: " + _id.toHexString();
+            }
+        }
+
+        var res = mongoTemplate.aggregate(
+                Aggregation.newAggregation(
+                        Aggregation.project(Book.Fields.title, Book.Fields.authors)
+                                .and(
+                                        ArrayOperators.Reduce.arrayOf(Book.Fields.authors)
+                                                .withInitialValue("")
+                                                .reduce(StringOperators.Concat.valueOf("$$value"))
+                                )
+                        ,
+                        Aggregation.skip(PAGE_SIZE * page),
+                        Aggregation.limit(PAGE_SIZE)
+                ),
+                Book.class,
+                BookData.class
+        );
+        return res.getMappedResults().stream().map(BookData::string).collect(Collectors.joining("\n"));
+    }
+
+
+    private final FunctionToolCallback<PageArg, String> booksIndexToolCallback = FunctionToolCallback.<PageArg, String>builder("booksIndex", pageArg -> booksIndexFuncImpl(pageArg.page()))
+            .inputType(PageArg.class)
+            .description("Function returns list that contains 150 short descriptions of books, parameter: page (integer)")
+            .build();
+
+    @Override
+    public FunctionToolCallback<PageArg, String> booksIndexFunction() {
+        return booksIndexToolCallback;
     }
 }

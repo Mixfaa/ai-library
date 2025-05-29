@@ -136,7 +136,6 @@ public class OpenLibImport extends AppLayout {
                         )
                 );
             } catch (Exception ex) {
-                ex.printStackTrace();
                 continue;
             }
         }

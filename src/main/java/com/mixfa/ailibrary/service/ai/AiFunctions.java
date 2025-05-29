@@ -10,6 +10,10 @@ public interface AiFunctions {
     record BookIdArg(String bookId) {
     }
 
+    record PageArg(int page) {}
+
+    FunctionToolCallback<PageArg, String> booksIndexFunction();
+
     FunctionToolCallback<SearchArgs, String> searchFunction();
 
     FunctionToolCallback<SearchArgs, String> searchFunctionWith(SearchOption searchOption);

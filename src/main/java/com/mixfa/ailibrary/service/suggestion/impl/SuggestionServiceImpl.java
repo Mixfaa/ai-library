@@ -50,7 +50,7 @@ public class SuggestionServiceImpl implements SuggestionService {
             )
     );
 
-    private static final UserMessage SEARCH_MESSAGE = new UserMessage("Suggest 3 books to read, based on user`s read books and available books, to list availiable books, use search function");
+    private static final UserMessage SEARCH_MESSAGE = new UserMessage("Suggest 3-5 books to read, based on user`s read books and available books, to list availiable books, use search function");
 
     private final Retry retry = Retry.of("suggestionService",
             RetryConfig.<SuggestedBook[]>custom()
@@ -118,9 +118,10 @@ public class SuggestionServiceImpl implements SuggestionService {
         var userContext = new UserMessage(suggsetionHint.makeHint());
 
         var searchTool = aiFunctions.searchFunctionWith(searchOptions);
+        var indexTool = aiFunctions.booksIndexFunction();
 
         var searchPromptOptions = OpenAiChatOptions.builder()
-                .toolCallbacks(searchTool)
+                .toolCallbacks(searchTool, indexTool)
                 .build();
 
         var prompt = new Prompt(List.of(CONFIG_MESSAGE, SEARCH_MESSAGE, userContext), searchPromptOptions);
