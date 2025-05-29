@@ -41,39 +41,14 @@ public class Utils {
         return new JsonMappingBodyHandler<>(MAP_TYPE_REFERENCE, MAPPER);
     }
 
-    public static <T> Sinks.Many<T> sink() {
-        return Sinks.many().multicast().onBackpressureBuffer();
-    }
-
-    public static <T> Flux<T> sinkToFlux(Sinks.Many<T> sink) {
-        return sink.asFlux().share();
-    }
-
     public static double calculateCurrency(long amount, Currency currency) {
         return currency.getDefaultFractionDigits() <= 0 ? amount : amount / Math.pow(10, currency.getDefaultFractionDigits());
-    }
-
-    public static Currency findCurrencyByCodeOrThrow(int code) {
-        for (Currency currency : Currency.getAvailableCurrencies()) {
-            if (currency.getNumericCode() == code)
-                return currency;
-        }
-        throw new NoSuchElementException(MessageFormat.format("Currency with code {0} not found", code));
     }
 
     public static @Nullable JsonNode findJsonNode(JsonNode root, Predicate<JsonNode> predicate) {
         for (JsonNode jsonNode : root)
             if (predicate.test(jsonNode)) return jsonNode;
         return null;
-    }
-
-    public static <K, V> V getOrGetFirst(Map<K, V> map, K key) {
-        var value = map.get(key);
-        if (value == null) {
-            var firstKey = map.keySet().stream().findFirst().orElse(null);
-            return map.get(firstKey);
-        }
-        return value;
     }
 
     public static String makeBookDescription(Book book) {
@@ -187,7 +162,6 @@ public class Utils {
                 return false;
         return true;
     }
-
 
     public <T> Optional<T> find(T[] array, Predicate<T> predicate) {
         if (array == null || array.length == 0) return Optional.empty();

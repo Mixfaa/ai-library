@@ -2,7 +2,7 @@ package com.mixfa.ailibrary.route;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
-import com.mixfa.ailibrary.model.statistics.StatisticsRecord;
+import com.mixfa.ailibrary.model.statistics.StatisticRecord;
 import com.mixfa.ailibrary.model.user.Role;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
 import com.mixfa.ailibrary.route.components.DateRangePicker;
@@ -27,10 +27,8 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import jakarta.annotation.security.RolesAllowed;
 import org.apache.commons.lang3.ObjectUtils;
-import oshi.util.Util;
 
 import java.io.ByteArrayInputStream;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Currency;
 
@@ -46,21 +44,18 @@ public class StatisticsRoute extends AppLayout {
         setContent(makeContnet());
     }
 
-    private static Dialog makeShowStatisticsDialog(StatisticsRecord statistics) {
+    private static Dialog makeShowStatisticsDialog(StatisticRecord statistics) {
         var dialog = new Dialog();
         dialog.setWidth("1200px");
         dialog.getFooter().add(new CloseDialogButton(dialog));
 
-        var totalPaid = statistics.totalMoneyPaid();
-
         dialog.add(new Div(statistics.from().format(Utils.getDateTimeFormatter()) + " - " + statistics.to().format(Utils.getDateTimeFormatter())));
-        dialog.add(new Div("Total paid: " + totalPaid.asString()));
 
-        var grid = new Grid<>(StatisticsRecord.BookStatistics.class, false);
-        VaadinCommons.configureDefaultBookGridEx(grid, StatisticsRecord.BookStatistics::book);
+        var grid = new Grid<>(StatisticRecord.BookStatistic.class, false);
+        VaadinCommons.configureDefaultBookGridEx(grid, StatisticRecord.BookStatistic::book);
 
-        grid.addColumn(stat -> stat.moneyPaid().asString()).setHeader("Money paid");
-        grid.addColumn(StatisticsRecord.BookStatistics::borrowingCount).setHeader("Borrowing count");
+        grid.addColumn(StatisticRecord.BookStatistic::moneyPaidString).setHeader("Money paid");
+        grid.addColumn(StatisticRecord.BookStatistic::borrowingCount).setHeader("Borrowing count");
         grid.setItems(statistics.statistics());
         dialog.add(grid);
 

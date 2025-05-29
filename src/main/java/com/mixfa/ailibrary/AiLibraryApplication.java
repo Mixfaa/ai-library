@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.MongoLocaleConverter;
 import com.mixfa.ailibrary.misc.cache.ByUserCache;
 import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
+import com.mixfa.ailibrary.service.CommentService;
 import com.mixfa.ailibrary.service.impl.StatisticsServiceImpl;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.server.PWA;
@@ -16,6 +17,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
@@ -32,6 +34,7 @@ import java.util.List;
 
 @Slf4j
 @EnableScheduling
+@EnableConfigurationProperties(CommentService.Properties.class)
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
 @EnableMongoRepositories
 @PWA(name = "ai-library", shortName = "ailib")

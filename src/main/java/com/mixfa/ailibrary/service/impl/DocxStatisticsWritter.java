@@ -2,19 +2,18 @@ package com.mixfa.ailibrary.service.impl;
 
 
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.statistics.StatisticsRecord;
+import com.mixfa.ailibrary.model.statistics.StatisticRecord;
 import org.apache.poi.xwpf.usermodel.*;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
 
 public class DocxStatisticsWritter {
 
-    public static ByteArrayOutputStream createReport(StatisticsRecord statRecord) {
+    public static ByteArrayOutputStream createReport(StatisticRecord statRecord) {
         XWPFDocument document = new XWPFDocument();
         var outputStream = new ByteArrayOutputStream();
         try {
@@ -44,13 +43,6 @@ public class DocxStatisticsWritter {
             toRun.addBreak();
             toRun.addBreak(); // Add extra break for spacing before table
 
-            XWPFRun totalPaid = dateParagraph.createRun();
-            totalPaid.setText("Total money paid:   " + statRecord.totalMoneyPaid().asString());
-            totalPaid.setFontFamily("Inter");
-            totalPaid.setFontSize(12);
-            totalPaid.addBreak();
-            totalPaid.addBreak(); // Add extra break for spacing before table
-
             // Create Table
             XWPFTable table = document.createTable(1, 4); // Start with 1 row (for headers) and 4 columns
 
@@ -79,7 +71,7 @@ public class DocxStatisticsWritter {
                 XWPFTableRow dataRow = table.createRow(); // Create a new row for each statistics entry
                 setCellText(dataRow.getCell(0), stats.book().title(), false);
                 setCellText(dataRow.getCell(1), stats.book().id().toHexString(), false);
-                setCellText(dataRow.getCell(2), stats.moneyPaid().asString(), false);
+                setCellText(dataRow.getCell(2), stats.moneyPaidString(), false);
                 setCellText(dataRow.getCell(3), String.valueOf(stats.borrowingCount()), false);
             }
 

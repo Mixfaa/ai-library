@@ -1,10 +1,11 @@
 package com.mixfa.ailibrary.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mixfa.ailibrary.misc.ExceptionType;
 import com.mixfa.ailibrary.misc.Utils;
+import com.mixfa.ailibrary.model.Money;
 import com.mixfa.ailibrary.model.invoice.InvoiceData;
 import com.mixfa.ailibrary.model.invoice.InvoiceStatus;
-import com.mixfa.ailibrary.model.Money;
 import com.mixfa.ailibrary.service.InvoiceProvider;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +38,10 @@ public class MonoInvoiceProvider implements InvoiceProvider {
         return reqBuilder.header("X-Token", xToken);
     }
 
-    @SneakyThrows
+    private static final URI CREATE_INVOICE_URI = makeUri("/api/merchant/invoice/create");
+
     @Override
+    @SneakyThrows
     public InvoiceData createInvoice(Money amount, String destination) {
         var data = objectMapper.writeValueAsBytes(
                 Map.of(
@@ -48,22 +51,27 @@ public class MonoInvoiceProvider implements InvoiceProvider {
                 )
         );
 
-        var request = configureRequest(HttpRequest.newBuilder(makeUri("/api/merchant/invoice/create")))
+        var request = configureRequest(HttpRequest.newBuilder(CREATE_INVOICE_URI))
                 .POST(HttpRequest.BodyPublishers.ofByteArray(data))
                 .build();
 
-        var response = httpClient.send(request, Utils.mapBodyHandler());
-        if (response.statusCode() != 200) {
-            log.error("Error creating invoice: {}", response.statusCode());
-            throw new RuntimeException("Error creating invoice");
+        try {
+            var response = httpClient.send(request, Utils.mapBodyHandler());
+            if (response.statusCode() != 200) {
+                log.error("Error creating invoice, status: {}", response.statusCode());
+                throw ExceptionType.invoiceCreationFailed();
+            }
+
+            var responseBody = response.body();
+
+            return new InvoiceData(
+                    (String) responseBody.get("invoiceId"),
+                    (String) responseBody.get("pageUrl")
+            );
+        } catch (Exception e) {
+            log.error("Error creating invoice: {}", e.getMessage());
+            throw ExceptionType.invoiceCreationFailed();
         }
-
-        var responseBody = response.body();
-
-        return new InvoiceData(
-                (String) responseBody.get("invoiceId"),
-                (String) responseBody.get("pageUrl")
-        );
     }
 
     @Override

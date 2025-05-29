@@ -36,7 +36,6 @@ public interface UserDataService {
 
         void unmark(Book book);
 
-        // true if added
         boolean addRemove(Book book, ReadBook.Mark mark);
 
         ReadBook.Mark getMark(Book book);

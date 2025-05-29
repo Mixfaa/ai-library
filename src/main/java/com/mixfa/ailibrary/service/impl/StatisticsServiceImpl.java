@@ -3,7 +3,7 @@ package com.mixfa.ailibrary.service.impl;
 import com.mixfa.ailibrary.model.Book;
 import com.mixfa.ailibrary.model.BookBorrowing;
 import com.mixfa.ailibrary.model.Money;
-import com.mixfa.ailibrary.model.statistics.StatisticsRecord;
+import com.mixfa.ailibrary.model.statistics.StatisticRecord;
 import com.mixfa.ailibrary.service.CurrencyConverter;
 import com.mixfa.ailibrary.service.SearchEngine;
 import com.mixfa.ailibrary.service.StatisticsService;
@@ -62,24 +62,16 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public StatisticsRecord getStatistics(LocalDate from, LocalDate to, Currency targetCurrency) {
+    public StatisticRecord getStatistics(LocalDate from, LocalDate to, Currency targetCurrency) {
         var booksIds = allBorrowedBooksIds(from, to);
 
-        var statisticsBlocks = new ArrayList<StatisticsRecord.BookStatistics>();
+        var statisticsBlocks = new ArrayList<StatisticRecord.BookStatistic>();
 
         for (Book book : booksIds) {
             var allPaidMoney = getAllBorrowings(from, to, book);
-
-            long moneyPaid = 0;
-
-            for (Money money : allPaidMoney) {
-                var amount = currencyConverter.convert(money, targetCurrency).amount();
-                moneyPaid += amount;
-            }
-            var money = new Money(targetCurrency, moneyPaid);
-            statisticsBlocks.add(new StatisticsRecord.BookStatistics(book, money, allPaidMoney.length));
+            statisticsBlocks.add(new StatisticRecord.BookStatistic(book, allPaidMoney, allPaidMoney.length));
         }
 
-        return new StatisticsRecord(from, to, targetCurrency, statisticsBlocks);
+        return new StatisticRecord(from, to, statisticsBlocks);
     }
 }

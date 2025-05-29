@@ -18,11 +18,14 @@ import com.mixfa.ailibrary.service.repo.CommentsRepo;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +33,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -40,11 +44,12 @@ import java.util.function.Function;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
+
+
 @Service
 public class CommentServiceImpl implements CommentService {
     private final CommentsRepo commentsRepo;
     private final SearchEngine.ForComments commentSearchEngine;
-    private final BookRepo bookRepo;
     private final MongoTemplate mongoTemplate;
     private final BookService bookService;
     private final ChatModel chatModel;
@@ -52,24 +57,26 @@ public class CommentServiceImpl implements CommentService {
     private final PerUserRateLimiter rateLimiter;
     private final ApplicationEventPublisher eventPublisher;
 
-    private final AiCommentChecker aiCommentChecker = new AiCommentChecker();
+    private final AiCommentChecker aiCommentChecker;
 
     public CommentServiceImpl(CacheMaintainer cacheMaintainer,
                               CommentsRepo commentsRepo,
                               SearchEngine.ForComments commentSearchEngine,
-                              BookRepo bookRepo,
                               MongoTemplate mongoTemplate,
                               BookService bookService,
                               ChatModel chatModel,
-                              AiBookDescriptionService aiBookDescriptionService, ApplicationEventPublisher eventPublisher) {
+                              AiBookDescriptionService aiBookDescriptionService,
+                              ApplicationEventPublisher eventPublisher,
+                              CommentService.Properties properties) {
         this.commentsRepo = commentsRepo;
         this.commentSearchEngine = commentSearchEngine;
-        this.bookRepo = bookRepo;
         this.mongoTemplate = mongoTemplate;
         this.bookService = bookService;
         this.chatModel = chatModel;
         this.aiBookDescriptionService = aiBookDescriptionService;
         this.eventPublisher = eventPublisher;
+
+        this.aiCommentChecker = new AiCommentChecker(properties.commentschecking().enabled());
 
         this.rateLimiter = new PerUserRateLimiter(
                 RateLimiterConfig.custom()
@@ -94,9 +101,6 @@ public class CommentServiceImpl implements CommentService {
         if (commentsRepo.existsByBookIdAndOwner(request.bookId(), remoteUser))
             throw ExceptionType.bookAlreadyRated(request.bookId(), remoteUser.getUsername());
 
-        if (!bookRepo.existsById(request.bookId()))
-            throw ExceptionType.bookNotFound(request.bookId());
-
         var book = bookService.findBookOrThrow(request.bookId());
 
         var validationPassed = aiCommentChecker.checkComment(request.text(), book);
@@ -113,6 +117,7 @@ public class CommentServiceImpl implements CommentService {
     public void removeComment(Object commentId) {
         var q = Query.query(HasOwner.ownerCriteria().and(Comment.Fields.id).is(Utils.idToObj(commentId)));
         var comment = mongoTemplate.findOne(q, Comment.class);
+        if (comment == null) return;
         mongoTemplate.remove(q, Comment.class);
         var rate = getBookRate(comment.book().id());
         eventPublisher.publishEvent(new CommentService.Event.OnCommentRemoved(comment, rate));
@@ -151,7 +156,10 @@ public class CommentServiceImpl implements CommentService {
         );
     }
 
+    @RequiredArgsConstructor
     private class AiCommentChecker {
+        private final boolean enabled;
+
         private static final SystemMessage CONFIG_MESSAGE = new SystemMessage(
                 String.join(
                         "\n",
@@ -197,7 +205,9 @@ public class CommentServiceImpl implements CommentService {
 
         private Function<Prompt, Optional<Boolean>> commentValidationPassed = Retry.decorateFunction(retry, this::commentValidationSuccess);
 
-        private boolean checkComment(String comment, Book book) {
+        public boolean checkComment(String comment, Book book) {
+            if (!enabled) return true;
+
             List<Message> messages = List.of(CONFIG_MESSAGE, makeRequestMessage(comment, book));
             var prompt = new Prompt(messages);
 
@@ -206,4 +216,7 @@ public class CommentServiceImpl implements CommentService {
             return result.get();
         }
     }
+
+
+
 }

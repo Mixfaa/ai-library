@@ -17,11 +17,6 @@ public record Money(
         return new Money(UAH, amount);
     }
 
-//    @PersistenceCreator
-//    public Money(String currency, long amount) {
-//        this(Currency.getInstance(currency), amount);
-//    }
-
     public String asString() {
         return Utils.calculateCurrency(amount, currency) + currency.getSymbol();
     }

@@ -2,6 +2,7 @@ package com.mixfa.ailibrary.service;
 
 
 import com.mixfa.ailibrary.model.Comment;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -21,6 +22,16 @@ public interface CommentService {
         }
 
         public static record OnCommentRemoved(Comment comment, double newRate) implements Event {
+        }
+    }
+
+    @ConfigurationProperties(prefix = "commentservice")
+    public record Properties(
+            CommentsChecking commentschecking
+    ) {
+        public record CommentsChecking(
+                boolean enabled
+        ) {
         }
     }
 }

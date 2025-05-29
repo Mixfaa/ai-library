@@ -23,6 +23,7 @@ public enum ExceptionType {
     USER_ALREADY_WORKER,
     BOOK_ALREADY_BORROWED, // string
     CURRENCY_CONVERTION_FAILED,
+    INVOICE_CREATION_FAILED,
     BOOK_ALREADY_RATED; // bookId - Object, username - String
 
     private final String TEMPLATE_CODE = this.name().toLowerCase();
@@ -41,6 +42,11 @@ public enum ExceptionType {
     private static final UserFriendlyException currencyConvertionFailedCached = ExceptionType.CURRENCY_CONVERTION_FAILED.make();
     public static UserFriendlyException currencyConvertionFailed() {
         return currencyConvertionFailedCached;
+    }
+
+    private static final UserFriendlyException invoiceCreationFailed = ExceptionType.INVOICE_CREATION_FAILED.make();
+    public static UserFriendlyException invoiceCreationFailed() {
+        return invoiceCreationFailed;
     }
 
     public static UserFriendlyException bookAleardyBorrowed(Object bookId) {
