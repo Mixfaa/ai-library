@@ -6,5 +6,5 @@ import java.time.LocalDate;
 import java.util.Currency;
 
 public interface StatisticsService {
-    StatisticRecord getStatistics(LocalDate from, LocalDate to, Currency targetCurrency);
+    StatisticRecord getStatistics(LocalDate from, LocalDate to);
 }

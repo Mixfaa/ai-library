@@ -21,7 +21,6 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
@@ -30,7 +29,6 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.io.ByteArrayInputStream;
 import java.time.temporal.ChronoUnit;
-import java.util.Currency;
 
 @Route
 @RolesAllowed(Role.ADMIN_ROLE)
@@ -85,11 +83,6 @@ public class StatisticsRoute extends AppLayout {
 
     private Component makeContnet() {
         var periodPicker = new DateRangePicker("Select Period");
-        var currencySelect = new Select<Currency>() {{
-            setLabel("Currency");
-            setItems(Currency.getAvailableCurrencies());
-            setItemLabelGenerator(Currency::getDisplayName);
-        }};
 
         var periodBinder = new Binder<LocalDateRange>()
                 .forField(periodPicker)
@@ -116,22 +109,17 @@ public class StatisticsRoute extends AppLayout {
             if (validationResult.isEmpty() || !validationResult.get().isError()) {
                 var period = (LocalDateRange) periodBinder.getField().getValue();
 
-                var currency = currencySelect.getValue();
-                if (currency == null) {
-                    Notification.show("Enter currency");
-                    return;
-                }
 
                 if (period == null || period.startDate() == null || period.endDate() == null) {
                     Notification.show("Enter valid period");
                     return;
                 }
-                var statistics = statisticsService.getStatistics(period.startDate(), period.endDate(), currency);
+                var statistics = statisticsService.getStatistics(period.startDate(), period.endDate());
 
                 makeShowStatisticsDialog(statistics).open();
             }
         });
 
-        return new VerticalLayout(new HorizontalLayout(periodPicker, currencySelect), fetchButton);
+        return new VerticalLayout(new HorizontalLayout(periodPicker), fetchButton);
     }
 }
