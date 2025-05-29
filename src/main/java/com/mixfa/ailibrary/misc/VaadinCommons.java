@@ -1,12 +1,12 @@
 package com.mixfa.ailibrary.misc;
 
 import com.mixfa.ailibrary.controller.FileStorageContoller;
-import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.route.components.BookCommentsComponent;
 import com.mixfa.ailibrary.route.components.BookDetailsComponent;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
-import com.mixfa.ailibrary.service.FileStorageService;
-import com.mixfa.ailibrary.service.impl.Services;
+import com.mixfa.ailibrary.service.filestorage.FileStorageService;
+import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
@@ -28,8 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Function;
-
-import static com.mixfa.ailibrary.misc.Utils.fmt;
 
 @Slf4j
 @UtilityClass

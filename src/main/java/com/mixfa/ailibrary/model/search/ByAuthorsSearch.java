@@ -1,7 +1,7 @@
 package com.mixfa.ailibrary.model.search;
 
 
-import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.library.Book;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.query.Criteria;

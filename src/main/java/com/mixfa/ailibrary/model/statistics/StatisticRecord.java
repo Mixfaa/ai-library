@@ -1,8 +1,8 @@
 package com.mixfa.ailibrary.model.statistics;
 
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Money;
+import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.model.finance.Money;
 import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

@@ -1,7 +1,7 @@
 package com.mixfa.ailibrary.route.components;
 
-import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.service.BookChatBotService;
+import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.service.library.BookChatBotService;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;

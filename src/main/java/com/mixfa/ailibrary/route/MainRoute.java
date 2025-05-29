@@ -1,14 +1,14 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.search.*;
 import com.mixfa.ailibrary.route.components.BookGrid;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
 import com.mixfa.ailibrary.route.components.OpenDialogButton;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
-import com.mixfa.ailibrary.service.SearchEngine;
-import com.mixfa.ailibrary.service.UserDataService;
-import com.mixfa.ailibrary.service.impl.Services;
+import com.mixfa.ailibrary.service.search.SearchEngine;
+import com.mixfa.ailibrary.service.user.UserDataService;
+import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;

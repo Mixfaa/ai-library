@@ -1,8 +1,5 @@
 package com.mixfa.ailibrary.model.suggestion;
 
-import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.Book;
-
 public class DislikedBooksHint implements SuggsetionHint {
     private final String hint;
 

@@ -1,9 +1,9 @@
 package com.mixfa.ailibrary.route.components;
 
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Comment;
-import com.mixfa.ailibrary.service.CommentService;
+import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.model.library.Comment;
+import com.mixfa.ailibrary.service.library.CommentService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;

@@ -1,16 +1,15 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.suggestion.*;
 import com.mixfa.ailibrary.route.components.CloseDialogButton;
 import com.mixfa.ailibrary.route.components.CustomMultiSelectComboBox;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
-import com.mixfa.ailibrary.service.SearchEngine;
-import com.mixfa.ailibrary.service.SuggestionService;
-import com.mixfa.ailibrary.service.UserDataService;
-import com.mixfa.ailibrary.service.impl.Services;
+import com.mixfa.ailibrary.service.search.SearchEngine;
+import com.mixfa.ailibrary.service.suggestion.SuggestionService;
+import com.mixfa.ailibrary.service.user.UserDataService;
+import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.mixfa.ailibrary.service.repo.BookRepo;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;

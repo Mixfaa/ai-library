@@ -1,7 +1,7 @@
 package com.mixfa.ailibrary.route.components;
 
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.library.Book;
 import com.vaadin.flow.component.html.Div;
 
 import java.util.Collection;

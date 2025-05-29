@@ -3,11 +3,11 @@ package com.mixfa.ailibrary.route.components;
 
 import com.mixfa.ailibrary.controller.FileStorageContoller;
 import com.mixfa.ailibrary.misc.VaadinCommons;
-import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.BookContentProvider;
-import com.mixfa.ailibrary.model.content_provider.GoogleBookContentProvider;
-import com.mixfa.ailibrary.model.content_provider.PdfFileContentProvider;
-import com.mixfa.ailibrary.service.impl.Services;
+import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.model.library.BookContentProvider;
+import com.mixfa.ailibrary.model.library.content_provider.GoogleBookContentProvider;
+import com.mixfa.ailibrary.model.library.content_provider.PdfFileContentProvider;
+import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;

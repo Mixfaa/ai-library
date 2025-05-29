@@ -1,7 +1,7 @@
 package com.mixfa.ailibrary.model.user;
 
-import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.ReadBook;
+import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.model.library.ReadBook;
 import lombok.With;
 import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;

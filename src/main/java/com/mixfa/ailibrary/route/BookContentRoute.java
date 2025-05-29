@@ -1,12 +1,12 @@
 package com.mixfa.ailibrary.route;
 
-import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.content_provider.GoogleBookContentProvider;
-import com.mixfa.ailibrary.model.content_provider.PdfFileContentProvider;
+import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.model.library.content_provider.GoogleBookContentProvider;
+import com.mixfa.ailibrary.model.library.content_provider.PdfFileContentProvider;
 import com.mixfa.ailibrary.route.components.GoogleBooksViewerComponent;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
-import com.mixfa.ailibrary.service.BookService;
-import com.mixfa.ailibrary.service.impl.Services;
+import com.mixfa.ailibrary.service.library.BookService;
+import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.vaadin.componentfactory.pdfviewer.PdfViewer;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;

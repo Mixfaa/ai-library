@@ -1,6 +1,6 @@
 package com.mixfa.ailibrary.route.components;
 
-import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.route.BookRoute;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.card.Card;

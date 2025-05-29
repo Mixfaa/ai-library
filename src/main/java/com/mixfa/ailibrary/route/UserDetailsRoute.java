@@ -1,17 +1,17 @@
 package com.mixfa.ailibrary.route;
 
 import com.mixfa.ailibrary.misc.VaadinCommons;
-import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.BookBorrowing;
-import com.mixfa.ailibrary.model.Comment;
-import com.mixfa.ailibrary.model.ReadBook;
+import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.model.library.BookBorrowing;
+import com.mixfa.ailibrary.model.library.Comment;
+import com.mixfa.ailibrary.model.library.ReadBook;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.route.components.GridWithPagination;
 import com.mixfa.ailibrary.route.components.SideBarInitializer;
-import com.mixfa.ailibrary.service.BookBorrowingService;
-import com.mixfa.ailibrary.service.CommentService;
-import com.mixfa.ailibrary.service.UserDataService;
-import com.mixfa.ailibrary.service.impl.Services;
+import com.mixfa.ailibrary.service.library.BookBorrowingService;
+import com.mixfa.ailibrary.service.library.CommentService;
+import com.mixfa.ailibrary.service.user.UserDataService;
+import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
@@ -26,16 +26,13 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
-import org.apache.commons.lang3.function.Functions;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Locale;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 
 @PermitAll

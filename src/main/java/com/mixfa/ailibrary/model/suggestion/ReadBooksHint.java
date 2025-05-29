@@ -1,7 +1,7 @@
 package com.mixfa.ailibrary.model.suggestion;
 
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.ReadBook;
+import com.mixfa.ailibrary.model.library.ReadBook;
 
 public class ReadBooksHint implements SuggsetionHint {
     private final String hint;
