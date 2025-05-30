@@ -121,10 +121,11 @@ public class BookDetailsComponent extends VerticalLayout {
 
     private Dialog makeBorrowBookDialog() {
         var dialog = new Dialog(localizer.get("book.payment"));
+        dialog.setWidth("700px");
         dialog.getFooter().add(new CloseDialogButton(dialog, localizer));
 
         var currencySelect = new ComboBox<Currency>(localizer.get("book.selectcurrency")) {{
-            setItems(Currency.getAvailableCurrencies());
+            setItems(Currency.getInstance("UAH"), Currency.getInstance("USD"), Currency.getInstance("EUR"));
             setValue(Currency.getInstance("UAH"));
             setItemLabelGenerator(Currency::getDisplayName);
         }};

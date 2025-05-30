@@ -9,15 +9,11 @@ import com.mixfa.ailibrary.ui.components.BookDetailsComponent;
 import com.mixfa.ailibrary.ui.components.CloseDialogButton;
 import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.FileBuffer;
@@ -52,7 +48,7 @@ public class VaadinCommons {
             var urlsGrid = new Grid<String>(String.class, false) {{
                 addColumn(ObjectUtils::CONST).setHeader("URL");
                 addComponentColumn(url ->
-                        new Button("remove", _ -> imagesList.remove(url))
+                        new Button(VaadinIcon.DEL.create(), _ -> imagesList.remove(url))
                 );
             }};
 
@@ -81,46 +77,30 @@ public class VaadinCommons {
 
     public static Dialog bookPreviewDialog(Book book, Services services, Localizer localizer) {
         var commentService = services.commentService();
-        var dialog = new Dialog("Book preview " + book.title());
+        var dialog = new Dialog(book.title());
 
-        var content = new HorizontalLayout();
-        content.setSpacing(true);
-        content.setPadding(true);
-
-        var image = new Image(book.imageUrl(), "Book cover");
-        image.setWidth("200px");
-
-        var details = new VerticalLayout(
-                new H3(book.title()),
-                new Div(new Text("Authors: " + book.authorsString())),
-                new Div(new Text("Genres: " + book.subjectsString())),
-                new Div(new Text("Rating: " + commentService.getBookRate(book.id()))),
-                new Div(new Text("Took: " + book.tookCount()))
-        );
-
-        content.add(image, details);
         dialog.add(new BookDetailsComponent(book, localizer, services), new BookCommentsComponent(book, localizer, commentService));
         dialog.getFooter().add(new CloseDialogButton(dialog, localizer));
 
         return dialog;
     }
 
-    public static <T> void configureDefaultBookGridEx(Grid<T> grid, Function<T, Book> tranformer) {
-        grid.addColumn(b -> tranformer.apply(b).title()).setHeader("Title");
-        grid.addColumn(b -> tranformer.apply(b).authorsString()).setHeader("Authors");
+    public static <T> void configureDefaultBookGridEx(Grid<T> grid, Function<T, Book> tranformer, Localizer localizer) {
+        grid.addColumn(b -> tranformer.apply(b).title()).setHeader(localizer.get("bookgrid.title"));
+        grid.addColumn(b -> tranformer.apply(b).authorsString()).setHeader(localizer.get("bookgrid.authors"));
     }
 
     public static <T> void configureBookGridPreviewEx(Grid<T> grid, Function<T, Book> tranformer, Services services, Localizer localizer) {
         var bookPreviewDialogCache = new LinkedHashMap<Book, Dialog>();
-        grid.addComponentColumn(b -> new Button("Preview", _ -> {
+        grid.addComponentColumn(b -> new Button(localizer.get("bookgrid.preview"), _ -> {
             var book = tranformer.apply(b);
             var dialog = bookPreviewDialogCache.computeIfAbsent(book, key -> bookPreviewDialog(key, services, localizer));
             dialog.open();
-        })).setHeader("Preview");
+        })).setHeader(localizer.get("bookgrid.preview"));
     }
 
-    public static void configureDefaultBookGrid(Grid<Book> grid) {
-        configureDefaultBookGridEx(grid, Function.identity());
+    public static void configureDefaultBookGrid(Grid<Book> grid, Localizer localizer) {
+        configureDefaultBookGridEx(grid, Function.identity(), localizer);
     }
 
     public static void configureBookGridPreview(Grid<Book> grid, Services services, Localizer localizer) {

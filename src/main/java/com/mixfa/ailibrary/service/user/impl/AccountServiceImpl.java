@@ -14,11 +14,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements AccountService {
+public class AccountServiceImpl implements AccountService {
     private final AccountRepo accountRepo;
     private final AdminAuthenticator adminAuthenticator;
     private final MongoTemplate mongoTemplate;
-
 
     @Override
     public Account findOrThrow(String id) {

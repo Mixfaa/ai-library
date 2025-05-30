@@ -9,6 +9,7 @@ import com.mixfa.ailibrary.service.library.CommentService;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
 import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
@@ -31,6 +32,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import java.util.List;
 
 @Slf4j
+@Push
 @EnableScheduling
 @EnableConfigurationProperties(CommentService.Properties.class)
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})

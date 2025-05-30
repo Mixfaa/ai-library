@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class GoogleOAuth2UserService extends OidcUserService {
-    private final UserService userService;
+    private final AccountServiceImpl userService;
 
     @Override
     public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {

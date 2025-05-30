@@ -35,7 +35,7 @@ public class AiFunctionsImpl implements AiFunctions {
     private final ByUserMultiCache<FunctionToolCallback<?, ?>> cache;
 
     private final FunctionToolCallback<SearchArgs, String> defaultSearchFunction =
-            FunctionToolCallback.builder("default search", (SearchArgs args) -> makeBooksContext(SearchOption.empty(), args))
+            FunctionToolCallback.builder("simpleSearch", (SearchArgs args) -> makeBooksContext(SearchOption.empty(), args))
                     .inputType(SearchArgs.class)
                     .description("Search for available books page by page. Params: String query(can be empty), int page(starts from 0)")
                     .build();

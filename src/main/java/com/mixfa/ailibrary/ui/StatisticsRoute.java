@@ -54,11 +54,11 @@ public class StatisticsRoute extends AppLayout {
         dialog.add(new Div(statistics.from().format(Utils.getDateTimeFormatter()) + " - " + statistics.to().format(Utils.getDateTimeFormatter())));
 
         var grid = new Grid<>(StatisticRecord.BookStatistic.class, false);
-        VaadinCommons.configureDefaultBookGridEx(grid, StatisticRecord.BookStatistic::book);
-
+        VaadinCommons.configureDefaultBookGridEx(grid, StatisticRecord.BookStatistic::book,localizer);
         grid.addColumn(StatisticRecord.BookStatistic::moneyPaidString).setHeader(localizer.get("statistics.moneypaid"));
         grid.addColumn(StatisticRecord.BookStatistic::borrowingCount).setHeader(localizer.get("statistics.borrowingcount"));
         grid.setItems(statistics.statistics());
+        grid.recalculateColumnWidths();
         dialog.add(grid);
 
         dialog.getFooter().add(

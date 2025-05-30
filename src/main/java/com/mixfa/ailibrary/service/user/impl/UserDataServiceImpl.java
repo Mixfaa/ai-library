@@ -26,9 +26,9 @@ import java.util.function.Predicate;
 @Service
 public class UserDataServiceImpl implements UserDataService {
     private final MongoTemplate mongoTemplate;
-    private final UserService userService;
+    private final AccountServiceImpl userService;
 
-    public UserDataServiceImpl(MongoTemplate mongoTemplate, UserService userService, CacheMaintainer maintainer) {
+    public UserDataServiceImpl(MongoTemplate mongoTemplate, AccountServiceImpl userService, CacheMaintainer maintainer) {
         this.mongoTemplate = mongoTemplate;
         this.userService = userService;
         this.localeCache = new ByUserCache<>(maintainer);

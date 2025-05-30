@@ -165,7 +165,6 @@ class SearchParamsDialog extends Dialog {
         return new VerticalLayout(textField, isbnField, ratingField);
     }
 
-
     public SearchOption getSearchOption() {
         return searchOptions.isEmpty() ? SearchOption.empty() : SearchOption.composition(searchOptions);
     }

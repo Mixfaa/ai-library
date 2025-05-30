@@ -14,7 +14,6 @@ import com.mixfa.ailibrary.ui.components.SideBarInitializer;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
 import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -29,7 +28,6 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -92,7 +90,6 @@ public class AiFeaturesRoute extends AppLayout {
 
         var header = new Paragraph(localizer.get("aifeatures.title"));
 
-        var searchOptions = new ArrayList<SearchOption>();
         var suggestionHints = new ArrayList<SuggsetionHint>();
 
         var optionsDialog = new Dialog(localizer.get("aifeatures.configureoptions"));
@@ -106,7 +103,6 @@ public class AiFeaturesRoute extends AppLayout {
         optionsDialog.add(optionsAccordion);
 
         var optionsDialogButton = new Button(localizer.get("aifeatures.configureoptions"), _ -> optionsDialog.open());
-
         var getSuggestionsButton = new Button(localizer.get("aifeatures.getsuggestions"), _ -> {
 
             Notification.show(localizer.get("aifeatures.requestsubmitted"));
@@ -114,13 +110,14 @@ public class AiFeaturesRoute extends AppLayout {
                 final SuggestedBook[] suggestions;
                 try {
                     suggestions = suggestionService.getSuggestions(
-                            SearchOption.composition(searchOptions),
-                            SuggsetionHint.composition(suggestionHints)
+                            SearchOption.empty(),
+                            SuggsetionHint.composition(suggestionHints),
+                            localizer.locale()
                     );
-                    System.out.println("Suggestions ready " + Arrays.toString(suggestions));
                     log.info("Suggestions are ready: {}", suggestions);
-                } catch (Throwable e) {
-                    UI.getCurrent().access(() -> Notification.show(localizer.get("aifeatures.erroroccurred"), 5000, Notification.Position.MIDDLE));
+                } catch (Exception e) {
+                    this.getUI().ifPresent(ui ->
+                            ui.access(() -> Notification.show(localizer.get("aifeatures.erroroccurred"), 5000, Notification.Position.MIDDLE)));
                     log.error("Error while getting suggestions", e);
                     e.printStackTrace();
                     throw new RuntimeException(e);

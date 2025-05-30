@@ -76,7 +76,7 @@ public class UserDetailsRoute extends AppLayout {
         IntFunction<Page<BookBorrowing>> fetchFunc = page -> borrowingService.findAllMyBorrowings(PageRequest.of(page, 15));
 
         var takenBooksGrid = new GridWithPagination<BookBorrowing>(BookBorrowing.class, 15, fetchFunc);
-        VaadinCommons.configureDefaultBookGridEx(takenBooksGrid, BookBorrowing::book);
+        VaadinCommons.configureDefaultBookGridEx(takenBooksGrid, BookBorrowing::book, localizer);
         VaadinCommons.configureBookGridPreviewEx(takenBooksGrid, BookBorrowing::book, services, localizer);
 
         takenBooksGrid.addComponentColumn(it -> new Button(localizer.get("userdetails.readbook"),
@@ -94,7 +94,7 @@ public class UserDetailsRoute extends AppLayout {
         var waitList = userDataService.waitList();
 
         var waitListGrid = new Grid<>(Book.class, false);
-        VaadinCommons.configureDefaultBookGrid(waitListGrid);
+        VaadinCommons.configureDefaultBookGrid(waitListGrid, localizer);
         VaadinCommons.configureBookGridPreview(waitListGrid, services, localizer);
 
         waitListGrid.addComponentColumn(book -> new Button(localizer.get("userdetails.remove"), _ ->
@@ -112,7 +112,7 @@ public class UserDetailsRoute extends AppLayout {
         var readList = userDataService.readBooks();
 
         var grid = new Grid<>(ReadBook.class, false);
-        VaadinCommons.configureDefaultBookGridEx(grid, ReadBook::book);
+        VaadinCommons.configureDefaultBookGridEx(grid, ReadBook::book, localizer);
         grid.addComponentColumn(rb -> new Button((rb.mark() == ReadBook.Mark.LIKE ? VaadinIcon.THUMBS_UP : VaadinIcon.THUMBS_DOWN).create()))
                 .setHeader(localizer.get("userdetails.yourmark"));
         VaadinCommons.configureBookGridPreviewEx(grid, ReadBook::book, services, localizer);
@@ -140,7 +140,7 @@ public class UserDetailsRoute extends AppLayout {
     }
 
     private Component makeProfileSection() {
-        return new HorizontalLayout(
+        return new VerticalLayout(
                 new Span(localizer.formatGet("userdetails.username", account.getUsername())),
                 new Span(localizer.formatGet("userdetails.email", account.getEmail())),
                 new Span(localizer.formatGet("userdetails.role", account.getRole().name().toLowerCase())),

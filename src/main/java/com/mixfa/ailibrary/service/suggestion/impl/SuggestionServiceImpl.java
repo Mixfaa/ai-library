@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.search.SearchOption;
-import com.mixfa.ailibrary.model.suggestion.ReadBooksHint;
 import com.mixfa.ailibrary.model.suggestion.SuggestedBook;
 import com.mixfa.ailibrary.model.suggestion.SuggsetionHint;
 import com.mixfa.ailibrary.service.ai.AiFunctions;
@@ -25,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 
 @Slf4j
@@ -37,18 +37,21 @@ public class SuggestionServiceImpl implements SuggestionService {
     private final AiFunctions aiFunctions;
 
     private static final String RESPONSE_JSON_SCHEMA = JsonSchemaGenerator.generateForType(SuggestedBook[].class);
-    private static final SystemMessage CONFIG_MESSAGE = new SystemMessage(
-            String.join(
-                    "\n",
-                    "You are not chat assistent, you are part of system",
-                    "In response provide: bookId, title and reason(why user should read book)",
-                    "You must use ID from book description (from search function), not 1,2,3",
-                    "You must not wrap json in ```json tag",
-                    "You must ALWAYS respond with Json Array, even if single book",
-                    "You are not allowed to respond with question or anything except what you were asked for",
-                    RESPONSE_JSON_SCHEMA
-            )
-    );
+
+    private static SystemMessage makeConfigMessage(Locale locale) {
+        return new SystemMessage(
+                String.join(
+                        "\n",
+                        "You are not chat assistent, you are part of system",
+                        "In response provide: bookId, title and reason(why user should read book, in locale: )" + locale.getDisplayLanguage(),
+                        "You must use ID from book description (from search functions)",
+                        "You must not wrap json in ```json tag",
+                        "You must ALWAYS respond with Json Array, even if single book",
+                        "You are not allowed to respond with question or anything except what you were asked for",
+                        RESPONSE_JSON_SCHEMA
+                )
+        );
+    }
 
     private static final UserMessage SEARCH_MESSAGE = new UserMessage("Suggest 3-5 books to read, based on user`s read books and available books, to list availiable books, use search function");
 
@@ -66,7 +69,7 @@ public class SuggestionServiceImpl implements SuggestionService {
         System.out.println(searchResult);
 
         var textToParse = searchResult.getResult().getOutput().getText();
-
+        System.out.println(textToParse);
         final var jsonPrefix = "```json";
         if (textToParse.startsWith(jsonPrefix))
             textToParse = textToParse.substring(jsonPrefix.length());
@@ -94,17 +97,17 @@ public class SuggestionServiceImpl implements SuggestionService {
     }
 
     @Override
-    public SuggestedBook[] getSuggestions(SearchOption searchOptions, SuggsetionHint suggsetionHint) {
+    public SuggestedBook[] getSuggestions(SearchOption searchOptions, SuggsetionHint suggsetionHint, Locale locale) {
         var userContext = new UserMessage(suggsetionHint.makeHint());
 
-        var searchTool = aiFunctions.searchFunctionWith(searchOptions);
+        var searchTool = aiFunctions.searchFunction();
         var indexTool = aiFunctions.booksIndexFunction();
 
         var searchPromptOptions = OpenAiChatOptions.builder()
                 .toolCallbacks(searchTool, indexTool)
                 .build();
 
-        var prompt = new Prompt(List.of(CONFIG_MESSAGE, SEARCH_MESSAGE, userContext), searchPromptOptions);
+        var prompt = new Prompt(List.of(makeConfigMessage(locale), SEARCH_MESSAGE, userContext), searchPromptOptions);
         return getAndParseFunc.apply(prompt);
     }
 }
