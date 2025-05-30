@@ -1,11 +1,12 @@
 package com.mixfa.ailibrary.service.finance.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.ExceptionType;
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.finance.Money;
 import com.mixfa.ailibrary.model.finance.InvoiceData;
 import com.mixfa.ailibrary.model.finance.InvoiceStatus;
+import com.mixfa.ailibrary.model.finance.Money;
 import com.mixfa.ailibrary.service.finance.InvoiceProvider;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -41,15 +42,20 @@ public class MonoInvoiceProvider implements InvoiceProvider {
     private static final URI CREATE_INVOICE_URI = makeUri("/api/merchant/invoice/create");
 
     @Override
-    @SneakyThrows
     public InvoiceData createInvoice(Money amount, String destination) {
-        var data = objectMapper.writeValueAsBytes(
-                Map.of(
-                        "amount", amount.amount(),
-                        "ccy", amount.currency(),
-                        "merchantPaymInfo", Map.of("destination", destination)
-                )
-        );
+        byte[] data;
+        try {
+            data = objectMapper.writeValueAsBytes(
+                    Map.of(
+                            "amount", amount.amount(),
+                            "ccy", amount.currency().getNumericCode(),
+                            "merchantPaymInfo", Map.of("destination", destination)
+                    )
+            );
+        } catch (JsonProcessingException jpe) {
+            log.error(jpe.getMessage(), jpe);
+            throw new RuntimeException(jpe);
+        }
 
         var request = configureRequest(HttpRequest.newBuilder(CREATE_INVOICE_URI))
                 .POST(HttpRequest.BodyPublishers.ofByteArray(data))

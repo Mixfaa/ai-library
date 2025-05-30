@@ -1,4 +1,4 @@
-package com.mixfa.ailibrary.route.components;
+package com.mixfa.ailibrary.ui.components;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.Grid;

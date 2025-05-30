@@ -1,23 +1,18 @@
-package com.mixfa.ailibrary.route.components;
+package com.mixfa.ailibrary.ui.components;
 
-import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.ui.localization.Localizator;
 import com.vaadin.flow.component.html.Div;
 
 import java.util.Collection;
-import java.util.Locale;
 
 
 public class BookGrid extends Div {
-    private final Locale locale;
     private static final int COLUMNS = 4;
+    private final Localizator localizator;
 
-    public BookGrid() {
-        this(Utils.DEFAULT_LOCALE);
-    }
-
-    public BookGrid(Locale locale) {
-        this.locale = locale;
+    public BookGrid(Localizator localizator) {
+        this.localizator = localizator;
         setupGrid();
     }
 
@@ -33,6 +28,6 @@ public class BookGrid extends Div {
     public void setItems(Collection<Book> books) {
         removeAll();
         for (Book book : books)
-            add(new BookCard(book, locale));
+            add(new BookCard(book, localizator));
     }
 }

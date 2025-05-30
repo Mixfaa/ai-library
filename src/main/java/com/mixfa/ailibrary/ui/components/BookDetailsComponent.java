@@ -1,15 +1,17 @@
-package com.mixfa.ailibrary.route.components;
+package com.mixfa.ailibrary.ui.components;
 
 import com.mixfa.ailibrary.misc.ExceptionType;
 import com.mixfa.ailibrary.misc.UserFriendlyException;
+import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.library.ReadBook;
-import com.mixfa.ailibrary.route.BookContentRoute;
 import com.mixfa.ailibrary.service.library.BookBorrowingService;
 import com.mixfa.ailibrary.service.library.BookChatBotService;
-import com.mixfa.ailibrary.service.user.UserDataService;
 import com.mixfa.ailibrary.service.misc.impl.Services;
+import com.mixfa.ailibrary.service.user.UserDataService;
+import com.mixfa.ailibrary.ui.BookContentRoute;
+import com.mixfa.ailibrary.ui.localization.Localizator;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -17,6 +19,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -36,11 +39,12 @@ public class BookDetailsComponent extends VerticalLayout {
     private final UserDataService.WaitList waitList;
     private final UserDataService.ReadBooks readBooks;
     private final BookChatBotService bookChatBotService;
-
+    private final Localizator localizator;
     private final BookBorrowingService bookBorrowingService;
 
-    public BookDetailsComponent(Book book, Services services) {
+    public BookDetailsComponent(Book book, Localizator localizator, Services services) {
         this.book = book;
+        this.localizator = localizator;
         this.bookChatBotService = services.bookChatBotService();
         this.rating = services.commentService().getBookRate(book.id());
         this.userDataService = services.userDataService();
@@ -120,22 +124,30 @@ public class BookDetailsComponent extends VerticalLayout {
             try {
                 var invoice = bookBorrowingService.borrowBook(book.id());
                 var paymentUrl = invoice.pageUrl();
-                var dialog = new Dialog("Payment url");
-                dialog.add(new Anchor(paymentUrl, "Pay") {{
+                var dialog = new Dialog(localizator.get("book.payment"));
+                dialog.add(new Anchor(paymentUrl, localizator.get("book.pay")) {{
                     setRouterIgnore(true);
                 }});
                 dialog.open();
             } catch (UserFriendlyException ex) {
-                if (ex.isTypeOf(ExceptionType.BOOK_ALREADY_BORROWED))
+                if (ex.isTypeOf(ExceptionType.BOOK_ALREADY_BORROWED)) {
                     UI.getCurrent().navigate(BookContentRoute.class, book.id().toHexString());
+                    return;
+                }
+                Notification.show(ex.format(userLocale));
             }
 
             return;
-        });
+        }) {{
+            setTooltipText(localizator.get("book.borrow"));
+            setTooltipText("Borrow book");
+        }};
     }
 
     private Button createWaitListButton() {
-        Button waitListBtn = new Button(waitList.isInList(book) ? VaadinIcon.HEART.create() : VaadinIcon.HEART_O.create());
+        Button waitListBtn = new Button(waitList.isInList(book) ? VaadinIcon.HEART.create() : VaadinIcon.HEART_O.create()) {{
+            setTooltipText(localizator.get("book.waitlist"));
+        }};
         waitListBtn.addClickListener(_ -> {
             var added = waitList.addRemove(book);
             waitListBtn.setIcon(added ? VaadinIcon.HEART.create() : VaadinIcon.HEART_O.create());
@@ -147,7 +159,9 @@ public class BookDetailsComponent extends VerticalLayout {
         var bookMark = readBooks.getMark(book);
         var icon = (bookMark == null) ? VaadinIcon.OPEN_BOOK.create() :
                 (bookMark == ReadBook.Mark.LIKE) ? VaadinIcon.THUMBS_UP.create() : VaadinIcon.THUMBS_DOWN.create();
-        Button readBookBtn = new Button(icon);
+        Button readBookBtn = new Button(icon) {{
+            setTooltipText(localizator.get("book.givemark"));
+        }};
         Popover readBookPopover = createReadBookPopover(readBookBtn);
 
         readBookBtn.addClickListener(_ -> {
@@ -174,14 +188,13 @@ public class BookDetailsComponent extends VerticalLayout {
             readBookPopover.close();
         };
 
-        var likedBtn = new Button("I liked", VaadinIcon.THUMBS_UP.create(), _ -> {
+        var likedBtn = new Button(localizator.get("book.liked"), VaadinIcon.THUMBS_UP.create(), _ -> {
             setBookMark.accept(ReadBook.Mark.LIKE);
         });
-        var dislikeBtn = new Button("I disliked", VaadinIcon.THUMBS_DOWN.create(), _ -> {
+        var dislikeBtn = new Button(localizator.get("book.disliked"), VaadinIcon.THUMBS_DOWN.create(), _ -> {
             setBookMark.accept(ReadBook.Mark.DISLIKE);
         });
 
-        readBookPopover.setWidth("300px");
         readBookPopover.addThemeVariants(PopoverVariant.ARROW, PopoverVariant.LUMO_NO_PADDING);
         readBookPopover.setModal(true);
         readBookPopover.setAriaLabelledBy("notifications-heading");
@@ -191,10 +204,10 @@ public class BookDetailsComponent extends VerticalLayout {
     }
 
     private Button createTalkToButton() {
-        var aiChatBotComp = new AiChatBotDialog(book, bookChatBotService);
+        var aiChatBotComp = new AiChatBotDialog(book, localizator, bookChatBotService);
 
         return new Button(VaadinIcon.MAGIC.create(), _ -> aiChatBotComp.open()) {{
-            setTooltipText("Chat with chat bot about this book");
+            setTooltipText(localizator.get("book.chat"));
         }};
     }
 
@@ -221,7 +234,7 @@ public class BookDetailsComponent extends VerticalLayout {
     private Component createIsbnSection() {
         Icon icon = VaadinIcon.BARCODE.create();
         icon.setColor("var(--lumo-primary-color)");
-        HorizontalLayout genresLayout = new HorizontalLayout(icon, new Span("ISBN: " + book.isbn()));
+        HorizontalLayout genresLayout = new HorizontalLayout(icon, new Span(Utils.fmt(localizator.get("book.isbn"), book.isbn())));
         genresLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         return genresLayout;
     }
@@ -229,7 +242,7 @@ public class BookDetailsComponent extends VerticalLayout {
     private Component createPublishYearSection() {
         Icon icon = VaadinIcon.DATE_INPUT.create();
         icon.setColor("var(--lumo-primary-color)");
-        HorizontalLayout genresLayout = new HorizontalLayout(icon, new Span("Publish year: " + book.firstPublishYear()));
+        HorizontalLayout genresLayout = new HorizontalLayout(icon, new Span(Utils.fmt(localizator.get("book.publishyear"), book.firstPublishYear())));
         genresLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         return genresLayout;
     }
@@ -254,7 +267,7 @@ public class BookDetailsComponent extends VerticalLayout {
         HorizontalLayout statsLayout = new HorizontalLayout();
         Icon takeIcon = VaadinIcon.BOOK.create();
         Icon readIcon = VaadinIcon.CHECK.create();
-        Span takeSpan = new Span(String.format("Taken: %d", book.tookCount()));
+        Span takeSpan = new Span(Utils.fmt(localizator.get("book.taken"), book.tookCount()));
         statsLayout.add(takeIcon, takeSpan, readIcon);
         statsLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         return statsLayout;
@@ -262,7 +275,7 @@ public class BookDetailsComponent extends VerticalLayout {
 
     private Component createDescriptionSection() {
         var description = book.description();
-        if (StringUtils.isBlank(description)) description = "No description yet";
+        if (StringUtils.isBlank(description)) description = localizator.get("book.nodescription");
 
         Div descriptionSection = new Div();
         descriptionSection.setWidthFull();
@@ -272,7 +285,7 @@ public class BookDetailsComponent extends VerticalLayout {
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border-radius", "8px");
 
-        H3 descriptionTitle = new H3("Description");
+        H3 descriptionTitle = new H3(localizator.get("book.description"));
         descriptionTitle.getStyle().set("margin-top", "0");
 
         Paragraph bookDescription = new Paragraph(description);

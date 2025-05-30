@@ -87,7 +87,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Comment addComment(Comment.AddRequest request) {
-        if (!Utils.inBound(0.0, 5.0, request.rate())) throw ExceptionType.INVALID_BOOK_RATE.make(request.rate());
+        if (!Utils.inBound(0.0, 5.0, request.rate())) throw ExceptionType.invalidBookRate(request.rate());
 
         if (!rateLimiter.acquirePermission())
             throw ExceptionType.rateLimitExceeded();

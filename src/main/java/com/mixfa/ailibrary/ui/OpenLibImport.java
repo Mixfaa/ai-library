@@ -1,4 +1,4 @@
-package com.mixfa.ailibrary.route;
+package com.mixfa.ailibrary.ui;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -7,8 +7,10 @@ import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.library.content_provider.GoogleBookContentProvider;
 import com.mixfa.ailibrary.model.user.Role;
-import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.library.BookService;
+import com.mixfa.ailibrary.ui.components.SideBarInitializer;
+import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
+import com.mixfa.ailibrary.ui.localization.Localizator;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -38,7 +40,7 @@ public class OpenLibImport extends AppLayout {
     private final BookService bookService;
 
     public OpenLibImport(BookService bookService) {
-        SideBarInitializer.init(this);
+        SideBarInitializer.init(this, LocalizationProvider.getLocalizator());
 
         setContent(makeContent());
         this.bookService = bookService;

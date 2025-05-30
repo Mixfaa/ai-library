@@ -1,4 +1,4 @@
-package com.mixfa.ailibrary.route.components.model;
+package com.mixfa.ailibrary.ui.components.model;
 
 import java.time.LocalDate;
 

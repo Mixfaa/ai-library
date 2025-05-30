@@ -1,16 +1,18 @@
-package com.mixfa.ailibrary.route;
+package com.mixfa.ailibrary.ui;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.statistics.StatisticRecord;
 import com.mixfa.ailibrary.model.user.Role;
-import com.mixfa.ailibrary.route.components.CloseDialogButton;
-import com.mixfa.ailibrary.route.components.DateRangePicker;
-import com.mixfa.ailibrary.route.components.SideBarInitializer;
-import com.mixfa.ailibrary.route.components.model.LocalDateRange;
+import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.mixfa.ailibrary.service.statistic.StatisticsService;
 import com.mixfa.ailibrary.service.statistic.impl.DocxStatisticsWritter;
-import com.mixfa.ailibrary.service.misc.impl.Services;
+import com.mixfa.ailibrary.ui.components.CloseDialogButton;
+import com.mixfa.ailibrary.ui.components.DateRangePicker;
+import com.mixfa.ailibrary.ui.components.SideBarInitializer;
+import com.mixfa.ailibrary.ui.components.model.LocalDateRange;
+import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
+import com.mixfa.ailibrary.ui.localization.Localizator;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -34,26 +36,27 @@ import java.time.temporal.ChronoUnit;
 @RolesAllowed(Role.ADMIN_ROLE)
 public class StatisticsRoute extends AppLayout {
     private final StatisticsService statisticsService;
+    private final Localizator localizator = LocalizationProvider.getLocalizator();
 
     public StatisticsRoute(Services services) {
         this.statisticsService = services.statisticsService();
-        SideBarInitializer.init(this);
+        SideBarInitializer.init(this, localizator);
 
-        setContent(makeContnet());
+        setContent(makeContent());
     }
 
-    private static Dialog makeShowStatisticsDialog(StatisticRecord statistics) {
+    private Dialog makeShowStatisticsDialog(StatisticRecord statistics) {
         var dialog = new Dialog();
         dialog.setWidth("1200px");
-        dialog.getFooter().add(new CloseDialogButton(dialog));
+        dialog.getFooter().add(new CloseDialogButton(dialog, localizator));
 
         dialog.add(new Div(statistics.from().format(Utils.getDateTimeFormatter()) + " - " + statistics.to().format(Utils.getDateTimeFormatter())));
 
         var grid = new Grid<>(StatisticRecord.BookStatistic.class, false);
         VaadinCommons.configureDefaultBookGridEx(grid, StatisticRecord.BookStatistic::book);
 
-        grid.addColumn(StatisticRecord.BookStatistic::moneyPaidString).setHeader("Money paid");
-        grid.addColumn(StatisticRecord.BookStatistic::borrowingCount).setHeader("Borrowing count");
+        grid.addColumn(StatisticRecord.BookStatistic::moneyPaidString).setHeader(localizator.get("statistics.moneypaid"));
+        grid.addColumn(StatisticRecord.BookStatistic::borrowingCount).setHeader(localizator.get("statistics.borrowingcount"));
         grid.setItems(statistics.statistics());
         dialog.add(grid);
 
@@ -73,45 +76,45 @@ public class StatisticsRoute extends AppLayout {
                     });
 
                     setHref(docxResource);
-                    setTitle("Download docx report");
-                    setText("Download docx report");
+                    setTitle(localizator.get("statistics.downloadreport"));
+                    setText(localizator.get("statistics.downloadreport"));
                 }}
         );
 
         return dialog;
     }
 
-    private Component makeContnet() {
-        var periodPicker = new DateRangePicker("Select Period");
+    private Component makeContent() {
+        var periodPicker = new DateRangePicker(localizator.get("statistics.selectperiod"), localizator);
 
         var periodBinder = new Binder<LocalDateRange>()
                 .forField(periodPicker)
-                .asRequired("Period is required")
+                .asRequired(localizator.get("statistics.periodrequired"))
                 .withValidator(
                         localDateRange -> localDateRange.startDate() == null
                                 || localDateRange.endDate() == null
                                 || ChronoUnit.DAYS.between(
                                 localDateRange.startDate(),
                                 localDateRange.endDate()) <= 60,
-                        "Dates cannot be more than 60 days apart")
+                        localizator.get("statistics.periodmaxdays"))
                 .withValidator(
                         localDateRange -> localDateRange.startDate() == null
                                 || localDateRange.endDate() == null
                                 || localDateRange.startDate()
                                 .isBefore(localDateRange.endDate()),
-                        "Start date must be earlier than end date")
+                        localizator.get("statistics.startdateearlier"))
                 .bind(ObjectUtils::CONST, (_, _) -> {
                 });
 
 
-        var fetchButton = new Button("Show Statistics", _ -> {
+        var fetchButton = new Button(localizator.get("statistics.showstatistics"), _ -> {
             var validationResult = periodBinder.validate().getResult();
             if (validationResult.isEmpty() || !validationResult.get().isError()) {
                 var period = (LocalDateRange) periodBinder.getField().getValue();
 
 
                 if (period == null || period.startDate() == null || period.endDate() == null) {
-                    Notification.show("Enter valid period");
+                    Notification.show(localizator.get("statistics.entervalidperiod"));
                     return;
                 }
                 var statistics = statisticsService.getStatistics(period.startDate(), period.endDate());

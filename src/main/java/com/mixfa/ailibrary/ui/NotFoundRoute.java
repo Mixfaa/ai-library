@@ -1,4 +1,4 @@
-package com.mixfa.ailibrary.route;
+package com.mixfa.ailibrary.ui;
 
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteNotFoundError;

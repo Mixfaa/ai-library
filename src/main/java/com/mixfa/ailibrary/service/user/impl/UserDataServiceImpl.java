@@ -2,12 +2,13 @@ package com.mixfa.ailibrary.service.user.impl;
 
 import com.mixfa.ailibrary.misc.CachedRuntimeWrapperClassGen;
 import com.mixfa.ailibrary.misc.Utils;
+import com.mixfa.ailibrary.misc.cache.ByUserCache;
+import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.library.ReadBook;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.model.user.UserData;
 import com.mixfa.ailibrary.service.user.UserDataService;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.concurrent.locks.LockingVisitors;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -23,10 +24,15 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Service
-@RequiredArgsConstructor
 public class UserDataServiceImpl implements UserDataService {
     private final MongoTemplate mongoTemplate;
     private final UserService userService;
+
+    public UserDataServiceImpl(MongoTemplate mongoTemplate, UserService userService, CacheMaintainer maintainer) {
+        this.mongoTemplate = mongoTemplate;
+        this.userService = userService;
+        this.localeCache = new ByUserCache<>(maintainer);
+    }
 
     @Override
     public UserData getUserData() {
@@ -93,14 +99,18 @@ public class UserDataServiceImpl implements UserDataService {
         saveUserData(fallback.apply(userData, value));
     }
 
+    private final ByUserCache<Locale> localeCache;
+
     @Override
     public Locale getLocale() {
-        return fetchField(UserData.Fields.targetLocale, Locale.class, UserData::targetLocale);
+        return localeCache.getOrPut(userId -> fetchField(UserData.Fields.targetLocale, Locale.class, UserData::targetLocale, userId));
     }
 
     @Override
     public Locale setLocale(Locale locale) {
-        setField(UserData.Fields.targetLocale, locale, UserData::withTargetLocale);
+        var userId = Account.getAuthenticated().id();
+        setField(UserData.Fields.targetLocale, locale.stripExtensions(), UserData::withTargetLocale, userId);
+        localeCache.set(userId, locale);
         return locale;
     }
 

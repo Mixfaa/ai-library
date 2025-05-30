@@ -3,17 +3,17 @@ package com.mixfa.ailibrary;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.MongoLocaleConverter;
-import com.mixfa.ailibrary.misc.cache.ByUserCache;
+import com.mixfa.ailibrary.misc.cache.ByUserMultiCache;
 import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
-import com.mixfa.ailibrary.service.ai.impl.AiFunctionsImpl;
 import com.mixfa.ailibrary.service.library.CommentService;
+import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
+import com.mixfa.ailibrary.ui.localization.Localizator;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -82,8 +82,14 @@ public class AiLibraryApplication implements AppShellConfigurator {
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public <T> ByUserCache<T> byUserCache(CacheMaintainer cacheMaintainer) {
-        return new ByUserCache<>(cacheMaintainer);
+    public <T> ByUserMultiCache<T> byUserCache(CacheMaintainer cacheMaintainer) {
+        return new ByUserMultiCache<>(cacheMaintainer);
+    }
+
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public Localizator localizator() {
+        return LocalizationProvider.getLocalizator();
     }
 
     public static void main(String[] args) {

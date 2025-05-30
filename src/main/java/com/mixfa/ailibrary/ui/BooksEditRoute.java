@@ -1,4 +1,4 @@
-package com.mixfa.ailibrary.route;
+package com.mixfa.ailibrary.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixfa.ailibrary.misc.UserFriendlyException;
@@ -6,15 +6,17 @@ import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.user.Role;
-import com.mixfa.ailibrary.route.components.EditBookCompontent;
-import com.mixfa.ailibrary.route.components.GridPagination;
-import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.filestorage.FileStorageService;
-import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.mixfa.ailibrary.service.library.BookService;
 import com.mixfa.ailibrary.service.library.CommentService;
+import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.mixfa.ailibrary.service.search.SearchEngine;
 import com.mixfa.ailibrary.service.user.UserDataService;
+import com.mixfa.ailibrary.ui.components.EditBookCompontent;
+import com.mixfa.ailibrary.ui.components.GridPagination;
+import com.mixfa.ailibrary.ui.components.SideBarInitializer;
+import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
+import com.mixfa.ailibrary.ui.localization.Localizator;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -31,7 +33,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.LinkedHashMap;
-import java.util.Locale;
 
 @Slf4j
 @Route("books-edit")
@@ -40,13 +41,13 @@ public class BooksEditRoute extends AppLayout {
     private final BookService bookService;
     private final SearchEngine.ForBooks bookSearchService;
     private final FileStorageService fileStorageService;
-    private final TextField searchField = new TextField("Search query");
+    private final Localizator localizator = LocalizationProvider.getLocalizator();
+    private final TextField searchField = new TextField(localizator.get("booksedit.searchquery"));
 
     private final Grid<Book> foundBooksGrid = new Grid<>();
     private final GridPagination<Book> gridPagination = new GridPagination<>(foundBooksGrid, 10, this::fetchBooks);
     private final ObjectMapper objectMapper;
 
-    private final Locale userLocale;
     private final CommentService commentService;
     private final UserDataService userDataService;
     private final Services services;
@@ -62,26 +63,26 @@ public class BooksEditRoute extends AppLayout {
     }
 
     private Component makeAddButton() {
-        var addDialog = new EditBookCompontent("Add new book", req -> {
+        var addDialog = new EditBookCompontent(localizator.get("booksedit.addnewbook"), req -> {
             try {
                 bookService.addBook(req);
-                Notification.show("Book added successfully");
+                Notification.show(localizator.get("booksedit.bookadded"));
             } catch (Exception e) {
-                String msg = "Error during registering new book";
+                String msg = localizator.get("booksedit.errorregisteringbook");
                 if (e instanceof UserFriendlyException ufEx) {
-                    msg = ufEx.format(Locale.ENGLISH);
+                    msg = ufEx.format(localizator.locale());
                 }
                 Notification.show(msg);
                 log.error(e.getLocalizedMessage());
             }
-        }, services);
-        return new Button("Create book", _ -> {
+        }, localizator, services);
+        return new Button(localizator.get("booksedit.createbook"), _ -> {
             addDialog.open();
         });
     }
 
     private FormLayout makeSearch() {
-        var searchBtn = new Button("search", _ -> {
+        var searchBtn = new Button(localizator.get("booksedit.search"), _ -> {
             var books = fetchBooks(0);
             foundBooksGrid.setItems(books.getContent());
         });
@@ -109,35 +110,34 @@ public class BooksEditRoute extends AppLayout {
         this.commentService = services.commentService();
         this.userDataService = services.userDataService();
         this.services = services;
-        this.userLocale = userDataService.getLocale();
-        SideBarInitializer.init(this);
+        SideBarInitializer.init(this, localizator);
 
-        foundBooksGrid.addColumn(Book::title).setHeader("Title");
-        foundBooksGrid.addColumn(book -> String.join(", ", book.authors())).setHeader("Author");
-        foundBooksGrid.addComponentColumn(book -> new Button("Delete", _ -> {
+        foundBooksGrid.addColumn(Book::title).setHeader(localizator.get("aifeatures.grid.title"));
+        foundBooksGrid.addColumn(book -> String.join(", ", book.authors())).setHeader(localizator.get("editbook.authors"));
+        foundBooksGrid.addComponentColumn(book -> new Button(localizator.get("booksedit.delete"), _ -> {
             try {
                 bookService.removeBook(book.id().toHexString());
                 foundBooksGrid.setItems(fetchBooks(gridPagination.getCurrentPage()).getContent());
             } catch (Exception e) {
             }
         }));
-        foundBooksGrid.addComponentColumn(book -> new Button("Edit",
+        foundBooksGrid.addComponentColumn(book -> new Button(localizator.get("booksedit.edit"),
                 _ -> {
-                    var dialog = new EditBookCompontent("Edit book", req -> {
+                    var dialog = new EditBookCompontent(localizator.get("booksedit.editbook"), req -> {
                         try {
                             bookService.editBook(book.id(), req);
-                            Notification.show("Book successfully edited!");
+                            Notification.show(localizator.get("booksedit.bookeditedsuccessfully"));
                         } catch (Exception e) {
                             System.out.println(e.getLocalizedMessage());
-                            Notification.show("Error during updating book");
+                            Notification.show(localizator.get("booksedit.errorupdatingbook"));
                         }
-                    }, services);
+                    }, localizator, services);
                     dialog.initForBook(book);
                     dialog.open();
                 }));
         var dialogCache = new LinkedHashMap<Book, Dialog>();
-        foundBooksGrid.addComponentColumn(book -> new Button("Preview", _ -> {
-            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, services));
+        foundBooksGrid.addComponentColumn(book -> new Button(localizator.get("booksedit.preview"), _ -> {
+            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, services, localizator));
             dialog.open();
         }));
 

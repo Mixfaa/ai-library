@@ -2,11 +2,12 @@ package com.mixfa.ailibrary.misc;
 
 import com.mixfa.ailibrary.controller.FileStorageContoller;
 import com.mixfa.ailibrary.model.library.Book;
-import com.mixfa.ailibrary.route.components.BookCommentsComponent;
-import com.mixfa.ailibrary.route.components.BookDetailsComponent;
-import com.mixfa.ailibrary.route.components.CloseDialogButton;
 import com.mixfa.ailibrary.service.filestorage.FileStorageService;
 import com.mixfa.ailibrary.service.misc.impl.Services;
+import com.mixfa.ailibrary.ui.components.BookCommentsComponent;
+import com.mixfa.ailibrary.ui.components.BookDetailsComponent;
+import com.mixfa.ailibrary.ui.components.CloseDialogButton;
+import com.mixfa.ailibrary.ui.localization.Localizator;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
@@ -44,9 +45,9 @@ public class VaadinCommons {
         return component;
     }
 
-    public static Dialog editImagesDialog(List<String> imagesList, FileStorageService fileStorageService) {
+    public static Dialog editImagesDialog(List<String> imagesList, Localizator localizator, FileStorageService fileStorageService) {
         return new Dialog("Edit images") {{
-            this.getFooter().add(new CloseDialogButton(this));
+            this.getFooter().add(new CloseDialogButton(this, localizator));
 
             var urlsGrid = new Grid<String>(String.class, false) {{
                 addColumn(ObjectUtils::CONST).setHeader("URL");
@@ -78,7 +79,7 @@ public class VaadinCommons {
         }};
     }
 
-    public static Dialog bookPreviewDialog(Book book, Services services) {
+    public static Dialog bookPreviewDialog(Book book, Services services, Localizator localizator) {
         var commentService = services.commentService();
         var dialog = new Dialog("Book preview " + book.title());
 
@@ -98,8 +99,8 @@ public class VaadinCommons {
         );
 
         content.add(image, details);
-        dialog.add(new BookDetailsComponent(book, services), new BookCommentsComponent(book, commentService));
-        dialog.getFooter().add(new CloseDialogButton(dialog));
+        dialog.add(new BookDetailsComponent(book, localizator, services), new BookCommentsComponent(book, localizator, commentService));
+        dialog.getFooter().add(new CloseDialogButton(dialog, localizator));
 
         return dialog;
     }
@@ -109,11 +110,11 @@ public class VaadinCommons {
         grid.addColumn(b -> tranformer.apply(b).authorsString()).setHeader("Authors");
     }
 
-    public static <T> void configureBookGridPreviewEx(Grid<T> grid, Function<T, Book> tranformer, Services services) {
+    public static <T> void configureBookGridPreviewEx(Grid<T> grid, Function<T, Book> tranformer, Services services, Localizator localizator) {
         var bookPreviewDialogCache = new LinkedHashMap<Book, Dialog>();
         grid.addComponentColumn(b -> new Button("Preview", _ -> {
             var book = tranformer.apply(b);
-            var dialog = bookPreviewDialogCache.computeIfAbsent(book, key -> bookPreviewDialog(key, services));
+            var dialog = bookPreviewDialogCache.computeIfAbsent(book, key -> bookPreviewDialog(key, services, localizator));
             dialog.open();
         })).setHeader("Preview");
     }
@@ -122,8 +123,8 @@ public class VaadinCommons {
         configureDefaultBookGridEx(grid, Function.identity());
     }
 
-    public static void configureBookGridPreview(Grid<Book> grid, Services services) {
-        configureBookGridPreviewEx(grid, Function.identity(), services);
+    public static void configureBookGridPreview(Grid<Book> grid, Services services, Localizator localizator) {
+        configureBookGridPreviewEx(grid, Function.identity(), services, localizator);
     }
 
 }

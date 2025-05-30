@@ -1,9 +1,10 @@
-package com.mixfa.ailibrary.route.components;
+package com.mixfa.ailibrary.ui.components;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.library.Comment;
 import com.mixfa.ailibrary.service.library.CommentService;
+import com.mixfa.ailibrary.ui.localization.Localizator;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
@@ -23,12 +24,14 @@ public class BookCommentsComponent extends VerticalLayout {
     private final Book book;
     private final MessageList messageList;
     private final ArrayList<MessageListItem> commentsItems;
+    private final Localizator localizator;
 
-    public BookCommentsComponent(Book book, CommentService commentService) {
+    public BookCommentsComponent(Book book, Localizator localizator, CommentService commentService) {
         this.book = book;
+        this.localizator = localizator;
         this.commentService = commentService;
         this.messageList = new MessageList();
-        
+
         var comments = commentService.listComments(book.id(), Pageable.ofSize(15));
         commentsItems = comments.getContent()
                 .stream()
@@ -36,12 +39,12 @@ public class BookCommentsComponent extends VerticalLayout {
                 .collect(Collectors.toCollection(ArrayList::new));
 
         messageList.setItems(commentsItems);
-        
+
         add(
-            messageList,
-            createCommentInputSection()
+                messageList,
+                createCommentInputSection()
         );
-        
+
         setWidthFull();
         getStyle()
                 .set("max-width", "1500px")
@@ -51,7 +54,7 @@ public class BookCommentsComponent extends VerticalLayout {
                 .set("box-shadow", "0 8px 24px rgba(0, 0, 0, 0.12)")
                 .set("padding", "24px");
     }
-    
+
     private static MessageListItem commentToItem(Comment comment) {
         return new MessageListItem(
                 Utils.fmt("{0} ({1})", comment.text(), comment.rate()),
@@ -59,13 +62,17 @@ public class BookCommentsComponent extends VerticalLayout {
                 comment.owner().getUsername()
         );
     }
-    
+
     private Component createCommentInputSection() {
         var messageInput = new MessageInput();
-        var rateInput = new IntegerField("Rate");
-        rateInput.setMin(0);
-        rateInput.setMax(5);
-        
+        var rateInput = new IntegerField(localizator.get("comment.rate.label")) {{
+            setWidth("100px");
+            setValue(5);
+            setMin(0);
+            setMax(5);
+            setStepButtonsVisible(true);
+        }};
+
         messageInput.addSubmitListener(event -> {
             var text = event.getValue();
             var rate = rateInput.getValue();
@@ -77,7 +84,7 @@ public class BookCommentsComponent extends VerticalLayout {
                 Notification.show(e.getLocalizedMessage());
             }
         });
-        
+
         return new HorizontalLayout(
                 rateInput,
                 messageInput

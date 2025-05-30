@@ -1,4 +1,4 @@
-package com.mixfa.ailibrary.route;
+package com.mixfa.ailibrary.ui;
 
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -13,9 +13,6 @@ public class LoginRoute extends VerticalLayout {
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);
         setAlignItems(Alignment.CENTER);
-//        add(new Anchor("/oauth2/authorization/github", "Authorize with github") {{
-//            setRouterIgnore(true);
-//        }});
         add(new Anchor("/oauth2/authorization/google", "Authorize with google") {{
             setRouterIgnore(true);
         }});

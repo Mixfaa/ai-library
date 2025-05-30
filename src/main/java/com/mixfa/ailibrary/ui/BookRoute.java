@@ -1,13 +1,15 @@
-package com.mixfa.ailibrary.route;
+package com.mixfa.ailibrary.ui;
 
 import com.mixfa.ailibrary.model.library.Book;
-import com.mixfa.ailibrary.route.components.BookCommentsComponent;
-import com.mixfa.ailibrary.route.components.BookDetailsComponent;
-import com.mixfa.ailibrary.route.components.SideBarInitializer;
 import com.mixfa.ailibrary.service.library.BookService;
 import com.mixfa.ailibrary.service.library.CommentService;
-import com.mixfa.ailibrary.service.user.UserDataService;
 import com.mixfa.ailibrary.service.misc.impl.Services;
+import com.mixfa.ailibrary.service.user.UserDataService;
+import com.mixfa.ailibrary.ui.components.BookCommentsComponent;
+import com.mixfa.ailibrary.ui.components.BookDetailsComponent;
+import com.mixfa.ailibrary.ui.components.SideBarInitializer;
+import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
+import com.mixfa.ailibrary.ui.localization.Localizator;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -16,14 +18,12 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 
-import java.util.Locale;
-
 @Route("book")
 @PermitAll
 public class BookRoute extends AppLayout implements HasUrlParameter<String> {
     private final BookService bookService;
     private final CommentService commentService;
-    private final Locale userLocale;
+    private final Localizator localizator;
     private final UserDataService userDataService;
     private final Services services;
 
@@ -33,15 +33,16 @@ public class BookRoute extends AppLayout implements HasUrlParameter<String> {
         this.bookService = services.bookService();
         this.commentService = services.commentService();
         this.userDataService = services.userDataService();
-        this.userLocale = userDataService.getLocale();
+        this.localizator = LocalizationProvider.getLocalizator();
         this.services = services;
 
-        SideBarInitializer.init(this);
+        SideBarInitializer.init(this, localizator);
     }
 
     private Component makeContent() {
-        var bookDetails = new BookDetailsComponent(book, services);
-        var comments = new BookCommentsComponent(book, commentService);
+        var localizer = LocalizationProvider.getLocalizator();
+        var bookDetails = new BookDetailsComponent(book, localizator, services);
+        var comments = new BookCommentsComponent(book, localizer, commentService);
 
         return new VerticalLayout(
                 bookDetails,

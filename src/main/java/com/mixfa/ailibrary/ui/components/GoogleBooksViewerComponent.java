@@ -1,9 +1,7 @@
-package com.mixfa.ailibrary.route.components;
+package com.mixfa.ailibrary.ui.components;
 
-import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.dom.Element;
 
 
 public class GoogleBooksViewerComponent extends VerticalLayout {

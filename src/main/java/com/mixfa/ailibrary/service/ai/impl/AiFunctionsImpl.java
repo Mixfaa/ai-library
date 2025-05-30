@@ -1,6 +1,6 @@
 package com.mixfa.ailibrary.service.ai.impl;
 
-import com.mixfa.ailibrary.misc.cache.ByUserCache;
+import com.mixfa.ailibrary.misc.cache.ByUserMultiCache;
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.service.ai.AiBookDescriptionService;
@@ -32,7 +32,7 @@ public class AiFunctionsImpl implements AiFunctions {
     private final BookService bookService;
     private final AiBookDescriptionService aiBookDescriptionService;
     private final MongoTemplate mongoTemplate;
-    private final ByUserCache<FunctionToolCallback<?, ?>> cache;
+    private final ByUserMultiCache<FunctionToolCallback<?, ?>> cache;
 
     private final FunctionToolCallback<SearchArgs, String> defaultSearchFunction =
             FunctionToolCallback.builder("default search", (SearchArgs args) -> makeBooksContext(SearchOption.empty(), args))
@@ -156,7 +156,7 @@ public class AiFunctionsImpl implements AiFunctions {
                         .build());
     }
 
-    public String booksIndexFuncImpl(int page) {
+    private String booksIndexFuncImpl(int page) {
         final int PAGE_SIZE = 150;
 
         record BookData(String title, String authors, ObjectId _id) {
@@ -167,15 +167,14 @@ public class AiFunctionsImpl implements AiFunctions {
 
         var res = mongoTemplate.aggregate(
                 Aggregation.newAggregation(
+                        Aggregation.skip(PAGE_SIZE * page),
+                        Aggregation.limit(PAGE_SIZE),
                         Aggregation.project(Book.Fields.title, Book.Fields.authors)
                                 .and(
                                         ArrayOperators.Reduce.arrayOf(Book.Fields.authors)
                                                 .withInitialValue("")
                                                 .reduce(StringOperators.Concat.valueOf("$$value"))
                                 )
-                        ,
-                        Aggregation.skip(PAGE_SIZE * page),
-                        Aggregation.limit(PAGE_SIZE)
                 ),
                 Book.class,
                 BookData.class
