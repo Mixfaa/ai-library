@@ -13,7 +13,7 @@ import com.mixfa.ailibrary.service.user.UserDataService;
 import com.mixfa.ailibrary.ui.components.GridWithPagination;
 import com.mixfa.ailibrary.ui.components.SideBarInitializer;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
@@ -46,7 +46,7 @@ public class UserDetailsRoute extends AppLayout {
     private final BookBorrowingService borrowingService;
     private final Account account;
     private final Services services;
-    private final Localizator localizator = LocalizationProvider.getLocalizator();
+    private final Localizer localizer = LocalizationProvider.getLocalizator();
 
     private DateTimeFormatter dateTimeFormatter;
 
@@ -56,7 +56,7 @@ public class UserDetailsRoute extends AppLayout {
         this.borrowingService = services.bookBorrowingService();
         this.services = services;
         this.account = Account.getAuthenticatedAccount();
-        SideBarInitializer.init(this, localizator);
+        SideBarInitializer.init(this, localizer);
 
         UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> {
             var timezone = details.getTimeZoneId();
@@ -77,16 +77,16 @@ public class UserDetailsRoute extends AppLayout {
 
         var takenBooksGrid = new GridWithPagination<BookBorrowing>(BookBorrowing.class, 15, fetchFunc);
         VaadinCommons.configureDefaultBookGridEx(takenBooksGrid, BookBorrowing::book);
-        VaadinCommons.configureBookGridPreviewEx(takenBooksGrid, BookBorrowing::book, services, localizator);
+        VaadinCommons.configureBookGridPreviewEx(takenBooksGrid, BookBorrowing::book, services, localizer);
 
-        takenBooksGrid.addComponentColumn(it -> new Button(localizator.get("userdetails.readbook"),
+        takenBooksGrid.addComponentColumn(it -> new Button(localizer.get("userdetails.readbook"),
                         _ -> UI.getCurrent().navigate(BookContentRoute.class, it.book().id().toHexString())))
-                .setHeader(localizator.get("userdetails.readbook"));
-        takenBooksGrid.addColumn(it -> dateTimeFormatter.format(it.borrowedTime())).setHeader(localizator.get("userdetails.borrowedtime"));
-        takenBooksGrid.addColumn(it -> dateTimeFormatter.format(it.returnTime())).setHeader(localizator.get("userdetails.returntime"));
+                .setHeader(localizer.get("userdetails.readbook"));
+        takenBooksGrid.addColumn(it -> dateTimeFormatter.format(it.borrowedTime())).setHeader(localizer.get("userdetails.borrowedtime"));
+        takenBooksGrid.addColumn(it -> dateTimeFormatter.format(it.returnTime())).setHeader(localizer.get("userdetails.returntime"));
         takenBooksGrid.refresh();
 
-        layout.add(new Div(new H3(localizator.get("userdetails.yourorderedbooks"))), takenBooksGrid);
+        layout.add(new Div(new H3(localizer.get("userdetails.yourorderedbooks"))), takenBooksGrid);
         return VaadinCommons.applyMainStyle(new Div(layout));
     }
 
@@ -95,13 +95,13 @@ public class UserDetailsRoute extends AppLayout {
 
         var waitListGrid = new Grid<>(Book.class, false);
         VaadinCommons.configureDefaultBookGrid(waitListGrid);
-        VaadinCommons.configureBookGridPreview(waitListGrid, services, localizator);
+        VaadinCommons.configureBookGridPreview(waitListGrid, services, localizer);
 
-        waitListGrid.addComponentColumn(book -> new Button(localizator.get("userdetails.remove"), _ ->
+        waitListGrid.addComponentColumn(book -> new Button(localizer.get("userdetails.remove"), _ ->
         {
             waitList.addRemove(book);
             waitListGrid.setItems(waitList.get());
-        })).setHeader(localizator.get("userdetails.remove"));
+        })).setHeader(localizer.get("userdetails.remove"));
 
         waitListGrid.setItems(waitList.get());
 
@@ -114,12 +114,12 @@ public class UserDetailsRoute extends AppLayout {
         var grid = new Grid<>(ReadBook.class, false);
         VaadinCommons.configureDefaultBookGridEx(grid, ReadBook::book);
         grid.addComponentColumn(rb -> new Button((rb.mark() == ReadBook.Mark.LIKE ? VaadinIcon.THUMBS_UP : VaadinIcon.THUMBS_DOWN).create()))
-                .setHeader(localizator.get("userdetails.yourmark"));
-        VaadinCommons.configureBookGridPreviewEx(grid, ReadBook::book, services, localizator);
-        grid.addComponentColumn(rb -> new Button(localizator.get("userdetails.remove"), _ -> {
+                .setHeader(localizer.get("userdetails.yourmark"));
+        VaadinCommons.configureBookGridPreviewEx(grid, ReadBook::book, services, localizer);
+        grid.addComponentColumn(rb -> new Button(localizer.get("userdetails.remove"), _ -> {
             readList.addRemove(rb.book(), null);
             grid.setItems(readList.get());
-        })).setHeader(localizator.get("userdetails.remove"));
+        })).setHeader(localizer.get("userdetails.remove"));
         grid.setItems(readList.get());
         return grid;
     }
@@ -127,10 +127,10 @@ public class UserDetailsRoute extends AppLayout {
     private Component makeCommentsSection() {
         IntFunction<Page<Comment>> fetchFunc = page -> commentService.listMyComments(PageRequest.of(page, 10));
         var commentsGrid = new GridWithPagination<>(Comment.class, 10, fetchFunc);
-        commentsGrid.addColumn(Comment::text).setHeader(localizator.get("userdetails.text"));
-        commentsGrid.addColumn(comment -> comment.book().title()).setHeader(localizator.get("userdetails.book"));
-        VaadinCommons.configureBookGridPreviewEx(commentsGrid, Comment::book, services, localizator);
-        commentsGrid.addComponentColumn(comment -> new Button(localizator.get("userdetails.delete"), _ -> {
+        commentsGrid.addColumn(Comment::text).setHeader(localizer.get("userdetails.text"));
+        commentsGrid.addColumn(comment -> comment.book().title()).setHeader(localizer.get("userdetails.book"));
+        VaadinCommons.configureBookGridPreviewEx(commentsGrid, Comment::book, services, localizer);
+        commentsGrid.addComponentColumn(comment -> new Button(localizer.get("userdetails.delete"), _ -> {
             commentService.removeComment(comment.id());
             commentsGrid.refresh();
         }));
@@ -141,12 +141,12 @@ public class UserDetailsRoute extends AppLayout {
 
     private Component makeProfileSection() {
         return new HorizontalLayout(
-                new Span(localizator.formatGet("userdetails.username", account.getUsername())),
-                new Span(localizator.formatGet("userdetails.email", account.getEmail())),
-                new Span(localizator.formatGet("userdetails.role", account.getRole().name().toLowerCase())),
-                new ComboBox<Locale>(localizator.get("userdetails.localecombobox")) {{
+                new Span(localizer.formatGet("userdetails.username", account.getUsername())),
+                new Span(localizer.formatGet("userdetails.email", account.getEmail())),
+                new Span(localizer.formatGet("userdetails.role", account.getRole().name().toLowerCase())),
+                new ComboBox<Locale>(localizer.get("userdetails.localecombobox")) {{
                     setItems(Locale.ENGLISH, Locale.forLanguageTag("UA"));
-                    setValue(localizator.locale());
+                    setValue(localizer.locale());
                     addValueChangeListener(e -> {
                         userDataService.setLocale(e.getValue());
                         UI.getCurrent().navigate(UserDetailsRoute.class);
@@ -161,11 +161,11 @@ public class UserDetailsRoute extends AppLayout {
         Accordion accordion = new Accordion();
         accordion.setWidthFull();
 
-        accordion.add(localizator.get("userdetails.profile"), makeProfileSection());
-        accordion.add(localizator.get("userdetails.myorders"), makeMyOrders());
-        accordion.add(localizator.get("userdetails.waitlist"), makeWaitList());
-        accordion.add(localizator.get("userdetails.readlist"), makeReadList());
-        accordion.add(localizator.get("userdetails.mycomments"), makeCommentsSection());
+        accordion.add(localizer.get("userdetails.profile"), makeProfileSection());
+        accordion.add(localizer.get("userdetails.myorders"), makeMyOrders());
+        accordion.add(localizer.get("userdetails.waitlist"), makeWaitList());
+        accordion.add(localizer.get("userdetails.readlist"), makeReadList());
+        accordion.add(localizer.get("userdetails.mycomments"), makeCommentsSection());
 
         return VaadinCommons.applyMainStyle(accordion);
     }

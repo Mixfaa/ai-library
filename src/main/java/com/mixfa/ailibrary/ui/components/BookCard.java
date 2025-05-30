@@ -3,7 +3,7 @@ package com.mixfa.ailibrary.ui.components;
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.ui.BookRoute;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.card.CardVariant;
@@ -19,7 +19,7 @@ public class BookCard extends Card {
         UI.getCurrent().navigate(BookRoute.class, book.id().toHexString());
     }
 
-    public BookCard(Book book, Localizator localizator) {
+    public BookCard(Book book, Localizer localizer) {
         this.addThemeVariants(CardVariant.LUMO_STRETCH_MEDIA);
         var image = new Image(book.imageUrl(), "");
         image.getStyle()

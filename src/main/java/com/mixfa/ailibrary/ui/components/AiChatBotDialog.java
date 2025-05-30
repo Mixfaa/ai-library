@@ -2,7 +2,7 @@ package com.mixfa.ailibrary.ui.components;
 
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.service.library.BookChatBotService;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
@@ -19,10 +19,10 @@ public class AiChatBotDialog extends Dialog {
     private static final Executor executor = Executors.newSingleThreadExecutor();
     private final BookChatBotService.ChatBot bookChatBot;
 
-    public AiChatBotDialog(Book book, Localizator localizator, BookChatBotService bookChatBotService) {
+    public AiChatBotDialog(Book book, Localizer localizer, BookChatBotService bookChatBotService) {
         super();
-        setHeaderTitle(fmt(localizator.get("aichatbot.dialog.title"), book.title()));
-        getFooter().add(new CloseDialogButton(this, localizator));
+        setHeaderTitle(fmt(localizer.get("aichatbot.dialog.title"), book.title()));
+        getFooter().add(new CloseDialogButton(this, localizer));
         this.bookChatBot = bookChatBotService.createBookChatBot(book);
 
         var messages = new CopyOnWriteArrayList<MessageListItem>();

@@ -60,26 +60,6 @@ public class SuggestionServiceImpl implements SuggestionService {
 
     private final Function<Prompt, SuggestedBook[]> getAndParseFunc = Retry.decorateFunction(retry, this::getAndParse);
 
-    @Override
-    public SuggestedBook[] getSuggestions() {
-        return getSuggestions(SearchOption.empty());
-    }
-
-    @Override
-    public SuggestedBook[] getSuggestions(SearchOption searchOptions) {
-        var readBooks = userDataService.readBooks().get();
-        SuggsetionHint hint = SuggsetionHint.empty();
-        if (readBooks.length != 0)
-            hint = new ReadBooksHint(readBooks);
-
-        return getSuggestions(SearchOption.empty(), hint);
-    }
-
-    @Override
-    public SuggestedBook[] getSuggestions(SuggsetionHint suggsetionHint) {
-        return getSuggestions(SearchOption.empty(), suggsetionHint);
-    }
-
     private SuggestedBook[] getAndParse(Prompt prompt) {
         var searchResult = chatModel.call(prompt);
         log.info("LLM respond:");

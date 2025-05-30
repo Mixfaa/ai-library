@@ -4,12 +4,12 @@ package com.mixfa.ailibrary.ui.localization;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-public class RetringLocalizator extends Localizator {
-    private final Localizator fallbackLocalizator;
+public class RetringLocalizer extends Localizer {
+    private final Localizer fallbackLocalizer;
 
-    public RetringLocalizator(Locale locale, ResourceBundle textBundle, ResourceBundle errorsBundle, Localizator fallbackLocalizator) {
+    public RetringLocalizer(Locale locale, ResourceBundle textBundle, ResourceBundle errorsBundle, Localizer fallbackLocalizer) {
         super(locale, textBundle, errorsBundle);
-        this.fallbackLocalizator = fallbackLocalizator;
+        this.fallbackLocalizer = fallbackLocalizer;
     }
 
     @Override
@@ -17,7 +17,7 @@ public class RetringLocalizator extends Localizator {
         try {
             return super.formatError(e);
         } catch (Exception ex) {
-            return fallbackLocalizator.formatError(ex);
+            return fallbackLocalizer.formatError(ex);
         }
     }
 
@@ -26,7 +26,7 @@ public class RetringLocalizator extends Localizator {
         try {
             return super.get(key);
         } catch (Exception ex) {
-            return fallbackLocalizator.get(key);
+            return fallbackLocalizer.get(key);
         }
     }
 
@@ -35,7 +35,7 @@ public class RetringLocalizator extends Localizator {
         try {
             return super.formatGet(key, args);
         } catch (Exception ex) {
-            return fallbackLocalizator.formatGet(key, args);
+            return fallbackLocalizer.formatGet(key, args);
         }
     }
 }

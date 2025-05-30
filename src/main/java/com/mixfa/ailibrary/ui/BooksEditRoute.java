@@ -16,7 +16,7 @@ import com.mixfa.ailibrary.ui.components.EditBookCompontent;
 import com.mixfa.ailibrary.ui.components.GridPagination;
 import com.mixfa.ailibrary.ui.components.SideBarInitializer;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -41,8 +41,8 @@ public class BooksEditRoute extends AppLayout {
     private final BookService bookService;
     private final SearchEngine.ForBooks bookSearchService;
     private final FileStorageService fileStorageService;
-    private final Localizator localizator = LocalizationProvider.getLocalizator();
-    private final TextField searchField = new TextField(localizator.get("booksedit.searchquery"));
+    private final Localizer localizer = LocalizationProvider.getLocalizator();
+    private final TextField searchField = new TextField(localizer.get("booksedit.searchquery"));
 
     private final Grid<Book> foundBooksGrid = new Grid<>();
     private final GridPagination<Book> gridPagination = new GridPagination<>(foundBooksGrid, 10, this::fetchBooks);
@@ -63,26 +63,26 @@ public class BooksEditRoute extends AppLayout {
     }
 
     private Component makeAddButton() {
-        var addDialog = new EditBookCompontent(localizator.get("booksedit.addnewbook"), req -> {
+        var addDialog = new EditBookCompontent(localizer.get("booksedit.addnewbook"), req -> {
             try {
                 bookService.addBook(req);
-                Notification.show(localizator.get("booksedit.bookadded"));
+                Notification.show(localizer.get("booksedit.bookadded"));
             } catch (Exception e) {
-                String msg = localizator.get("booksedit.errorregisteringbook");
+                String msg = localizer.get("booksedit.errorregisteringbook");
                 if (e instanceof UserFriendlyException ufEx) {
-                    msg = localizator.formatError(ufEx);
+                    msg = localizer.formatError(ufEx);
                 }
                 Notification.show(msg);
                 log.error(e.getLocalizedMessage());
             }
-        }, localizator, services);
-        return new Button(localizator.get("booksedit.createbook"), _ -> {
+        }, localizer, services);
+        return new Button(localizer.get("booksedit.createbook"), _ -> {
             addDialog.open();
         });
     }
 
     private FormLayout makeSearch() {
-        var searchBtn = new Button(localizator.get("booksedit.search"), _ -> {
+        var searchBtn = new Button(localizer.get("booksedit.search"), _ -> {
             var books = fetchBooks(0);
             foundBooksGrid.setItems(books.getContent());
         });
@@ -110,36 +110,36 @@ public class BooksEditRoute extends AppLayout {
         this.commentService = services.commentService();
         this.userDataService = services.userDataService();
         this.services = services;
-        SideBarInitializer.init(this, localizator);
+        SideBarInitializer.init(this, localizer);
 
-        foundBooksGrid.addColumn(Book::title).setHeader(localizator.get("aifeatures.grid.title"));
-        foundBooksGrid.addColumn(book -> String.join(", ", book.authors())).setHeader(localizator.get("editbook.authors"));
-        foundBooksGrid.addComponentColumn(book -> new Button(localizator.get("booksedit.delete"), _ -> {
+        foundBooksGrid.addColumn(Book::title).setHeader(localizer.get("aifeatures.grid.title"));
+        foundBooksGrid.addColumn(book -> String.join(", ", book.authors())).setHeader(localizer.get("editbook.authors"));
+        foundBooksGrid.addComponentColumn(book -> new Button(localizer.get("booksedit.delete"), _ -> {
             try {
                 bookService.removeBook(book.id().toHexString());
                 foundBooksGrid.setItems(fetchBooks(gridPagination.getCurrentPage()).getContent());
             } catch (Exception e) {
             }
         }));
-        foundBooksGrid.addComponentColumn(book -> new Button(localizator.get("booksedit.edit"),
+        foundBooksGrid.addComponentColumn(book -> new Button(localizer.get("booksedit.edit"),
                 _ -> {
-                    var dialog = new EditBookCompontent(localizator.get("booksedit.editbook"), req -> {
+                    var dialog = new EditBookCompontent(localizer.get("booksedit.editbook"), req -> {
                         try {
                             bookService.editBook(book.id(), req);
-                            Notification.show(localizator.get("booksedit.bookeditedsuccessfully"));
+                            Notification.show(localizer.get("booksedit.bookeditedsuccessfully"));
                         } catch (Exception e) {
                             if (e instanceof UserFriendlyException ufEx)
-                                Notification.show(localizator.formatError(ufEx));
+                                Notification.show(localizer.formatError(ufEx));
                             else
-                                Notification.show(localizator.get("booksedit.errorupdatingbook"));
+                                Notification.show(localizer.get("booksedit.errorupdatingbook"));
                         }
-                    }, localizator, services);
+                    }, localizer, services);
                     dialog.initForBook(book);
                     dialog.open();
                 }));
         var dialogCache = new LinkedHashMap<Book, Dialog>();
-        foundBooksGrid.addComponentColumn(book -> new Button(localizator.get("booksedit.preview"), _ -> {
-            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, services, localizator));
+        foundBooksGrid.addComponentColumn(book -> new Button(localizer.get("booksedit.preview"), _ -> {
+            var dialog = dialogCache.computeIfAbsent(book, (key) -> VaadinCommons.bookPreviewDialog(book, services, localizer));
             dialog.open();
         }));
 

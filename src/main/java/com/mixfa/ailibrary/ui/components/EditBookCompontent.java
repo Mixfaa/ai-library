@@ -8,7 +8,7 @@ import com.mixfa.ailibrary.model.library.BookContentProvider;
 import com.mixfa.ailibrary.model.library.content_provider.GoogleBookContentProvider;
 import com.mixfa.ailibrary.model.library.content_provider.PdfFileContentProvider;
 import com.mixfa.ailibrary.service.misc.impl.Services;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -32,7 +32,7 @@ public class EditBookCompontent extends Dialog {
     private final Services services;
     private final Consumer<Book.AddRequest> handler;
 
-    private final Localizator localizator;
+    private final Localizer localizer;
 
     private final TextField title;
     private final TextField description;
@@ -44,8 +44,8 @@ public class EditBookCompontent extends Dialog {
     private final List<String> images = new ArrayList<>();
 
     private Dialog makeSelectContentProviderDialog() {
-        var dialog = new Dialog(localizator.get("editbook.selectcontentprovider"));
-        dialog.getFooter().add(new CloseDialogButton(dialog, localizator));
+        var dialog = new Dialog(localizer.get("editbook.selectcontentprovider"));
+        dialog.getFooter().add(new CloseDialogButton(dialog, localizer));
         dialog.setWidth("1200px");
 
         var accordion = new Accordion();
@@ -53,19 +53,19 @@ public class EditBookCompontent extends Dialog {
         {
             var configurationLayout = new HorizontalLayout();
             configurationLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
-            var isbnField = new TextField(localizator.get("editbook.isbn"));
+            var isbnField = new TextField(localizer.get("editbook.isbn"));
             isbnField.setPattern("[0-9]*");
 
-            var setButton = new Button(localizator.get("editbook.create"), _ -> {
+            var setButton = new Button(localizer.get("editbook.create"), _ -> {
                 try {
                     providers[0] = new GoogleBookContentProvider(Long.parseLong(isbnField.getValue()));
                     dialog.close();
                 } catch (NumberFormatException e) {
-                    Notification.show(localizator.get("editbook.invalidisbn"));
+                    Notification.show(localizer.get("editbook.invalidisbn"));
                 }
             });
             configurationLayout.add(isbnField, setButton);
-            accordion.add(localizator.get("editbook.googleprovider"), configurationLayout);
+            accordion.add(localizer.get("editbook.googleprovider"), configurationLayout);
         }
         {
             var configurationLayout = new HorizontalLayout();
@@ -81,47 +81,47 @@ public class EditBookCompontent extends Dialog {
                     var url = FileStorageContoller.makeFileStaticURL(fileData);
 
                     providers[0] = new PdfFileContentProvider(url);
-                    Notification.show(localizator.get("editbook.providercreated"));
+                    Notification.show(localizer.get("editbook.providercreated"));
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    Notification.show(localizator.get("editbook.uploaderror"));
+                    Notification.show(localizer.get("editbook.uploaderror"));
                 }
             });
 
-            configurationLayout.add(new Div(localizator.get("editbook.uploadfile")) {{
+            configurationLayout.add(new Div(localizer.get("editbook.uploadfile")) {{
                 add(upload);
             }});
 
-            accordion.add(localizator.get("editbook.pdfprovider"), configurationLayout);
+            accordion.add(localizer.get("editbook.pdfprovider"), configurationLayout);
         }
 
         dialog.add(accordion);
         return dialog;
     }
 
-    public EditBookCompontent(String dialogTitle, Consumer<Book.AddRequest> handler, Localizator localizator, Services services) {
+    public EditBookCompontent(String dialogTitle, Consumer<Book.AddRequest> handler, Localizer localizer, Services services) {
         super(dialogTitle);
 
-        this.title = new TextField(localizator.get("editbook.title"));
-        this.description = new TextField(localizator.get("editbook.description"));
-        this.isbn = new TextField(localizator.get("editbook.isbn"));
-        this.publishYear = new IntegerField(localizator.get("editbook.publishyear"));
-        this.subjects = new CustomMultiSelectComboBox<>(localizator.get("editbook.subjects"), Function.identity());
-        this.authors = new CustomMultiSelectComboBox<>(localizator.get("editbook.authors"), Function.identity());
+        this.title = new TextField(localizer.get("editbook.title"));
+        this.description = new TextField(localizer.get("editbook.description"));
+        this.isbn = new TextField(localizer.get("editbook.isbn"));
+        this.publishYear = new IntegerField(localizer.get("editbook.publishyear"));
+        this.subjects = new CustomMultiSelectComboBox<>(localizer.get("editbook.subjects"), Function.identity());
+        this.authors = new CustomMultiSelectComboBox<>(localizer.get("editbook.authors"), Function.identity());
 
         this.handler = handler;
         this.services = services;
-        this.localizator = localizator;
-        this.getFooter().add(new CloseDialogButton(this, localizator));
+        this.localizer = localizer;
+        this.getFooter().add(new CloseDialogButton(this, localizer));
 
         var formLayout = new FormLayout();
-        var addImagesDialog = VaadinCommons.editImagesDialog(images, localizator, services.fileStorageService());
-        var addImagesButton = new OpenDialogButton(localizator.get("editbook.editimages"), addImagesDialog);
+        var addImagesDialog = VaadinCommons.editImagesDialog(images, localizer, services.fileStorageService());
+        var addImagesButton = new OpenDialogButton(localizer.get("editbook.editimages"), addImagesDialog);
 
         var contentProviderDialog = makeSelectContentProviderDialog();
-        var contentProviderDialogButton = new OpenDialogButton(localizator.get("editbook.editcontentprovider"), contentProviderDialog);
+        var contentProviderDialogButton = new OpenDialogButton(localizer.get("editbook.editcontentprovider"), contentProviderDialog);
 
-        formLayout.add(title, description, isbn, subjects, authors, publishYear, addImagesButton, contentProviderDialogButton, new Button(localizator.get("editbook.submit"), _ -> submit()));
+        formLayout.add(title, description, isbn, subjects, authors, publishYear, addImagesButton, contentProviderDialogButton, new Button(localizer.get("editbook.submit"), _ -> submit()));
 
         this.add(formLayout);
     }

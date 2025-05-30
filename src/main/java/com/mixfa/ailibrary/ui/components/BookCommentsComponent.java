@@ -4,7 +4,7 @@ import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.library.Comment;
 import com.mixfa.ailibrary.service.library.CommentService;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
@@ -24,11 +24,11 @@ public class BookCommentsComponent extends VerticalLayout {
     private final Book book;
     private final MessageList messageList;
     private final ArrayList<MessageListItem> commentsItems;
-    private final Localizator localizator;
+    private final Localizer localizer;
 
-    public BookCommentsComponent(Book book, Localizator localizator, CommentService commentService) {
+    public BookCommentsComponent(Book book, Localizer localizer, CommentService commentService) {
         this.book = book;
-        this.localizator = localizator;
+        this.localizer = localizer;
         this.commentService = commentService;
         this.messageList = new MessageList();
 
@@ -65,7 +65,7 @@ public class BookCommentsComponent extends VerticalLayout {
 
     private Component createCommentInputSection() {
         var messageInput = new MessageInput();
-        var rateInput = new IntegerField(localizator.get("comment.rate.label")) {{
+        var rateInput = new IntegerField(localizer.get("comment.rate.label")) {{
             setWidth("100px");
             setValue(5);
             setMin(0);

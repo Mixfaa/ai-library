@@ -12,7 +12,7 @@ import com.mixfa.ailibrary.ui.components.CloseDialogButton;
 import com.mixfa.ailibrary.ui.components.CustomMultiSelectComboBox;
 import com.mixfa.ailibrary.ui.components.SideBarInitializer;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
@@ -31,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
@@ -44,40 +43,40 @@ public class AiFeaturesRoute extends AppLayout {
     private final SearchEngine.ForBooks bookSearchEngine;
     private final UserDataService userDataService;
 
-    private final Localizator localizator;
+    private final Localizer localizer;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final BookRepo bookRepo;
     private final Services services;
 
     public AiFeaturesRoute(Services services, BookRepo bookRepo) {
-        this.localizator = LocalizationProvider.getLocalizator();
+        this.localizer = LocalizationProvider.getLocalizator();
         this.suggestionService = services.suggestionService();
         this.bookSearchEngine = services.booksSearchEngine();
         this.userDataService = services.userDataService();
         this.bookRepo = bookRepo;
         this.services = services;
-        SideBarInitializer.init(this, localizator);
+        SideBarInitializer.init(this, localizer);
 
         setContent(makeContent());
     }
 
 
     private Component makeIncludeHints(List<SuggsetionHint> suggestionHints) {
-        var includeReadBooksCheckBox = new Checkbox(localizator.get("aifeatures.usereadbooks"));
+        var includeReadBooksCheckBox = new Checkbox(localizer.get("aifeatures.usereadbooks"));
         includeReadBooksCheckBox.addValueChangeListener(e -> {
             suggestionHints.removeIf(suggsetionHint -> ReadBooksHint.class.isInstance(suggestionHints));
             if (e.getValue())
                 suggestionHints.add(new ReadBooksHint(userDataService.readBooks().get()));
         });
 
-        var likedBookSelect = new CustomMultiSelectComboBox<String>(localizator.get("aifeatures.likedbooks"), Function.identity());
+        var likedBookSelect = new CustomMultiSelectComboBox<String>(localizer.get("aifeatures.likedbooks"), Function.identity());
         likedBookSelect.setWidth("50%");
         likedBookSelect.addValueChangeListener(e -> {
             suggestionHints.removeIf(suggsetionHint -> LikedBooksHint.class.isInstance(suggestionHints));
             suggestionHints.add(new LikedBooksHint(e.getValue().toArray(String[]::new)));
         });
 
-        var dislikedBookSelect = new CustomMultiSelectComboBox<String>(localizator.get("aifeatures.dislikedbooks"), Function.identity());
+        var dislikedBookSelect = new CustomMultiSelectComboBox<String>(localizer.get("aifeatures.dislikedbooks"), Function.identity());
         dislikedBookSelect.setWidth("50%");
         dislikedBookSelect.addValueChangeListener(e -> {
             suggestionHints.removeIf(suggsetionHint -> DislikedBooksHint.class.isInstance(suggestionHints));
@@ -91,26 +90,26 @@ public class AiFeaturesRoute extends AppLayout {
     private Component makeContent() {
 
 
-        var header = new Paragraph(localizator.get("aifeatures.title"));
+        var header = new Paragraph(localizer.get("aifeatures.title"));
 
         var searchOptions = new ArrayList<SearchOption>();
         var suggestionHints = new ArrayList<SuggsetionHint>();
 
-        var optionsDialog = new Dialog(localizator.get("aifeatures.configureoptions"));
+        var optionsDialog = new Dialog(localizer.get("aifeatures.configureoptions"));
         optionsDialog.setWidth("1200px");
-        optionsDialog.getFooter().add(new CloseDialogButton(optionsDialog, localizator));
+        optionsDialog.getFooter().add(new CloseDialogButton(optionsDialog, localizer));
 
         var optionsAccordion = new Accordion();
 
-        optionsAccordion.add(localizator.get("aifeatures.includeuserstats"), makeIncludeHints(suggestionHints));
+        optionsAccordion.add(localizer.get("aifeatures.includeuserstats"), makeIncludeHints(suggestionHints));
 
         optionsDialog.add(optionsAccordion);
 
-        var optionsDialogButton = new Button(localizator.get("aifeatures.configureoptions"), _ -> optionsDialog.open());
+        var optionsDialogButton = new Button(localizer.get("aifeatures.configureoptions"), _ -> optionsDialog.open());
 
-        var getSuggestionsButton = new Button(localizator.get("aifeatures.getsuggestions"), _ -> {
+        var getSuggestionsButton = new Button(localizer.get("aifeatures.getsuggestions"), _ -> {
 
-            Notification.show(localizator.get("aifeatures.requestsubmitted"));
+            Notification.show(localizer.get("aifeatures.requestsubmitted"));
             executor.execute(() -> {
                 final SuggestedBook[] suggestions;
                 try {
@@ -121,27 +120,27 @@ public class AiFeaturesRoute extends AppLayout {
                     System.out.println("Suggestions ready " + Arrays.toString(suggestions));
                     log.info("Suggestions are ready: {}", suggestions);
                 } catch (Throwable e) {
-                    UI.getCurrent().access(() -> Notification.show(localizator.get("aifeatures.erroroccurred"), 5000, Notification.Position.MIDDLE));
+                    UI.getCurrent().access(() -> Notification.show(localizer.get("aifeatures.erroroccurred"), 5000, Notification.Position.MIDDLE));
                     log.error("Error while getting suggestions", e);
                     e.printStackTrace();
                     throw new RuntimeException(e);
                 }
 
                 this.getUI().ifPresent(ui -> ui.access(() -> {
-                    Notification.show(localizator.get("aifeatures.suggestionready"));
+                    Notification.show(localizer.get("aifeatures.suggestionready"));
 
-                    var suggestionsDialog = new Dialog(localizator.get("aifeatures.suggestionsdialogtitle"));
+                    var suggestionsDialog = new Dialog(localizer.get("aifeatures.suggestionsdialogtitle"));
                     suggestionsDialog.setWidth("1500px");
-                    suggestionsDialog.getFooter().add(new CloseDialogButton(suggestionsDialog, localizator));
+                    suggestionsDialog.getFooter().add(new CloseDialogButton(suggestionsDialog, localizer));
 
                     var suggestionsGrid = new Grid<>(SuggestedBook.class, false);
 
-                    suggestionsGrid.addColumn(SuggestedBook::title).setHeader(localizator.get("aifeatures.grid.title"));
-                    suggestionsGrid.addColumn(SuggestedBook::reason).setHeader(localizator.get("aifeatures.grid.reason"));
+                    suggestionsGrid.addColumn(SuggestedBook::title).setHeader(localizer.get("aifeatures.grid.title"));
+                    suggestionsGrid.addColumn(SuggestedBook::reason).setHeader(localizer.get("aifeatures.grid.reason"));
 
                     VaadinCommons.<SuggestedBook>configureBookGridPreviewEx(suggestionsGrid, sb -> {
                         return bookRepo.findById(sb.bookId()).orElseThrow();
-                    }, services, localizator);
+                    }, services, localizer);
 
                     suggestionsGrid.setItems(suggestions);
                     suggestionsDialog.add(suggestionsGrid);

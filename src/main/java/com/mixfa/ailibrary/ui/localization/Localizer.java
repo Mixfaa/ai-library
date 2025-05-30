@@ -6,14 +6,13 @@ import com.mixfa.ailibrary.misc.Utils;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
-import org.apache.catalina.User;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true)
-public class Localizator {
+public class Localizer {
     @Getter
     private final Locale locale;
     private final ResourceBundle textBundle;

@@ -2,12 +2,13 @@ package com.mixfa.ailibrary.service.library.impl;
 
 import com.mixfa.ailibrary.misc.ExceptionType;
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.library.BookBorrowing;
 import com.mixfa.ailibrary.model.finance.InvoiceData;
 import com.mixfa.ailibrary.model.finance.InvoiceStatus;
+import com.mixfa.ailibrary.model.library.BookBorrowing;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.model.user.HasOwner;
+import com.mixfa.ailibrary.service.finance.CurrencyConverter;
 import com.mixfa.ailibrary.service.finance.InvoiceProvider;
 import com.mixfa.ailibrary.service.library.BookBorrowingService;
 import com.mixfa.ailibrary.service.library.BookPricingPolicyProvider;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Currency;
 
 import static com.mixfa.ailibrary.misc.Utils.fmt;
 
@@ -40,6 +42,7 @@ public class BookBorrowingServiceImpl implements BookBorrowingService {
     private final BookService bookService;
     private final SearchEngine.ForBorrowings bookBorrowingSearchEngine;
     private final MongoTemplate mongoTemplate;
+    private final CurrencyConverter currencyConverter;
     private final ApplicationEventPublisher eventPublisher;
 
     private static Criteria IS_PAID_CRITERIA = Criteria.where(BookBorrowing.Fields.isPaid).is(true);
@@ -59,12 +62,13 @@ public class BookBorrowingServiceImpl implements BookBorrowingService {
     }
 
     @Override
-    public InvoiceData borrowBook(Object bookId) {
+    public InvoiceData borrowBook(Object bookId, Currency currency) {
         if (hasAccessToBook(bookId)) throw ExceptionType.bookAleardyBorrowed(bookId);
 
-        var book = bookService.findBookOrThrow(bookId);
+        final var book = bookService.findBookOrThrow(bookId);
         var pricingPolicy = bookPricingPolicyProvider.getBookPricingPolicy(book);
         var price = pricingPolicy.calculatePrice(book);
+        price = currencyConverter.convert(price, currency);
 
         var invoice = invoiceProvider.createInvoice(price, "Borrowing book: " + book.title());
 

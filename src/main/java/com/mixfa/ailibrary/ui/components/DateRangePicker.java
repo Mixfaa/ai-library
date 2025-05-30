@@ -1,33 +1,31 @@
 package com.mixfa.ailibrary.ui.components;
 
 import com.mixfa.ailibrary.ui.components.model.LocalDateRange;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.datepicker.DatePicker;
-
-import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
 
 public class DateRangePicker extends CustomField<LocalDateRange> {
 
     private DatePicker start;
     private DatePicker end;
 
-    public DateRangePicker(String label, Localizator localizator) {
-        this(localizator);
+    public DateRangePicker(String label, Localizer localizer) {
+        this(localizer);
         setLabel(label);
     }
 
-    public DateRangePicker(Localizator localizator) {
+    public DateRangePicker(Localizer localizer) {
 
         start = new DatePicker();
-        String startDateText = localizator.get("daterange.startdate");
+        String startDateText = localizer.get("daterange.startdate");
         start.setPlaceholder(startDateText);
         // Sets title for screen readers
         start.setAriaLabel(startDateText);
 
         end = new DatePicker();
-        String endDateText = localizator.get("daterange.enddate");
+        String endDateText = localizer.get("daterange.enddate");
         end.setPlaceholder(endDateText);
         end.setAriaLabel(endDateText);
 

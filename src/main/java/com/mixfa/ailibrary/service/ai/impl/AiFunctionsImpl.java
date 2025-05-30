@@ -76,6 +76,7 @@ public class AiFunctionsImpl implements AiFunctions {
 
     @Override
     public FunctionToolCallback<SearchArgs, String> searchFunctionWith(SearchOption searchOption) {
+        if (searchOption.isEmpty()) return searchFunction();
         return FunctionToolCallback.builder("search", (SearchArgs args) -> makeBooksContext(searchOption, args))
                 .inputType(SearchArgs.class)
                 .description("Search for available books page by page. Params: String query(can be empty), int page(starts from 0)")

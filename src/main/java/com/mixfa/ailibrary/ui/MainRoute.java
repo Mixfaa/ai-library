@@ -10,7 +10,7 @@ import com.mixfa.ailibrary.ui.components.CloseDialogButton;
 import com.mixfa.ailibrary.ui.components.OpenDialogButton;
 import com.mixfa.ailibrary.ui.components.SideBarInitializer;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -40,31 +40,31 @@ import java.util.Objects;
 
 class SearchParamsDialog extends Dialog {
     private final List<SearchOption> searchOptions = new ArrayList<>();
-    private final Localizator localizator;
+    private final Localizer localizer;
     private final Services services;
     private final MongoTemplate mongoTemplate;
 
-    public SearchParamsDialog(Services services, Localizator localizator, MongoTemplate mongoTemplate) {
-        super(localizator.get("searchparams.title"));
-        this.localizator = localizator;
+    public SearchParamsDialog(Services services, Localizer localizer, MongoTemplate mongoTemplate) {
+        super(localizer.get("searchparams.title"));
+        this.localizer = localizer;
         this.services = services;
         this.mongoTemplate = mongoTemplate;
-        getFooter().add(new CloseDialogButton(this, localizator));
+        getFooter().add(new CloseDialogButton(this, localizer));
 
         var accordion = new Accordion();
-        accordion.add(localizator.get("searchparams.simpleoptions"), makeSimpleOptions());
-        accordion.add(localizator.get("searchparams.byauthorssearch"), makeByAuthorsSearch());
-        accordion.add(localizator.get("searchparams.bysubjectssearch"), makeBySubjectsSearch());
+        accordion.add(localizer.get("searchparams.simpleoptions"), makeSimpleOptions());
+        accordion.add(localizer.get("searchparams.byauthorssearch"), makeByAuthorsSearch());
+        accordion.add(localizer.get("searchparams.bysubjectssearch"), makeBySubjectsSearch());
 
         add(accordion);
         setWidth("1200px");
     }
 
     private Component makeBySubjectsSearch() {
-        var subjectTextField = new TextField(localizator.get("searchparams.searchbysubject"));
+        var subjectTextField = new TextField(localizer.get("searchparams.searchbysubject"));
         var searchBySubjectsGrid = new Grid<String>(String.class, false);
-        var subjectsSearch = new Button(localizator.get("searchparams.querysubjects"), _ -> searchBySubjectsGrid.setItems(findSubjects("")));
-        searchBySubjectsGrid.addColumn(ObjectUtils::CONST).setHeader(localizator.get("searchparams.subject"));
+        var subjectsSearch = new Button(localizer.get("searchparams.querysubjects"), _ -> searchBySubjectsGrid.setItems(findSubjects("")));
+        searchBySubjectsGrid.addColumn(ObjectUtils::CONST).setHeader(localizer.get("searchparams.subject"));
         subjectTextField.addValueChangeListener(e -> {
             var subjects = findSubjects(e.getValue());
             searchBySubjectsGrid.setItems(subjects);
@@ -85,10 +85,10 @@ class SearchParamsDialog extends Dialog {
     }
 
     private Component makeByAuthorsSearch() {
-        var authorTextField = new TextField(localizator.get("searchparams.searchbyauthor"));
+        var authorTextField = new TextField(localizer.get("searchparams.searchbyauthor"));
         var searchByAuthorsGrid = new Grid<String>(String.class, false);
-        var authorsSearch = new Button(localizator.get("searchparams.queryauthors"), _ -> searchByAuthorsGrid.setItems(findAuthors("")));
-        searchByAuthorsGrid.addColumn(ObjectUtils::CONST).setHeader(localizator.get("searchparams.author"));
+        var authorsSearch = new Button(localizer.get("searchparams.queryauthors"), _ -> searchByAuthorsGrid.setItems(findAuthors("")));
+        searchByAuthorsGrid.addColumn(ObjectUtils::CONST).setHeader(localizer.get("searchparams.author"));
         authorTextField.addValueChangeListener(e -> {
             var authors = findAuthors(e.getValue());
             searchByAuthorsGrid.setItems(authors);
@@ -138,13 +138,13 @@ class SearchParamsDialog extends Dialog {
     }
 
     private Component makeSimpleOptions() {
-        var textField = new TextField(localizator.get("searchparams.searchbyname"));
+        var textField = new TextField(localizer.get("searchparams.searchbyname"));
         textField.addValueChangeListener(e -> {
             searchOptions.removeIf(AnyTitleSearchOption.class::isInstance);
             searchOptions.add(new AnyTitleSearchOption(textField.getValue()));
         });
 
-        var isbnField = new TextField(localizator.get("searchparams.searchbyisbn"));
+        var isbnField = new TextField(localizer.get("searchparams.searchbyisbn"));
         isbnField.setPattern("[0-9]*");
         isbnField.addValueChangeListener(e -> {
             searchOptions.removeIf(ISBNSearch.class::isInstance);
@@ -153,7 +153,7 @@ class SearchParamsDialog extends Dialog {
                 searchOptions.add(new ISBNSearch(Long.parseLong(isbnField.getValue())));
         });
 
-        var ratingField = new NumberField(localizator.get("searchparams.searchbyminimalrating"));
+        var ratingField = new NumberField(localizer.get("searchparams.searchbyminimalrating"));
         ratingField.setMin(0.0);
         ratingField.setMax(5.0);
         ratingField.setStep(0.1);
@@ -177,18 +177,18 @@ public class MainRoute extends AppLayout {
     private final SearchEngine.ForBooks bookSearchService;
     private final BookGrid bookGrid;
     private final SearchParamsDialog searchParamsComp;
-    private final Localizator localizator = LocalizationProvider.getLocalizator();
-    private final Button searchButton = new Button(localizator.get("mainroute.search"));
+    private final Localizer localizer = LocalizationProvider.getLocalizator();
+    private final Button searchButton = new Button(localizer.get("mainroute.search"));
     private final int BOOKS_PER_PAGE = 12;
     private int currentPage = 0;
     private final Span pageIndicator;
     private Page<Book> booksPage;
 
     public MainRoute(SearchEngine.ForBooks bookSearchService, UserDataService userDataService, Services services, MongoTemplate mongoTemplate) {
-        searchParamsComp = new SearchParamsDialog(services, localizator, mongoTemplate);
+        searchParamsComp = new SearchParamsDialog(services, localizer, mongoTemplate);
         this.bookSearchService = bookSearchService;
-        this.bookGrid = new BookGrid(localizator);
-        SideBarInitializer.init(this, localizator);
+        this.bookGrid = new BookGrid(localizer);
+        SideBarInitializer.init(this, localizer);
 
         pageIndicator = new Span();
         loadCurrentPage();
@@ -198,7 +198,7 @@ public class MainRoute extends AppLayout {
         mainLayout.setPadding(true);
         mainLayout.addClassName("book-list-view");
         var searchLayout = new HorizontalLayout(
-                new OpenDialogButton(localizator.get("mainroute.customizesearch"), searchParamsComp),
+                new OpenDialogButton(localizer.get("mainroute.customizesearch"), searchParamsComp),
                 searchButton
         );
         mainLayout.add(searchLayout);
@@ -217,10 +217,10 @@ public class MainRoute extends AppLayout {
     }
 
     private Component createPaginationControls() {
-        Button firstPageBtn = new Button(localizator.get("mainroute.first"), e -> goToPage(0));
-        Button prevPageBtn = new Button(localizator.get("mainroute.previous"), e -> goToPage(currentPage - 1));
-        Button nextPageBtn = new Button(localizator.get("mainroute.next"), e -> goToPage(currentPage + 1));
-        Button lastPageBtn = new Button(localizator.get("mainroute.last"), e -> goToPage(booksPage.getTotalPages() - 1));
+        Button firstPageBtn = new Button(localizer.get("mainroute.first"), e -> goToPage(0));
+        Button prevPageBtn = new Button(localizer.get("mainroute.previous"), e -> goToPage(currentPage - 1));
+        Button nextPageBtn = new Button(localizer.get("mainroute.next"), e -> goToPage(currentPage + 1));
+        Button lastPageBtn = new Button(localizer.get("mainroute.last"), e -> goToPage(booksPage.getTotalPages() - 1));
 
         updatePageIndicator();
 
@@ -235,7 +235,7 @@ public class MainRoute extends AppLayout {
     }
 
     private void updatePageIndicator() {
-        pageIndicator.setText(localizator.formatGet("mainroute.page", currentPage + 1, Math.max(1, booksPage.getTotalPages())));
+        pageIndicator.setText(localizer.formatGet("mainroute.page", currentPage + 1, Math.max(1, booksPage.getTotalPages())));
     }
 
     private void goToPage(int page) {

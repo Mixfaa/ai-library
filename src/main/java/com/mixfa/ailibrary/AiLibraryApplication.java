@@ -7,7 +7,7 @@ import com.mixfa.ailibrary.misc.cache.ByUserMultiCache;
 import com.mixfa.ailibrary.misc.cache.CacheMaintainer;
 import com.mixfa.ailibrary.service.library.CommentService;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
@@ -88,7 +88,7 @@ public class AiLibraryApplication implements AppShellConfigurator {
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public Localizator localizator() {
+    public Localizer localizator() {
         return LocalizationProvider.getLocalizator();
     }
 

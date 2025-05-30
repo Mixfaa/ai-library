@@ -9,7 +9,7 @@ import com.mixfa.ailibrary.ui.components.BookCommentsComponent;
 import com.mixfa.ailibrary.ui.components.BookDetailsComponent;
 import com.mixfa.ailibrary.ui.components.SideBarInitializer;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -23,7 +23,7 @@ import jakarta.annotation.security.PermitAll;
 public class BookRoute extends AppLayout implements HasUrlParameter<String> {
     private final BookService bookService;
     private final CommentService commentService;
-    private final Localizator localizator;
+    private final Localizer localizer;
     private final UserDataService userDataService;
     private final Services services;
 
@@ -33,15 +33,15 @@ public class BookRoute extends AppLayout implements HasUrlParameter<String> {
         this.bookService = services.bookService();
         this.commentService = services.commentService();
         this.userDataService = services.userDataService();
-        this.localizator = LocalizationProvider.getLocalizator();
+        this.localizer = LocalizationProvider.getLocalizator();
         this.services = services;
 
-        SideBarInitializer.init(this, localizator);
+        SideBarInitializer.init(this, localizer);
     }
 
     private Component makeContent() {
         var localizer = LocalizationProvider.getLocalizator();
-        var bookDetails = new BookDetailsComponent(book, localizator, services);
+        var bookDetails = new BookDetailsComponent(book, this.localizer, services);
         var comments = new BookCommentsComponent(book, localizer, commentService);
 
         return new VerticalLayout(

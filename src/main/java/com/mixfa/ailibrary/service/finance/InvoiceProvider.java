@@ -5,7 +5,7 @@ import com.mixfa.ailibrary.model.finance.InvoiceStatus;
 import com.mixfa.ailibrary.model.finance.Money;
 
 public interface InvoiceProvider {
-    InvoiceData createInvoice(Money amount, String desctination);
+    InvoiceData createInvoice(Money money, String desctination);
 
     InvoiceStatus getInvoiceStatus(String invoiceId);
 }

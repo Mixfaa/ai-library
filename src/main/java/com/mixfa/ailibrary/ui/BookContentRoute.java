@@ -9,7 +9,7 @@ import com.mixfa.ailibrary.service.library.BookBorrowingService;
 import com.mixfa.ailibrary.service.library.BookService;
 import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
-import com.mixfa.ailibrary.ui.localization.Localizator;
+import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.componentfactory.pdfviewer.PdfViewer;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -29,13 +29,13 @@ public class BookContentRoute extends AppLayout implements HasUrlParameter<Strin
     private Book book;
     private final BookService bookService;
     private final BookBorrowingService bookBorrowingService;
-    private final Localizator localizator;
+    private final Localizer localizer;
 
     public BookContentRoute(Services services) {
-        this.localizator = LocalizationProvider.getLocalizator();
+        this.localizer = LocalizationProvider.getLocalizator();
         this.bookService = services.bookService();
         this.bookBorrowingService = services.bookBorrowingService();
-        SideBarInitializer.init(this, localizator);
+        SideBarInitializer.init(this, localizer);
     }
 
     private Component makeContent() {
