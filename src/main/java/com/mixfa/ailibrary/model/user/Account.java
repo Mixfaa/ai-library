@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.validation.constraints.NotNull;
 import java.util.Collection;
 
 @Document("account")
@@ -39,11 +40,11 @@ public class Account implements UserDetails {
         return username;
     }
 
-    public static Account getAuthenticatedAccount() {
+    public static  @NotNull Account getAuthenticatedAccount() {
         return getAuthenticated().getAccount();
     }
 
-    public static AuthenticatedAccount getAuthenticated() {
+    public static @NotNull AuthenticatedAccount getAuthenticated() {
         return Utils.getPrincipal();
     }
 

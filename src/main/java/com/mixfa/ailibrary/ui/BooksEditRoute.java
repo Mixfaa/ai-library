@@ -70,7 +70,7 @@ public class BooksEditRoute extends AppLayout {
             } catch (Exception e) {
                 String msg = localizator.get("booksedit.errorregisteringbook");
                 if (e instanceof UserFriendlyException ufEx) {
-                    msg = ufEx.format(localizator.locale());
+                    msg = localizator.formatError(ufEx);
                 }
                 Notification.show(msg);
                 log.error(e.getLocalizedMessage());
@@ -128,8 +128,10 @@ public class BooksEditRoute extends AppLayout {
                             bookService.editBook(book.id(), req);
                             Notification.show(localizator.get("booksedit.bookeditedsuccessfully"));
                         } catch (Exception e) {
-                            System.out.println(e.getLocalizedMessage());
-                            Notification.show(localizator.get("booksedit.errorupdatingbook"));
+                            if (e instanceof UserFriendlyException ufEx)
+                                Notification.show(localizator.formatError(ufEx));
+                            else
+                                Notification.show(localizator.get("booksedit.errorupdatingbook"));
                         }
                     }, localizator, services);
                     dialog.initForBook(book);

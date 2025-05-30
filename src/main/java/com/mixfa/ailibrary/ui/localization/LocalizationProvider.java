@@ -13,17 +13,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @UtilityClass
 public class LocalizationProvider { // availiable from anywhere
-    private static final String BUNDLE_NAME = "localization";
-    private static final ResourceBundle ENGLISH_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
-    private static final Localizator ENGLISH_LOCALIZATOR = new Localizator(Locale.ENGLISH, ENGLISH_BUNDLE);
-    private static final Map<Locale, Localizator> BUNDLES = new ConcurrentHashMap<>();
+    private static final String TEXT_BUNDLE_NAME = "localization";
+    private static final String ERROR_BUNDLE_NAME = "errors";
+    private static final ResourceBundle ENGLISH_TEXT_BUNDLE = ResourceBundle.getBundle(TEXT_BUNDLE_NAME);
+    private static final ResourceBundle ENGLISH_ERROR_BUNDLE = ResourceBundle.getBundle(ERROR_BUNDLE_NAME);
+    private static final Localizator ENGLISH_LOCALIZATOR = new Localizator(Locale.ENGLISH, ENGLISH_TEXT_BUNDLE, ENGLISH_ERROR_BUNDLE);
+    private static final Map<Locale, RetringLocalizator> BUNDLES = new ConcurrentHashMap<>();
 
     private static Localizator getLocalizator(Locale locale) {
         if (locale.equals(Locale.ENGLISH)) return ENGLISH_LOCALIZATOR;
 
         var bundle = BUNDLES.computeIfAbsent(locale, lkey -> {
             try {
-                return new Localizator(lkey, ResourceBundle.getBundle(BUNDLE_NAME, lkey));
+                return new RetringLocalizator(lkey,
+                        ResourceBundle.getBundle(TEXT_BUNDLE_NAME, lkey),
+                        ResourceBundle.getBundle(ERROR_BUNDLE_NAME, lkey),
+                        ENGLISH_LOCALIZATOR);
             } catch (MissingResourceException e) {
                 return null;
             }

@@ -33,7 +33,6 @@ import java.util.function.Consumer;
 
 public class BookDetailsComponent extends VerticalLayout {
     private final Book book;
-    private final Locale userLocale;
     private final UserDataService userDataService;
     private final double rating;
     private final UserDataService.WaitList waitList;
@@ -49,7 +48,6 @@ public class BookDetailsComponent extends VerticalLayout {
         this.rating = services.commentService().getBookRate(book.id());
         this.userDataService = services.userDataService();
         this.bookBorrowingService = services.bookBorrowingService();
-        this.userLocale = userDataService.getLocale();
         this.waitList = userDataService.waitList();
         this.readBooks = userDataService.readBooks();
 
@@ -134,7 +132,7 @@ public class BookDetailsComponent extends VerticalLayout {
                     UI.getCurrent().navigate(BookContentRoute.class, book.id().toHexString());
                     return;
                 }
-                Notification.show(ex.format(userLocale));
+                Notification.show(localizator.formatError(ex));
             }
 
             return;

@@ -1,10 +1,10 @@
 package com.mixfa.ailibrary.misc;
 
 import lombok.Getter;
-
-import java.util.Locale;
+import lombok.experimental.Accessors;
 
 @Getter
+@Accessors(fluent = true)
 public class UserFriendlyException extends RuntimeException {
     private final ExceptionType type;
     private final Object[] args;
@@ -23,10 +23,5 @@ public class UserFriendlyException extends RuntimeException {
 
     public boolean isTypeOf(ExceptionType type) {
         return this.type == type;
-    }
-
-    public String format(Locale locale) {
-
-        return type.format(locale, args);
     }
 }

@@ -1,5 +1,6 @@
 package com.mixfa.ailibrary.ui;
 
+import com.mixfa.ailibrary.misc.UserFriendlyException;
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.statistics.StatisticRecord;
@@ -68,9 +69,11 @@ public class StatisticsRoute extends AppLayout {
                             var outputStream = DocxStatisticsWritter.createReport(statistics);
                             return new ByteArrayInputStream(outputStream.toByteArray());
                         } catch (Exception e) {
-                            // Log the exception properly in a real application
                             e.printStackTrace();
-                            Notification.show("Error generating report: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+                            if (e instanceof UserFriendlyException ufex)
+                                Notification.show(localizator.formatError(ufex));
+                            else
+                                Notification.show("Error generating report: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
                             return null;
                         }
                     });

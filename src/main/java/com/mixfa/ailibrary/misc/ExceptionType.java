@@ -1,89 +1,99 @@
 package com.mixfa.ailibrary.misc;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+
 @Slf4j
+@Accessors(fluent = true)
 public enum ExceptionType {
-    UNKNOWN, // 0
-    FILE_NOT_FOUND, //
-    INTERNAL_SERVER, //
+    UNKNOWN(true), // 0
+    FILE_NOT_FOUND(true), //
+    INTERNAL_SERVER(true), //
     BOOK_NOT_FOUND, // bookId - Object
     BOOK_STATUS_NOT_FOUND, // booKStatusId - Object
     LIBRARY_NOT_FOUND, // id - Object
     NO_BOOKS_AVAILABLE, // libId - Object, bookid - Object
-    COMMENT_NOT_FOUND, //
+    COMMENT_NOT_FOUND(true), //
     INVALID_BOOK_RATE, // rate - Double
     BOOK_ORDER_CANT_BE_CANCELLED, // object status id
-    RATE_LIMIT_EXCEEDED, //
-    INVALID_COMMENT, //
-    ACCESS_DENIED, //
-    USER_ALREADY_WORKER,
+    RATE_LIMIT_EXCEEDED(true), //
+    INVALID_COMMENT(true), //
+    ACCESS_DENIED(true), //
+    USER_ALREADY_WORKER(true),
     BOOK_ALREADY_BORROWED, // string
-    CURRENCY_CONVERTION_FAILED,
-    INVOICE_CREATION_FAILED,
+    CURRENCY_CONVERTION_FAILED(true),
+    INVOICE_CREATION_FAILED(true),
+    USERNAME_CANNOT_BE_BLANK(true),
     BOOK_ALREADY_RATED; // bookId - Object, username - String
 
-    private final String TEMPLATE_CODE = this.name().toLowerCase();
-    private final String RESOURCE_BUNDLE_NAME = "errors";
+    private final UserFriendlyException instance;
+    @Getter
+    private final String templateCode = this.name().toLowerCase();
 
-    public String format(Locale locale, Object[] args) {
-        try {
-            var bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_NAME, locale);
-            return bundle.getString(TEMPLATE_CODE).formatted(args);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return "Exception: " + this.name();
-        }
+    ExceptionType() {
+        this.instance = null;
     }
 
-    private static final UserFriendlyException currencyConvertionFailedCached = ExceptionType.CURRENCY_CONVERTION_FAILED.make();
+    ExceptionType(boolean instanciate) {
+        this.instance = instanciate ? this.make() : null;
+    }
+
+    public UserFriendlyException make(Object... args) {
+        return new UserFriendlyException(this.templateCode, this, args);
+    }
+
+    public UserFriendlyException make() {
+        return new UserFriendlyException(this.templateCode, this, null);
+    }
+
+    public static UserFriendlyException unknown() {
+        return UNKNOWN.instance;
+    }
+
     public static UserFriendlyException currencyConvertionFailed() {
-        return currencyConvertionFailedCached;
+        return CURRENCY_CONVERTION_FAILED.instance;
     }
 
-    private static final UserFriendlyException invoiceCreationFailed = ExceptionType.INVOICE_CREATION_FAILED.make();
     public static UserFriendlyException invoiceCreationFailed() {
-        return invoiceCreationFailed;
+        return INVOICE_CREATION_FAILED.instance;
+    }
+
+
+    public static UserFriendlyException userAlreadyWorker() {
+        return USER_ALREADY_WORKER.instance;
+    }
+
+    public static UserFriendlyException accessDenied() {
+        return ACCESS_DENIED.instance;
+    }
+
+    public static UserFriendlyException invalidComment() {
+        return INVALID_COMMENT.instance;
+    }
+
+    public static UserFriendlyException rateLimitExceeded() {
+        return RATE_LIMIT_EXCEEDED.instance;
+    }
+
+    public static UserFriendlyException fileNotFound() {
+        return FILE_NOT_FOUND.instance;
+    }
+
+    public static UserFriendlyException internalServer() {
+        return INTERNAL_SERVER.instance;
+    }
+
+    public static UserFriendlyException commentNotFound() {
+        return COMMENT_NOT_FOUND.instance;
     }
 
     public static UserFriendlyException bookAleardyBorrowed(Object bookId) {
         return BOOK_ALREADY_BORROWED.make(bookId);
-    }
-
-    public static UserFriendlyException userAlreadyWorker() {
-        return USER_ALREADY_WORKER.make();
-    }
-
-    public UserFriendlyException make(Object... args) {
-        return new UserFriendlyException(this.name(), this, args);
-    }
-
-    public UserFriendlyException make() {
-        return new UserFriendlyException(this.name(), this, null);
-    }
-
-    public static UserFriendlyException accessDenied() {
-        return ACCESS_DENIED.make();
-    }
-
-    public static UserFriendlyException invalidComment() {
-        return INVALID_COMMENT.make();
-    }
-
-    public static UserFriendlyException rateLimitExceeded() {
-        return RATE_LIMIT_EXCEEDED.make();
-    }
-
-    // Static creator methods
-    public static UserFriendlyException fileNotFound() {
-        return FILE_NOT_FOUND.make();
-    }
-
-    public static UserFriendlyException internalServer() {
-        return INTERNAL_SERVER.make();
     }
 
     public static UserFriendlyException bookNotFound(Object bookId) {
@@ -100,10 +110,6 @@ public enum ExceptionType {
 
     public static UserFriendlyException noBooksAvailable(String libId, Object bookId) {
         return NO_BOOKS_AVAILABLE.make(libId, Utils.idToStr(bookId));
-    }
-
-    public static UserFriendlyException commentNotFound() {
-        return COMMENT_NOT_FOUND.make();
     }
 
     public static UserFriendlyException invalidBookRate(Double rate) {
