@@ -9,6 +9,7 @@ import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.service.library.BookBorrowingService;
 import com.mixfa.ailibrary.service.library.CommentService;
 import com.mixfa.ailibrary.service.misc.impl.Services;
+import com.mixfa.ailibrary.service.user.AccountService;
 import com.mixfa.ailibrary.service.user.UserDataService;
 import com.mixfa.ailibrary.ui.components.GridWithPagination;
 import com.mixfa.ailibrary.ui.components.SideBarInitializer;
@@ -19,18 +20,22 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.DateTimeException;
 import java.time.ZoneId;
@@ -47,10 +52,11 @@ public class UserDetailsRoute extends AppLayout {
     private final Account account;
     private final Services services;
     private final Localizer localizer = LocalizationProvider.getLocalizator();
+    private final AccountService accountService;
 
     private DateTimeFormatter dateTimeFormatter;
 
-    public UserDetailsRoute(Services services) {
+    public UserDetailsRoute(Services services, AccountService accountService) {
         this.userDataService = services.userDataService();
         this.commentService = services.commentService();
         this.borrowingService = services.bookBorrowingService();
@@ -69,6 +75,7 @@ public class UserDetailsRoute extends AppLayout {
             dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.of(timezone));
             setContent(makeContent());
         });
+        this.accountService = accountService;
     }
 
     private Component makeMyOrders() {
@@ -141,7 +148,21 @@ public class UserDetailsRoute extends AppLayout {
 
     private Component makeProfileSection() {
         return new VerticalLayout(
-                new Span(localizer.formatGet("userdetails.username", account.getUsername())),
+                new TextField(localizer.get("userdetails.username"), account.getUsername(), "username") {{
+                    addValueChangeListener(e -> {
+                        var username = e.getValue();
+                        if (StringUtils.isBlank(username))
+                            return;
+
+                        try {
+                            accountService.editUsername(username);
+                            Notification.show(localizer.get("userdetails.usernameupdated"));
+                        } catch (Exception ex) {
+                            var errorMsg = localizer.formatError(ex);
+                            Notification.show(errorMsg);
+                        }
+                    });
+                }},
                 new Span(localizer.formatGet("userdetails.email", account.getEmail())),
                 new Span(localizer.formatGet("userdetails.role", account.getRole().name().toLowerCase())),
                 new ComboBox<Locale>(localizer.get("userdetails.localecombobox")) {{
@@ -151,6 +172,12 @@ public class UserDetailsRoute extends AppLayout {
                         userDataService.setLocale(e.getValue());
                         UI.getCurrent().navigate(UserDetailsRoute.class);
                     });
+                }},
+                new Button(localizer.get("userdetails.logout"), _ -> {
+                    SecurityContextHolder.getContext().getAuthentication().setAuthenticated(false);
+                    UI.getCurrent().navigate(MainRoute.class);
+                }) {{
+                    addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
                 }}
         ) {{
             setAlignItems(Alignment.BASELINE);

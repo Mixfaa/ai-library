@@ -17,7 +17,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Paragraph;
@@ -60,12 +59,7 @@ public class AiFeaturesRoute extends AppLayout {
 
 
     private Component makeIncludeHints(List<SuggsetionHint> suggestionHints) {
-        var includeReadBooksCheckBox = new Checkbox(localizer.get("aifeatures.usereadbooks"));
-        includeReadBooksCheckBox.addValueChangeListener(e -> {
-            suggestionHints.removeIf(suggsetionHint -> ReadBooksHint.class.isInstance(suggestionHints));
-            if (e.getValue())
-                suggestionHints.add(new ReadBooksHint(userDataService.readBooks().get()));
-        });
+
 
         var likedBookSelect = new CustomMultiSelectComboBox<String>(localizer.get("aifeatures.likedbooks"), Function.identity());
         likedBookSelect.setWidth("50%");
@@ -82,7 +76,7 @@ public class AiFeaturesRoute extends AppLayout {
         });
 
         // select for liked and disliked books
-        return new VerticalLayout(includeReadBooksCheckBox, likedBookSelect, dislikedBookSelect);
+        return new VerticalLayout(likedBookSelect, dislikedBookSelect);
     }
 
     private Component makeContent() {
@@ -91,6 +85,7 @@ public class AiFeaturesRoute extends AppLayout {
         var header = new Paragraph(localizer.get("aifeatures.title"));
 
         var suggestionHints = new ArrayList<SuggsetionHint>();
+        suggestionHints.add(new ReadBooksHint(userDataService.readBooks().get()));
 
         var optionsDialog = new Dialog(localizer.get("aifeatures.configureoptions"));
         optionsDialog.setWidth("1200px");

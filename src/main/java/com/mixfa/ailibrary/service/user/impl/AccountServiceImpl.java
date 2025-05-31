@@ -1,6 +1,7 @@
 package com.mixfa.ailibrary.service.user.impl;
 
 import com.mixfa.ailibrary.model.user.Account;
+import com.mixfa.ailibrary.model.user.AuthenticatedAccount;
 import com.mixfa.ailibrary.model.user.Role;
 import com.mixfa.ailibrary.service.repo.AccountRepo;
 import com.mixfa.ailibrary.service.user.AccountService;
@@ -10,6 +11,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,7 +38,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void editUsername(String username) {
         if (username.isBlank()) return;
-        var account = Account.getAuthenticatedAccount();
+        var authenticated = Account.getAuthenticated();
+        var account = authenticated.getAccount();
 
         mongoTemplate.updateFirst(
                 Query.query(
@@ -44,5 +48,21 @@ public class AccountServiceImpl implements AccountService {
                 new Update().set(Account.Fields.username, username),
                 Account.class
         );
+
+        account = account.withUsername(username);
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth instanceof OAuth2AuthenticationToken oauth2Token) {
+            SecurityContextHolder.getContext().setAuthentication(
+                    new OAuth2AuthenticationToken(
+                            new AuthenticatedAccount(account, authenticated.getUser()),
+                            authenticated.getAuthorities(),
+                            oauth2Token.getAuthorizedClientRegistrationId()
+                    )
+            );
+        }  else {
+            SecurityContextHolder.getContext().getAuthentication().setAuthenticated(false);
+        }
     }
 }

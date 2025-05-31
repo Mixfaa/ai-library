@@ -94,15 +94,8 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
         return descriptionsWithMarks;
     }
 
-    @Override
     public void evictCache(Object bookId) {
         valueOps.getAndDelete(makeBookDescriptionKey(Utils.idToStr(bookId)));
-    }
-
-    @Override
-    public void evictCache(List<Object> booksIds) {
-        var keys = booksIds.stream().map(id -> makeBookDescriptionKey(Utils.idToStr(id))).toList();
-        redisTemplate.delete(keys);
     }
 
     public static String makeBookDescriptionKey(Book book) {

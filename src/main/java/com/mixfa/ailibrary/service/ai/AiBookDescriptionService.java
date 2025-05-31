@@ -14,7 +14,4 @@ public interface AiBookDescriptionService {
 
     List<String> bookDescriptionAndMarkList(List<ReadBook> readBooks);
 
-    void evictCache(Object bookId);
-
-    void evictCache(List<Object> booksIds);
 }

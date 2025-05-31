@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.Currency;
 
 public interface BookBorrowingService {
-    InvoiceData borrowBook(Object bookId, Currency currency);
+    InvoiceData borrowBook(Object bookId, Currency currency  );
 
     boolean hasAccessToBook(Object bookId);
 

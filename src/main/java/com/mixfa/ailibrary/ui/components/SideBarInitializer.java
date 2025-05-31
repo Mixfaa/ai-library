@@ -19,7 +19,7 @@ public class SideBarInitializer {
         var sideNav = new SideNav();
         var authentication = Account.getAuthenticated();
 
-        var authTestItem = new SideNavItem(Utils.fmt(localizer.get("sidebar.authenticated"), authentication.getUsername(), authentication.role().getRoleName()));
+        var authTestItem = new SideNavItem(Utils.fmt(localizer.get("sidebar.authenticated"), authentication.getUsername()));
         sideNav.addItem(authTestItem);
         sideNav.addItem(
                 new SideNavItem(localizer.get("sidebar.catalog"), MainRoute.class, VaadinIcon.BOOK.create()),

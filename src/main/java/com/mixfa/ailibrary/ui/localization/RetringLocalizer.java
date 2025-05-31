@@ -26,7 +26,11 @@ public class RetringLocalizer extends Localizer {
         try {
             return super.get(key);
         } catch (Exception ex) {
-            return fallbackLocalizer.get(key);
+            try {
+                return fallbackLocalizer.get(key);
+            } catch (Exception e) {
+                return key;
+            }
         }
     }
 
@@ -35,7 +39,11 @@ public class RetringLocalizer extends Localizer {
         try {
             return super.formatGet(key, args);
         } catch (Exception ex) {
-            return fallbackLocalizer.formatGet(key, args);
+            try {
+                return fallbackLocalizer.formatGet(key, args);
+            } catch (Exception e) {
+                return key;
+            }
         }
     }
 }
