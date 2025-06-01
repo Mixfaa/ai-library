@@ -79,7 +79,6 @@ public class UserDetailsRoute extends AppLayout {
     }
 
     private Component makeMyOrders() {
-        var layout = new VerticalLayout();
         IntFunction<Page<BookBorrowing>> fetchFunc = page -> borrowingService.findAllMyBorrowings(PageRequest.of(page, 15));
 
         var takenBooksGrid = new GridWithPagination<BookBorrowing>(BookBorrowing.class, 15, fetchFunc);
@@ -93,8 +92,8 @@ public class UserDetailsRoute extends AppLayout {
         takenBooksGrid.addColumn(it -> dateTimeFormatter.format(it.returnTime())).setHeader(localizer.get("userdetails.returntime"));
         takenBooksGrid.refresh();
 
-        layout.add(new Div(new H3(localizer.get("userdetails.yourorderedbooks"))), takenBooksGrid);
-        return VaadinCommons.applyMainStyle(new Div(layout));
+
+        return takenBooksGrid.component();
     }
 
     private Component makeWaitList() {
@@ -143,7 +142,7 @@ public class UserDetailsRoute extends AppLayout {
         }));
 
         commentsGrid.refresh();
-        return commentsGrid;
+        return commentsGrid.component();
     }
 
     private Component makeProfileSection() {
@@ -186,7 +185,6 @@ public class UserDetailsRoute extends AppLayout {
 
     private Component makeContent() {
         Accordion accordion = new Accordion();
-        accordion.setWidthFull();
 
         accordion.add(localizer.get("userdetails.profile"), makeProfileSection());
         accordion.add(localizer.get("userdetails.myorders"), makeMyOrders());

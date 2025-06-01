@@ -12,12 +12,15 @@ import com.mixfa.ailibrary.ui.components.SideBarInitializer;
 import com.mixfa.ailibrary.ui.localization.LocalizationProvider;
 import com.mixfa.ailibrary.ui.localization.Localizer;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -28,6 +31,7 @@ import jakarta.annotation.security.PermitAll;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
@@ -37,6 +41,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 class SearchParamsDialog extends Dialog {
     private final List<SearchOption> searchOptions = new ArrayList<>();
@@ -177,11 +182,47 @@ public class MainRoute extends AppLayout {
     private final BookGrid bookGrid;
     private final SearchParamsDialog searchParamsComp;
     private final Localizer localizer = LocalizationProvider.getLocalizator();
-    private final Button searchButton = new Button(localizer.get("mainroute.search"));
+    private final Button searchButton = new Button(VaadinIcon.SEARCH.create());
     private final int BOOKS_PER_PAGE = 12;
     private int currentPage = 0;
     private final Span pageIndicator;
     private Page<Book> booksPage;
+
+    private <T extends SearchOption> void addSortItem(
+            MenuBar menuBar,
+            String localizerKey,
+            Class<T> tClass,
+            Function<Sort.Direction, T> resolver,
+            Function<T, Sort.Direction> directionFunction,
+            List<SearchOption> sortSearchOptions
+    ) {
+        var textSpan = new Span(
+                new Text(localizer.get(localizerKey))
+        );
+
+        var ascendingIcon = VaadinIcon.ANGLE_UP.create();
+        var descendingIcon = VaadinIcon.ANGLE_DOWN.create();
+
+        menuBar.addItem(
+                textSpan,
+                e -> {
+                    var sortOpt = sortSearchOptions.stream().filter(tClass::isInstance).map(tClass::cast).findFirst();
+                    if (sortOpt.isPresent()) {
+                        var sort = sortOpt.get();
+                        sortSearchOptions.remove(sort);
+                        var dir = directionFunction.apply(sort);
+                        textSpan.remove(ascendingIcon, descendingIcon);
+                        if (dir == Sort.Direction.ASC) {
+                            textSpan.add(descendingIcon);
+                            sortSearchOptions.add(resolver.apply(Sort.Direction.DESC));
+                        }
+                    } else {
+                        textSpan.add(ascendingIcon);
+                        sortSearchOptions.add(resolver.apply(Sort.Direction.ASC));
+                    }
+                }
+        );
+    }
 
     public MainRoute(SearchEngine.ForBooks bookSearchService, UserDataService userDataService, Services services, MongoTemplate mongoTemplate) {
         searchParamsComp = new SearchParamsDialog(services, localizer, mongoTemplate);
@@ -194,19 +235,51 @@ public class MainRoute extends AppLayout {
 
         VerticalLayout mainLayout = new VerticalLayout();
         mainLayout.setSizeFull();
-        mainLayout.setPadding(true);
-        mainLayout.addClassName("book-list-view");
+        var sortSearchOptions = new ArrayList<SearchOption>();
+
+        var sortMenuBar = new MenuBar();
+        {
+            addSortItem(sortMenuBar, "mainroute.sortopt.popularity", PopularitySort.class, dir -> {
+                return switch (dir) {
+                    case ASC -> PopularitySort.ascending();
+                    case DESC -> PopularitySort.descending();
+                };
+            }, PopularitySort::getDirection, sortSearchOptions);
+
+            addSortItem(sortMenuBar, "mainroute.sortopt.rating", RatingSort.class, dir -> {
+                return switch (dir) {
+                    case ASC -> RatingSort.ascending();
+                    case DESC -> RatingSort.descending();
+                };
+            }, RatingSort::getDirection, sortSearchOptions);
+
+        }
+
+        var openDialogButton = new OpenDialogButton(localizer.get("mainroute.customizesearch"), searchParamsComp);
+
         var searchLayout = new HorizontalLayout(
-                new OpenDialogButton(localizer.get("mainroute.customizesearch"), searchParamsComp),
+                openDialogButton,
+                sortMenuBar,
                 searchButton
         );
+        searchLayout.setFlexShrink(2.5,
+                openDialogButton,
+                sortMenuBar,
+                searchButton);
+        searchLayout.setWidthFull();
+
         mainLayout.add(searchLayout);
-        mainLayout.add(bookGrid, createPaginationControls());
+        mainLayout.add(new VerticalLayout(bookGrid, createPaginationControls()));
 
         setContent(mainLayout);
 
         searchButton.addClickListener(e -> {
             var searchOption = searchParamsComp.getSearchOption();
+            if (!sortSearchOptions.isEmpty()) {
+                sortSearchOptions.addFirst(searchOption);
+                searchOption = SearchOption.composition(sortSearchOptions);
+            }
+
             booksPage = bookSearchService.find(searchOption, PageRequest.of(0, BOOKS_PER_PAGE));
             System.out.println(booksPage.getContent());
             currentPage = 0;

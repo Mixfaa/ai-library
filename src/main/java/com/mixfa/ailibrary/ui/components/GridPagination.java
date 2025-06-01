@@ -38,9 +38,11 @@ public class GridPagination<T> extends HorizontalLayout {
         Button nextPage = new Button(new Icon(VaadinIcon.ANGLE_RIGHT), e -> goToPage(currentPage + 1));
         Button lastPage = new Button(new Icon(VaadinIcon.ANGLE_DOUBLE_RIGHT), e -> goToPage(totalPages - 1));
 
-        setSpacing(true);
-        setAlignItems(Alignment.CENTER);
         add(firstPage, prevPage, pageInfo, nextPage, lastPage);
+        setSpacing(true);
+        setWidthFull();
+        setAlignItems(Alignment.CENTER);
+        setJustifyContentMode(JustifyContentMode.CENTER);
     }
 
     public GridPagination(Grid<T> grid, int pageSize) {

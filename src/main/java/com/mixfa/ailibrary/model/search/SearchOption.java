@@ -49,6 +49,24 @@ public interface SearchOption {
         public static SearchOption byYearLessThan(int year) {
             return new PublishYearSearch.LessThan(year);
         }
+
+        public static final class Sort {
+            public static SearchOption popularityAscending() {
+                return PopularitySort.ascending();
+            }
+
+            public static SearchOption popularityDescending() {
+                return PopularitySort.descending();
+            }
+
+            public static SearchOption ratingAscending() {
+                return RatingSort.ascending();
+            }
+
+            public static SearchOption ratingDescending() {
+                return RatingSort.descending();
+            }
+        }
     }
 
     interface Comments {
@@ -109,7 +127,8 @@ public interface SearchOption {
     }
 
     public static final class EmptyOption implements SearchOption {
-        private EmptyOption() {}
+        private EmptyOption() {
+        }
 
         @Override
         public List<AggregationOperation> makePipeline() {
