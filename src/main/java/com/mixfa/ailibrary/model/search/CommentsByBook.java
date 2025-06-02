@@ -1,6 +1,6 @@
 package com.mixfa.ailibrary.model.search;
 
-import com.mixfa.ailibrary.model.Comment;
+import com.mixfa.ailibrary.model.library.Comment;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;

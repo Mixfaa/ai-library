@@ -1,6 +1,6 @@
 package com.mixfa.ailibrary.misc;
 
-import com.mixfa.ailibrary.model.CountResponse;
+import com.mixfa.ailibrary.model.filestorage.CountResponse;
 
 import java.util.List;
 

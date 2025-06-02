@@ -9,7 +9,7 @@ import org.apache.tomcat.util.collections.ManagedConcurrentWeakHashMap;
 
 public class PerUserRateLimiter implements MaintainableCache {
     private final RateLimiterConfig rateLimiterConfig;
-    private final ManagedConcurrentWeakHashMap<Long, RateLimiter> rateLimiters = new ManagedConcurrentWeakHashMap<>();
+    private final ManagedConcurrentWeakHashMap<String, RateLimiter> rateLimiters = new ManagedConcurrentWeakHashMap<>();
 
     public PerUserRateLimiter(RateLimiterConfig rateLimiterConfig, CacheMaintainer cacheMaintainer) {
         this.rateLimiterConfig = rateLimiterConfig;

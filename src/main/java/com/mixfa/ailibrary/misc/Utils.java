@@ -1,22 +1,24 @@
 package com.mixfa.ailibrary.misc;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.mixfa.ailibrary.model.Book;
-import com.mixfa.ailibrary.model.Genre;
-import com.mixfa.ailibrary.model.ReadBook;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.model.library.ReadBook;
 import com.mixfa.ailibrary.model.user.AuthenticatedAccount;
 import jakarta.annotation.Nullable;
+import lombok.Getter;
 import lombok.experimental.UtilityClass;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 
 import java.lang.reflect.Array;
+import java.net.http.HttpResponse;
 import java.text.MessageFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -24,16 +26,21 @@ import java.util.function.Predicate;
 @UtilityClass
 @SuppressWarnings("unchecked")
 public class Utils {
-
     public static Locale DEFAULT_LOCALE = Locale.ENGLISH;
     public static int PAGE_SIZE = 15;
+    @Getter
+    public static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public static <T> Sinks.Many<T> sink() {
-        return Sinks.many().multicast().onBackpressureBuffer();
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<Map<String, Object>>() {
+    };
+
+    public static HttpResponse.BodyHandler<Map<String, Object>> mapBodyHandler() {
+        return new JsonMappingBodyHandler<>(MAP_TYPE_REFERENCE, MAPPER);
     }
 
-    public static <T> Flux<T> sinkToFlux(Sinks.Many<T> sink) {
-        return sink.asFlux().share();
+    public static double calculateCurrency(long amount, Currency currency) {
+        return currency.getDefaultFractionDigits() <= 0 ? amount : amount / Math.pow(10, currency.getDefaultFractionDigits());
     }
 
     public static @Nullable JsonNode findJsonNode(JsonNode root, Predicate<JsonNode> predicate) {
@@ -42,38 +49,9 @@ public class Utils {
         return null;
     }
 
-    public static <V> V getFromLocalizedMap(Map<Locale, V> map, Locale key) {
-        var value = map.get(key);
-        if (value == null)
-            value = map.get(DEFAULT_LOCALE);
-        if (value == null)
-            for (Locale locale : map.keySet())
-                return map.get(locale);
-
-        return value;
-    }
-
-    public static <V> V getFromLocalizedMap(Map<Locale, V> map) {
-        var value = map.get(DEFAULT_LOCALE);
-        if (value == null)
-            for (Locale locale : map.keySet())
-                return map.get(locale);
-
-        return value;
-    }
-
-    public static <K, V> V getOrGetFirst(Map<K, V> map, K key) {
-        var value = map.get(key);
-        if (value == null) {
-            var firstKey = map.keySet().stream().findFirst().orElse(null);
-            return map.get(firstKey);
-        }
-        return value;
-    }
-
     public static String makeBookDescription(Book book) {
         var id = book.id().toHexString();
-        var title = book.titleString(Utils.DEFAULT_LOCALE);
+        var title = book.title();
 
         var sb = new StringBuilder();
         appendBookDescForAi(book, sb);
@@ -85,7 +63,7 @@ public class Utils {
         var mark = readBook.mark();
 
         var id = book.id().toHexString();
-        var title = book.titleString(Utils.DEFAULT_LOCALE);
+        var title = book.title();
 
         var sb = new StringBuilder();
 
@@ -98,10 +76,8 @@ public class Utils {
     public static void appendBookDescForAi(Book book, StringBuilder sb) {
         sb.append("Book description").append('\n');
         sb.append("ID = ").append(book.id().toHexString()).append('\n');
-        sb.append("Title = ").append(
-                Utils.getFromLocalizedMap(book.localizedTitle())
-        ).append("\n");
-        var desc = book.localizedDescription().getOrDefault(Utils.DEFAULT_LOCALE, null);
+        sb.append("Title = ").append(book.title()).append("\n");
+        var desc = book.description();
         if (desc != null)
             sb.append("Description = \n").append(desc).append('\n');
         sb.append("Authors = ");
@@ -109,13 +85,9 @@ public class Utils {
             sb.append(author).append(", ");
 
         sb.append("\nGenres = ");
-        for (Genre genre : book.genres())
-            sb.append(genre.name()).append(", ");
+        for (String subject : book.subjects())
+            sb.append(subject).append(", ");
         sb.append("\n");
-    }
-
-    public static <T> T value(T value) {
-        return value;
     }
 
     public static ObjectId idToObj(Object id) {
@@ -188,7 +160,6 @@ public class Utils {
                 return false;
         return true;
     }
-
 
     public <T> Optional<T> find(T[] array, Predicate<T> predicate) {
         if (array == null || array.length == 0) return Optional.empty();

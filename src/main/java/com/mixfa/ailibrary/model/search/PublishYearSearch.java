@@ -1,6 +1,6 @@
 package com.mixfa.ailibrary.model.search;
 
-import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.library.Book;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 
@@ -20,7 +20,6 @@ public class PublishYearSearch {
     }
 
     public static class GreaterThan extends SearchOption.ImmutableAdapter {
-
         public GreaterThan(int year) {
             super(List.of(
                     Aggregation.match(

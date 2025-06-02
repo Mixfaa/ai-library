@@ -1,0 +1,196 @@
+package com.mixfa.ailibrary.service.ai.impl;
+
+import com.mixfa.ailibrary.misc.cache.ByUserMultiCache;
+import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.model.search.SearchOption;
+import com.mixfa.ailibrary.service.ai.AiBookDescriptionService;
+import com.mixfa.ailibrary.service.ai.AiFunctions;
+import com.mixfa.ailibrary.service.library.BookService;
+import com.mixfa.ailibrary.service.search.SearchEngine;
+import com.mixfa.ailibrary.service.user.UserDataService;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.bson.types.ObjectId;
+import org.springframework.ai.tool.function.FunctionToolCallback;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
+import org.springframework.data.mongodb.core.aggregation.StringOperators;
+import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class AiFunctionsImpl implements AiFunctions {
+    private final SearchEngine.ForBooks booksSearchEngine;
+    private final UserDataService userDataService;
+    private final BookService bookService;
+    private final AiBookDescriptionService aiBookDescriptionService;
+    private final MongoTemplate mongoTemplate;
+    private final ByUserMultiCache<FunctionToolCallback<?, ?>> cache;
+
+    private final FunctionToolCallback<SearchArgs, String> defaultSearchFunction =
+            FunctionToolCallback.builder("simpleSearch", (SearchArgs args) -> makeBooksContext(SearchOption.empty(), args))
+                    .inputType(SearchArgs.class)
+                    .description("Search for available books page by page. Params: String query(can be empty), int page(starts from 0)")
+                    .build();
+
+    private String makeBooksContext(final SearchOption searchOption, final SearchArgs args) {
+        var pageRequest = PageRequest.of(args.page(), 15);
+
+        var query = args.query();
+        Page<Book> booksPage = Page.empty();
+        if (StringUtils.isNotBlank(query)) {
+            var byTitleSearchOption = SearchOption.Books.byTitle(query);
+            var compsedSearchOptions = searchOption.isEmpty() ? byTitleSearchOption : SearchOption.composition(byTitleSearchOption, searchOption);
+
+            booksPage = booksSearchEngine.find(compsedSearchOptions, pageRequest);
+        }
+        if (booksPage.isEmpty())
+            booksPage = booksSearchEngine.find(searchOption, pageRequest);
+
+        var booksResponseBuilder = new StringBuilder();
+        booksResponseBuilder
+                .append("Page: ").append(args.page())
+                .append("\nTotal pages: ").append(booksPage.getTotalPages())
+                .append('\n');
+
+        var books = booksPage.getContent();
+        var descriptions = aiBookDescriptionService.bookDescriptionList(books);
+
+        for (String description : descriptions)
+            booksResponseBuilder.append(description).append('\n');
+
+        return booksResponseBuilder.toString();
+    }
+
+    @Override
+    public FunctionToolCallback<SearchArgs, String> searchFunction() {
+        return defaultSearchFunction;
+    }
+
+    @Override
+    public FunctionToolCallback<SearchArgs, String> searchFunctionWith(SearchOption searchOption) {
+        if (searchOption.isEmpty()) return searchFunction();
+        return FunctionToolCallback.builder("search", (SearchArgs args) -> makeBooksContext(searchOption, args))
+                .inputType(SearchArgs.class)
+                .description("Search for available books page by page. Params: String query(can be empty), int page(starts from 0)")
+                .build();
+    }
+
+    @Override
+    public FunctionToolCallback<Void, String> usersReadBooks() {
+        var readBooks = userDataService.readBooks();
+        return (FunctionToolCallback<Void, String>) cache.getOrPut("usersReadBooks", _ -> FunctionToolCallback.builder("getUserReadBooks", () -> {
+                    var usersReadBooks = readBooks.get();
+                    ArrayUtils.shuffle(usersReadBooks);
+                    return aiBookDescriptionService.bookDescriptionAndMarkList(
+                            Arrays.stream(usersReadBooks).limit(10).toList()
+                    );
+                })
+                .inputType(Void.class)
+                .description("Returns list of 10 random books and user`s marks, that user have read and marked")
+                .build());
+    }
+
+    @Override
+    public FunctionToolCallback<Void, String> usersWaitList() {
+        var userWaitList = userDataService.waitList();
+        return (FunctionToolCallback<Void, String>) cache.getOrPut("usersWaitList", _ -> FunctionToolCallback.builder("getUsersWaitList", () -> {
+                    var usersWaitList = userWaitList.get();
+                    ArrayUtils.shuffle(usersWaitList);
+                    return aiBookDescriptionService.bookDescriptionList(
+                            Arrays.stream(usersWaitList).limit(10).toList()
+                    );
+                })
+                .inputType(Void.class)
+                .description("Returns list of 10 random books from user`s wait list")
+                .build());
+    }
+
+    private void addBookToWaitListImpl(BookIdArg args, UserDataService.WaitList waitList, boolean add) {
+        var book = bookService.findBookOrThrow(args.bookId());
+
+        waitList.acceptWriteLocked(target -> {
+            if (add != target.isInList(book))
+                target.addRemove(book);
+        });
+    }
+
+    @Override
+    public FunctionToolCallback<BookIdArg, Void> addBookToWaitList() {
+        var waitList = userDataService.waitList();
+        return (FunctionToolCallback<BookIdArg, Void>) cache.getOrPut("addBookToWaitList", _ ->
+                FunctionToolCallback.builder("addBookToUserWaitList", (BookIdArg arg) -> addBookToWaitListImpl(arg, waitList, true))
+                        .inputType(BookIdArg.class)
+                        .description("Adds book to users wait list, parameter: bookId (string)")
+                        .build());
+    }
+
+
+    @Override
+    public FunctionToolCallback<BookIdArg, Void> removeBookFromWaitList() {
+        var waitList = userDataService.waitList();
+        return (FunctionToolCallback<BookIdArg, Void>) cache.getOrPut("removeBookFromWaitList", _ ->
+                FunctionToolCallback.builder("removeBookFromWaitList", (BookIdArg arg) -> addBookToWaitListImpl(arg, waitList, false))
+                        .inputType(BookIdArg.class)
+                        .description("Removes book to users wait list, parameter: bookId (string)")
+                        .build());
+    }
+
+    private boolean isBookInWaitListImpl(BookIdArg args, UserDataService.WaitList waitList) {
+        return waitList.isInList(book -> book.id().toHexString().equals(args.bookId()));
+    }
+
+    @Override
+    public FunctionToolCallback<BookIdArg, Boolean> isBookInWaitList() {
+        var waitList = userDataService.waitList();
+        return (FunctionToolCallback<BookIdArg, Boolean>) cache.getOrPut("isBookInWaitList", _ ->
+                FunctionToolCallback.builder("isBookInWaitList", (BookIdArg arg) -> isBookInWaitListImpl(arg, waitList))
+                        .inputType(BookIdArg.class)
+                        .description("Checks if book is in user`s wait list, parameter: bookId (string)")
+                        .build());
+    }
+
+    private String booksIndexFuncImpl(int page) {
+        final int PAGE_SIZE = 150;
+
+        record BookData(String title, String authors, ObjectId _id) {
+            public String string() {
+                return "title: " + title + ", authors: " + authors + ", id: " + _id.toHexString();
+            }
+        }
+
+        var res = mongoTemplate.aggregate(
+                Aggregation.newAggregation(
+                        Aggregation.skip(PAGE_SIZE * page),
+                        Aggregation.limit(PAGE_SIZE),
+                        Aggregation.project(Book.Fields.title, Book.Fields.authors)
+                                .and(
+                                        ArrayOperators.Reduce.arrayOf(Book.Fields.authors)
+                                                .withInitialValue("")
+                                                .reduce(StringOperators.Concat.valueOf("$$value"))
+                                )
+                ),
+                Book.class,
+                BookData.class
+        );
+        return res.getMappedResults().stream().map(BookData::string).collect(Collectors.joining("\n"));
+    }
+
+
+    private final FunctionToolCallback<PageArg, String> booksIndexToolCallback = FunctionToolCallback.<PageArg, String>builder("booksIndex", pageArg -> booksIndexFuncImpl(pageArg.page()))
+            .inputType(PageArg.class)
+            .description("Function returns list that contains 150 short descriptions of books, parameter: page (integer)")
+            .build();
+
+    @Override
+    public FunctionToolCallback<PageArg, String> booksIndexFunction() {
+        return booksIndexToolCallback;
+    }
+}

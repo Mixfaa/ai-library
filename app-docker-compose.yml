@@ -1,0 +1,51 @@
+services:
+  #MongoDB Service
+  ai-lib-mongodb:
+    image: mongo:7.0
+    container_name: mongo
+    restart: always
+    command: [ "--replSet", "rs0", "--bind_ip_all", "--port", "27017" ]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017'}]}) }" | mongosh --port 27017
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      start_interval: 1s
+      retries: 30
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+  redis:
+    image: redis:8.0.2
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: [ "redis-server", "--maxmemory", "1gb", "--appendonly", "yes" ] # Equivalent to Dragonfly's maxmemory
+    volumes:
+      - redis_data:/data
+
+  ai-library-app:
+    build: . # Docker Compose буде шукати Dockerfile в поточній директорії
+    container_name: ai-library-app
+    ports:
+      - "8080:8080" # Прокидання порту застосунку на хост
+    environment:
+      # Ці змінні середовища перевизначають властивості з application.properties всередині контейнера
+      # Використовуйте імена сервісів як хости для підключення
+      SPRING_DATA_MONGODB_URI: mongodb://ai-lib-mongodb:27017/ailibrary # 'ai-lib-mongodb' - це ім'я сервісу MongoDB
+      SPRING_DATA_REDIS_HOST: redis # 'redis' - це ім'я сервісу Redis
+    depends_on:
+      ai-lib-mongodb:
+        condition: service_healthy # Чекати, поки MongoDB буде готова
+      redis:
+        condition: service_started # Чекати, поки Redis буде запущено
+    restart: unless-stopped
+volumes:
+  mongo-data:
+  mongo-config:
+  redis_data:

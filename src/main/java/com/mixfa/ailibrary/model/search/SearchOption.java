@@ -1,7 +1,7 @@
 package com.mixfa.ailibrary.model.search;
 
 import com.mixfa.ailibrary.misc.Utils;
-import com.mixfa.ailibrary.model.Book;
+import com.mixfa.ailibrary.model.library.Book;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
@@ -22,18 +22,6 @@ public interface SearchOption {
     }
 
     final class Books {
-        public static SearchOption fromRequest(Book.SearchRequest request) {
-            return new SimpleSearchRequestOption(request);
-        }
-
-        public static SearchOption presentInLibs(Collection<String> libsNames) {
-            return new PresentInLibraries(libsNames);
-        }
-
-        public static SearchOption presentInLibs(String... libs) {
-            return new PresentInLibraries(libs);
-        }
-
         public static SearchOption byTitle(String query) {
             return new AnyTitleSearchOption(query);
         }
@@ -42,22 +30,42 @@ public interface SearchOption {
             return new ByAuthorsSearch(authors);
         }
 
-        public static SearchOption byGenre(Collection<String> genres) {
-            return new ByGenresSearch(genres);
+        public static SearchOption bySubject(Collection<String> genres) {
+            return new BySubjectsSearch(genres);
         }
 
         public static SearchOption byISBN(long isbn) {
             return new ISBNSearch(isbn);
         }
-    }
 
-    final class Libraries {
-        public static SearchOption containsBook(Book book) {
-            return new LibContainsBook(book.id());
+        public static SearchOption byRating(double minRating) {
+            return new RatingSearch(minRating);
         }
 
-        public static SearchOption byName(String query) {
-            return new LibraryByName(query);
+        public static SearchOption byYearGreaterThan(int year) {
+            return new PublishYearSearch.GreaterThan(year);
+        }
+
+        public static SearchOption byYearLessThan(int year) {
+            return new PublishYearSearch.LessThan(year);
+        }
+
+        public static final class Sort {
+            public static SearchOption popularityAscending() {
+                return PopularitySort.ascending();
+            }
+
+            public static SearchOption popularityDescending() {
+                return PopularitySort.descending();
+            }
+
+            public static SearchOption ratingAscending() {
+                return RatingSort.ascending();
+            }
+
+            public static SearchOption ratingDescending() {
+                return RatingSort.descending();
+            }
         }
     }
 
@@ -87,7 +95,7 @@ public interface SearchOption {
         return () -> List.of(Aggregation.match(criteriaDefinition));
     }
 
-    final class Match {
+    public static final class Match {
         public static SearchOption all(Criteria... criterias) {
             return withOperator(
                     Criteria::andOperator,
@@ -97,7 +105,7 @@ public interface SearchOption {
 
         public static SearchOption any(Criteria... criterias) {
             return withOperator(
-                    Criteria::andOperator,
+                    Criteria::orOperator,
                     criterias
             );
         }
@@ -118,7 +126,10 @@ public interface SearchOption {
         }
     }
 
-    final class EmptyOption implements SearchOption {
+    public static final class EmptyOption implements SearchOption {
+        private EmptyOption() {
+        }
+
         @Override
         public List<AggregationOperation> makePipeline() {
             return List.of();

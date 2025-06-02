@@ -1,7 +1,7 @@
 package com.mixfa.ailibrary.controller;
 
-import com.mixfa.ailibrary.model.FileData;
-import com.mixfa.ailibrary.service.FileStorageService;
+import com.mixfa.ailibrary.model.filestorage.FileData;
+import com.mixfa.ailibrary.service.filestorage.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

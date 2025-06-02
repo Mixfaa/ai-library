@@ -3,14 +3,11 @@ package com.mixfa.ailibrary.misc.cache;
 import com.mixfa.ailibrary.model.user.Account;
 import org.apache.tomcat.util.collections.ManagedConcurrentWeakHashMap;
 
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-
 public class ByUserCache<T> implements MaintainableCache {
-    private final Map<String, ManagedConcurrentWeakHashMap<Long, T>> cache = new ConcurrentHashMap<>();
+    private final ManagedConcurrentWeakHashMap<String, T> cache = new ManagedConcurrentWeakHashMap<>();
 
     public ByUserCache(CacheMaintainer maintainer) {
         Objects.requireNonNull(maintainer);
@@ -19,18 +16,25 @@ public class ByUserCache<T> implements MaintainableCache {
 
     @Override
     public void maintainCache() {
-        for (var entry : cache.entrySet())
-            entry.getValue().maintain();
+        cache.maintain();
     }
 
-    public Map<Long, T> getCache(String cacheName) {
-        return cache.computeIfAbsent(cacheName, _ -> new ManagedConcurrentWeakHashMap<>());
+    public void evict(String cacheName) {
+        var userId = Account.getAuthenticated().id();
+        cache.remove(userId);
     }
 
-    public T getOrPut(String cacheName, Function<Long, T> supplier) {
-        var cache = getCache(cacheName);
+    public void set(String userId, T value) {
+        cache.put(userId, value);
+    }
+
+    public void set(T value) {
+        var userId = Account.getAuthenticated().id();
+        cache.put(userId, value);
+    }
+
+    public T getOrPut(Function<String, T> supplier) {
         var usersId = Account.getAuthenticated().id();
-
         return cache.computeIfAbsent(usersId, supplier);
     }
 }
