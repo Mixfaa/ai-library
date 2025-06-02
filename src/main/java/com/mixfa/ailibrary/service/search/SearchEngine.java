@@ -4,6 +4,7 @@ import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.library.BookBorrowing;
 import com.mixfa.ailibrary.model.library.Comment;
 import com.mixfa.ailibrary.model.search.SearchOption;
+import com.mixfa.ailibrary.model.user.Account;
 import com.mixfa.ailibrary.service.search.impl.GenericSearchEngineImpl;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,13 @@ public interface SearchEngine<T> {
     static class ForBorrowings extends DelegationBase<BookBorrowing> {
         public ForBorrowings(MongoTemplate template) {
             super(new GenericSearchEngineImpl<>(template, BookBorrowing.class));
+        }
+    }
+
+    @Component
+    static class ForAccounts extends DelegationBase<Account> {
+        public ForAccounts(MongoTemplate template) {
+            super(new GenericSearchEngineImpl<>(template, Account.class));
         }
     }
 }

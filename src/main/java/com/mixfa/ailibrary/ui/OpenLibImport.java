@@ -46,7 +46,13 @@ public class OpenLibImport extends AppLayout {
     }
 
     public static Optional<String> searchBooks(String query) {
-        String url = GOOGLE_BOOKS_API + "?q=intitle:" + URLEncoder.encode(query);
+
+        String url = GOOGLE_BOOKS_API + "?=";
+        if (!query.startsWith("intitle:") && !query.startsWith("author:"))
+            url = url + "?q=intitle:" + URLEncoder.encode(query);
+        else
+            url = url + URLEncoder.encode(query);
+
 
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()

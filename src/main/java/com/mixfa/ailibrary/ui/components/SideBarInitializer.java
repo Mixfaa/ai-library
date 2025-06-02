@@ -34,9 +34,11 @@ public class SideBarInitializer {
 
         if (authentication.role().isAdmin()) {
             sideNav.addItem(
-                    new SideNavItem(localizer.get("sidebar.editbooks"), BooksEditRoute.class, VaadinIcon.BOOK.create()),
                     new SideNavItem(localizer.get("sidebar.statistics"), StatisticsRoute.class, VaadinIcon.MONEY_EXCHANGE.create()),
+                    new SideNavItem(localizer.get("sidebar.editusers"), EditUsersRoute.class, VaadinIcon.USER.create()),
+                    new SideNavItem(localizer.get("sidebar.editbooks"), BooksEditRoute.class, VaadinIcon.BOOK.create()),
                     new SideNavItem(localizer.get("sidebar.importfromopenlib"), OpenLibImport.class, VaadinIcon.MAGIC.create())
+
             );
         }
 

@@ -17,18 +17,18 @@ public class LocalizationProvider {
     private static final String ERROR_BUNDLE_NAME = "errors";
     private static final ResourceBundle ENGLISH_TEXT_BUNDLE = ResourceBundle.getBundle(TEXT_BUNDLE_NAME);
     private static final ResourceBundle ENGLISH_ERROR_BUNDLE = ResourceBundle.getBundle(ERROR_BUNDLE_NAME);
+
     private static final Localizer ENGLISH_LOCALIZER = new Localizer(Locale.ENGLISH, ENGLISH_TEXT_BUNDLE, ENGLISH_ERROR_BUNDLE);
-    private static final Map<Locale, RetringLocalizer> BUNDLES = new ConcurrentHashMap<>();
+    private static final Map<Locale, Localizer> BUNDLES = new ConcurrentHashMap<>();
 
     private static Localizer getLocalizator(Locale locale) {
         if (locale.equals(Locale.ENGLISH)) return ENGLISH_LOCALIZER;
 
         var bundle = BUNDLES.computeIfAbsent(locale, lkey -> {
             try {
-                return new RetringLocalizer(lkey,
+                return new Localizer(lkey,
                         ResourceBundle.getBundle(TEXT_BUNDLE_NAME, lkey),
-                        ResourceBundle.getBundle(ERROR_BUNDLE_NAME, lkey),
-                        ENGLISH_LOCALIZER);
+                        ResourceBundle.getBundle(ERROR_BUNDLE_NAME, lkey));
             } catch (MissingResourceException e) {
                 return null;
             }

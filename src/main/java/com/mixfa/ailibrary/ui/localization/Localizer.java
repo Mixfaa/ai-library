@@ -30,11 +30,19 @@ public class Localizer {
     }
 
     public String get(String key) {
-        return textBundle.getString(key);
+        try {
+            return textBundle.getString(key);
+        } catch (Exception e) {
+            return key;
+        }
     }
 
     public String formatGet(String key, Object... args) {
-        var template = textBundle.getString(key);
-        return Utils.fmt(template, args);
+        try {
+            var template = textBundle.getString(key);
+            return Utils.fmt(template, args);
+        } catch (Exception e) {
+            return key;
+        }
     }
 }
