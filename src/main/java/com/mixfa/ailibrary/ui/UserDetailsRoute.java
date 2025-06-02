@@ -157,8 +157,7 @@ public class UserDetailsRoute extends AppLayout {
                             accountService.editUsername(username);
                             Notification.show(localizer.get("userdetails.usernameupdated"));
                         } catch (Exception ex) {
-                            var errorMsg = localizer.formatError(ex);
-                            Notification.show(errorMsg);
+                            Notification.show(localizer.formatError(ex));
                         }
                     });
                 }},

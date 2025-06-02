@@ -20,11 +20,9 @@ public enum ExceptionType {
     NO_BOOKS_AVAILABLE, // libId - Object, bookid - Object
     COMMENT_NOT_FOUND(true), //
     INVALID_BOOK_RATE, // rate - Double
-    BOOK_ORDER_CANT_BE_CANCELLED, // object status id
     RATE_LIMIT_EXCEEDED(true), //
     INVALID_COMMENT(true), //
     ACCESS_DENIED(true), //
-    USER_ALREADY_WORKER(true),
     BOOK_ALREADY_BORROWED, // string
     CURRENCY_CONVERTION_FAILED(true),
     INVOICE_CREATION_FAILED(true),
@@ -63,10 +61,6 @@ public enum ExceptionType {
         return INVOICE_CREATION_FAILED.instance;
     }
 
-
-    public static UserFriendlyException userAlreadyWorker() {
-        return USER_ALREADY_WORKER.instance;
-    }
 
     public static UserFriendlyException accessDenied() {
         return ACCESS_DENIED.instance;
@@ -120,8 +114,6 @@ public enum ExceptionType {
         return BOOK_ALREADY_RATED.make(Utils.idToStr(bookId), username);
     }
 
-    public static UserFriendlyException bookOrderCanBeCancelled(Object bookId) {
-        return BOOK_ORDER_CANT_BE_CANCELLED.make(Utils.idToStr(bookId));
-    }
+
 
 }

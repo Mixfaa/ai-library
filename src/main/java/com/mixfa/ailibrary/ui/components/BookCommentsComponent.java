@@ -81,7 +81,7 @@ public class BookCommentsComponent extends VerticalLayout {
                 commentsItems.addLast(commentToItem(comment));
                 messageList.setItems(commentsItems);
             } catch (Exception e) {
-                Notification.show(e.getLocalizedMessage());
+                Notification.show(localizer.formatError(e));
             }
         });
 
