@@ -19,22 +19,16 @@ services:
     volumes:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
-
-  dragonfly:
-    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
-    container_name: dragonfly
+  redis:
+    image: redis:8.0.2
+    container_name: redis
     restart: unless-stopped
     ports:
       - "6379:6379"
-    environment:
-      - DF_CACHE_SIZE=1GB  # Adjust cache size as needed
-      - DF_THREADS=1        # Number of threads to use
-    command: [ "--maxmemory", "1GB" ]
+    command: [ "redis-server", "--maxmemory", "1gb", "--appendonly", "yes" ] # Equivalent to Dragonfly's maxmemory
     volumes:
-      - dragonfly_data:/data
-
-
+      - redis_data:/data
 volumes:
   mongo-data:
   mongo-config:
-  dragonfly_data:
+  redis_data:

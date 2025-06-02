@@ -34,7 +34,6 @@ public class BookCard extends Card {
         this.setTitle(book.title());
         this.setSubtitle(new Span(String.join(", ", book.authors())));
         this.add(new Text(localizer.formatGet("book.tookcount", book.tookCount())));
-//        this.setWidth("auto");
         this.setHeight("auto");
     }
 }
