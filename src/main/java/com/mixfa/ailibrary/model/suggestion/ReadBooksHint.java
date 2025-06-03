@@ -2,12 +2,13 @@ package com.mixfa.ailibrary.model.suggestion;
 
 import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.library.ReadBook;
+import com.mixfa.ailibrary.service.ai.AiBookDescriptionService;
 
 public class ReadBooksHint implements SuggsetionHint {
     private final String hint;
 
-    public ReadBooksHint(ReadBook[] books) {
-        this.hint = makeHint(books);
+    public ReadBooksHint(ReadBook[] books, AiBookDescriptionService aiBookDescriptionService) {
+        this.hint = makeHint(books, aiBookDescriptionService);
     }
 
     @Override
@@ -15,7 +16,7 @@ public class ReadBooksHint implements SuggsetionHint {
         return hint;
     }
 
-    public static String makeHint(ReadBook[] books) {
+    public static String makeHint(ReadBook[] books, AiBookDescriptionService aiBookDescriptionService) {
         if (books == null || books.length == 0)
             return "";
 
@@ -25,7 +26,8 @@ public class ReadBooksHint implements SuggsetionHint {
 
         for (ReadBook readBook : books) {
             var book = readBook.book();
-            Utils.appendBookDescForAi(book, sb);
+            var desc = aiBookDescriptionService.bookDescription(book);
+            sb.append(desc);
             sb.append("User review = ").append(readBook.mark().name());
             sb.append("\n");
         }

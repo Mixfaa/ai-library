@@ -31,7 +31,7 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
 
         var description = valueOps.get(bookKey);
         if (description == null) {
-            description = Utils.makeBookDescription(book);
+            description = makeBookDescription(book);
             valueOps.set(bookKey, description);
         }
 
@@ -44,7 +44,7 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
 
         var description = valueOps.get(bookKey);
         if (description == null) {
-            description = Utils.makeBookDescription(readBook.book());
+            description = makeBookDescription(readBook.book());
             valueOps.set(bookKey, description);
         }
 
@@ -67,7 +67,7 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
             var description = descriptions.get(i);
 
             if (description == null) {
-                description = Utils.makeBookDescription(book);
+                description = makeBookDescription(book);
                 toSetValues.put(makeBookDescriptionKey(book), description);
             }
         }
@@ -113,5 +113,47 @@ public class CachedAiBookDescriptionServiceImpl implements AiBookDescriptionServ
             case BookService.Event.OnBookEdited onEdited -> evictCache(onEdited.book().id());
             case BookService.Event.OnBookDeleted onRemoved -> evictCache(onRemoved.bookId());
         }
+    }
+
+
+    private static String makeBookDescription(Book book) {
+        var id = book.id().toHexString();
+        var title = book.title();
+
+        var sb = new StringBuilder();
+        appendBookDescForAi(book, sb);
+        return sb.toString();
+    }
+
+    private static String makeBookDescriptionAndMark(ReadBook readBook) {
+        var book = readBook.book();
+        var mark = readBook.mark();
+
+        var id = book.id().toHexString();
+        var title = book.title();
+
+        var sb = new StringBuilder();
+
+        appendBookDescForAi(book, sb);
+        sb.append("User review = ").append(mark.name()).append("\n");
+        sb.append("\n\n");
+        return sb.toString();
+    }
+
+    private static void appendBookDescForAi(Book book, StringBuilder sb) {
+        sb.append("Book description").append('\n');
+        sb.append("ID = ").append(book.id().toHexString()).append('\n');
+        sb.append("Title = ").append(book.title()).append("\n");
+        var desc = book.description();
+        if (desc != null)
+            sb.append("Description = \n").append(desc).append('\n');
+        sb.append("Authors = ");
+        for (String author : book.authors())
+            sb.append(author).append(", ");
+
+        sb.append("\nGenres = ");
+        for (String subject : book.subjects())
+            sb.append(subject).append(", ");
+        sb.append("\n");
     }
 }

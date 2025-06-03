@@ -49,47 +49,6 @@ public class Utils {
         return null;
     }
 
-    public static String makeBookDescription(Book book) {
-        var id = book.id().toHexString();
-        var title = book.title();
-
-        var sb = new StringBuilder();
-        appendBookDescForAi(book, sb);
-        return sb.toString();
-    }
-
-    public static String makeBookDescriptionAndMark(ReadBook readBook) {
-        var book = readBook.book();
-        var mark = readBook.mark();
-
-        var id = book.id().toHexString();
-        var title = book.title();
-
-        var sb = new StringBuilder();
-
-        appendBookDescForAi(book, sb);
-        sb.append("User review = ").append(mark.name()).append("\n");
-        sb.append("\n\n");
-        return sb.toString();
-    }
-
-    public static void appendBookDescForAi(Book book, StringBuilder sb) {
-        sb.append("Book description").append('\n');
-        sb.append("ID = ").append(book.id().toHexString()).append('\n');
-        sb.append("Title = ").append(book.title()).append("\n");
-        var desc = book.description();
-        if (desc != null)
-            sb.append("Description = \n").append(desc).append('\n');
-        sb.append("Authors = ");
-        for (String author : book.authors())
-            sb.append(author).append(", ");
-
-        sb.append("\nGenres = ");
-        for (String subject : book.subjects())
-            sb.append(subject).append(", ");
-        sb.append("\n");
-    }
-
     public static ObjectId idToObj(Object id) {
         if (id instanceof ObjectId objId) return objId;
         if (id instanceof String strId) return new ObjectId(strId);
@@ -116,15 +75,6 @@ public class Utils {
             copy[i] = mapper.apply(array[i]);
         }
         return copy;
-    }
-
-    public <T> void iteratePages(Function<Pageable, Page<T>> supplier, Function<Page<T>, Boolean> handler) {
-        var pageRequest = PageRequest.of(0, PAGE_SIZE);
-        var page = supplier.apply(pageRequest);
-
-        while (handler.apply(page) && page.hasNext()) {
-            page = supplier.apply(pageRequest.next());
-        }
     }
 
     public AuthenticatedAccount getPrincipal() {

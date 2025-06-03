@@ -1,7 +1,7 @@
 package com.mixfa.ailibrary.service.library.impl;
 
-import com.mixfa.ailibrary.misc.Utils;
 import com.mixfa.ailibrary.model.library.Book;
+import com.mixfa.ailibrary.service.ai.AiBookDescriptionService;
 import com.mixfa.ailibrary.service.ai.AiFunctions;
 import com.mixfa.ailibrary.service.library.BookChatBotService;
 import lombok.RequiredArgsConstructor;
@@ -23,18 +23,19 @@ import java.util.List;
 public class BookChatBotServiceImpl implements BookChatBotService {
     private final ChatModel chatModel;
     private final AiFunctions aiFunctions;
+    private final AiBookDescriptionService aiBookDescriptionService;
 
     @Override
     public ChatBot createBookChatBot(Book book) {
         return new BookChatBotImpl(book);
     }
 
-    private static SystemMessage makeSystemMessage(Book book) {
+    private static SystemMessage makeSystemMessage(Book book, AiBookDescriptionService aiBookDescriptionService) {
         return new SystemMessage(String.join("\n",
                 "Act as library assistent",
                 "Answer in user`s language",
                 "In context of book:",
-                Utils.makeBookDescription(book)));
+                aiBookDescriptionService.bookDescription(book)));
     }
 
     private List<FunctionCallback> makeToolCallbacks() {
@@ -51,11 +52,10 @@ public class BookChatBotServiceImpl implements BookChatBotService {
         private final OpenAiChatOptions chatOptions;
         private final List<Message> chatHistory = Collections.synchronizedList(new ArrayList<>());
 
-
         BookChatBotImpl(Book book) {
             this.chatOptions = OpenAiChatOptions.builder()
                     .toolCallbacks(makeToolCallbacks()).build();
-            chatHistory.addFirst(makeSystemMessage(book));
+            chatHistory.addFirst(makeSystemMessage(book, aiBookDescriptionService));
         }
 
         @Override

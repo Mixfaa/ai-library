@@ -82,7 +82,6 @@ public class CommentServiceImpl implements CommentService {
                         .build(),
                 cacheMaintainer
         );
-
     }
 
     @Override
@@ -161,8 +160,9 @@ public class CommentServiceImpl implements CommentService {
                         "\n",
                         "You are not chat assistent, you are part of system.",
                         "You will receive user`s comment and book description.",
-                        "Your mission: Check if user`s comment is adequate, valid and does not contain significant book spoilers.",
-                        "If user`s comment is OK, respond with 'OK', otherwise: 'BAD'.",
+                        "Your mission: Check if user`s comment is adequate and does not contain significant book spoilers.",
+                        "You should accept bad comments, if they are adequate and does not contain significant book spoilers.",
+                        "If user`s comment is OK, respond with 'OK', otherwise: 'NOT_OK'.",
                         "You are not allowed to respond with question or anything except what you were asked for."
                 )
         );
@@ -194,7 +194,7 @@ public class CommentServiceImpl implements CommentService {
 
             if (aiResponse.contains("OK"))
                 return Optional.of(Boolean.TRUE);
-            if (aiResponse.contains("BAD"))
+            if (aiResponse.contains("NOT_OK"))
                 return Optional.of(Boolean.FALSE);
             return Optional.empty();
         }
@@ -212,7 +212,4 @@ public class CommentServiceImpl implements CommentService {
             return result.get();
         }
     }
-
-
-
 }

@@ -3,6 +3,7 @@ package com.mixfa.ailibrary.ui;
 import com.mixfa.ailibrary.misc.VaadinCommons;
 import com.mixfa.ailibrary.model.search.SearchOption;
 import com.mixfa.ailibrary.model.suggestion.*;
+import com.mixfa.ailibrary.service.ai.AiBookDescriptionService;
 import com.mixfa.ailibrary.service.misc.impl.Services;
 import com.mixfa.ailibrary.service.repo.BookRepo;
 import com.mixfa.ailibrary.service.search.SearchEngine;
@@ -39,6 +40,7 @@ public class AiFeaturesRoute extends AppLayout {
     private final SuggestionService suggestionService;
     private final SearchEngine.ForBooks bookSearchEngine;
     private final UserDataService userDataService;
+    private final AiBookDescriptionService aiBookDescriptionService;
 
     private final Localizer localizer;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
@@ -50,6 +52,7 @@ public class AiFeaturesRoute extends AppLayout {
         this.suggestionService = services.suggestionService();
         this.bookSearchEngine = services.booksSearchEngine();
         this.userDataService = services.userDataService();
+        this.aiBookDescriptionService = services.aiBookDescriptionService();
         this.bookRepo = bookRepo;
         this.services = services;
         SideBarInitializer.init(this, localizer);
@@ -80,12 +83,10 @@ public class AiFeaturesRoute extends AppLayout {
     }
 
     private Component makeContent() {
-
-
         var header = new Paragraph(localizer.get("aifeatures.title"));
 
         var suggestionHints = new ArrayList<SuggsetionHint>();
-        suggestionHints.add(new ReadBooksHint(userDataService.readBooks().get()));
+        suggestionHints.add(new ReadBooksHint(userDataService.readBooks().get(), aiBookDescriptionService));
 
         var optionsDialog = new Dialog(localizer.get("aifeatures.configureoptions"));
         optionsDialog.setWidth("1200px");
