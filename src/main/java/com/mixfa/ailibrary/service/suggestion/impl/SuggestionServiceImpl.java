@@ -65,17 +65,13 @@ public class SuggestionServiceImpl implements SuggestionService {
 
     private SuggestedBook[] getAndParse(Prompt prompt) {
         var searchResult = chatModel.call(prompt);
-        log.info("LLM respond:");
-        System.out.println(searchResult);
 
         var textToParse = searchResult.getResult().getOutput().getText();
-        System.out.println(textToParse);
-        final var jsonPrefix = "```json";
-        if (textToParse.startsWith(jsonPrefix))
-            textToParse = textToParse.substring(jsonPrefix.length());
-        final var jsonPostfix = "```";
-        if (textToParse.endsWith(jsonPostfix))
-            textToParse = textToParse.substring(0, textToParse.length() - jsonPostfix.length());
+
+        textToParse = textToParse.substring(
+                textToParse.indexOf("["),
+                textToParse.lastIndexOf("]") + 1
+        );
 
         var output = textToParse;
 

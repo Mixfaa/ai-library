@@ -1,5 +1,6 @@
 package com.mixfa.ailibrary.service.library.impl;
 
+import com.mixfa.ailibrary.model.finance.Money;
 import com.mixfa.ailibrary.model.library.Book;
 import com.mixfa.ailibrary.model.library.BookPricingPolicy;
 import com.mixfa.ailibrary.model.library.pricing_policy.ConstPricePolicy;
@@ -8,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class BookPricingPolicyProviderImpl implements BookPricingPolicyProvider {
-    private final ConstPricePolicy CONST_PRICE_POLICY = new ConstPricePolicy();
+    private final ConstPricePolicy CONST_PRICE_POLICY = new ConstPricePolicy(Money.uah(150 * 100));
     @Override
     public BookPricingPolicy getBookPricingPolicy(Book book) {
         return CONST_PRICE_POLICY;

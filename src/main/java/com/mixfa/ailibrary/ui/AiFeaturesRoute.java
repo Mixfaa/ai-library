@@ -62,8 +62,6 @@ public class AiFeaturesRoute extends AppLayout {
 
 
     private Component makeIncludeHints(List<SuggsetionHint> suggestionHints) {
-
-
         var likedBookSelect = new CustomMultiSelectComboBox<String>(localizer.get("aifeatures.likedbooks"), Function.identity());
         likedBookSelect.setWidth("50%");
         likedBookSelect.addValueChangeListener(e -> {

@@ -3,16 +3,11 @@ package com.mixfa.ailibrary.misc;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mixfa.ailibrary.model.library.Book;
-import com.mixfa.ailibrary.model.library.ReadBook;
 import com.mixfa.ailibrary.model.user.AuthenticatedAccount;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
 import org.bson.types.ObjectId;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.lang.reflect.Array;
@@ -77,17 +72,17 @@ public class Utils {
         return copy;
     }
 
-    public AuthenticatedAccount getPrincipal() {
+    public static AuthenticatedAccount getPrincipal() {
         return (AuthenticatedAccount) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    public <T> T[] allocArray(Class<? extends T[]> newType, int newLength) {
+    public static <T> T[] allocArray(Class<? extends T[]> newType, int newLength) {
         return ((Object) newType == (Object) Object[].class)
                 ? (T[]) new Object[newLength]
                 : (T[]) Array.newInstance(newType.getComponentType(), newLength);
     }
 
-    public <T> boolean anyMatch(T[] array, Predicate<T> predicate) {
+    public static <T> boolean anyMatch(T[] array, Predicate<T> predicate) {
         if (array == null || array.length == 0) return false;
         for (T t : array)
             if (predicate.test(t))
@@ -95,7 +90,7 @@ public class Utils {
         return false;
     }
 
-    public <T> boolean noneMatch(T[] array, Predicate<T> predicate) {
+    public static <T> boolean noneMatch(T[] array, Predicate<T> predicate) {
         if (array == null || array.length == 0) return true;
         for (T t : array)
             if (predicate.test(t))
@@ -103,7 +98,7 @@ public class Utils {
         return true;
     }
 
-    public <T> boolean allMatch(T[] array, Predicate<T> predicate) {
+    public static <T> boolean allMatch(T[] array, Predicate<T> predicate) {
         if (array == null || array.length == 0) return false;
         for (T t : array)
             if (!predicate.test(t))
@@ -111,7 +106,7 @@ public class Utils {
         return true;
     }
 
-    public <T> Optional<T> find(T[] array, Predicate<T> predicate) {
+    public static <T> Optional<T> find(T[] array, Predicate<T> predicate) {
         if (array == null || array.length == 0) return Optional.empty();
         for (T t : array) {
             if (predicate.test(t)) {
@@ -121,7 +116,7 @@ public class Utils {
         return Optional.empty();
     }
 
-    public <T> T[] filter(T[] array, Predicate<T> predicate) {
+    public static <T> T[] filter(T[] array, Predicate<T> predicate) {
         if (array == null || array.length == 0) return null;
         var newLength = count(array, predicate);
         T[] copy = (T[]) allocArray(array.getClass(), newLength);
@@ -137,7 +132,7 @@ public class Utils {
         return copy;
     }
 
-    public <T> int count(T[] array, Predicate<T> predicate) {
+    public static <T> int count(T[] array, Predicate<T> predicate) {
         if (array == null || array.length == 0) return 0;
         int count = 0;
         for (T t : array) {
@@ -148,7 +143,7 @@ public class Utils {
         return count;
     }
 
-    public <T> T[] replace(T[] array, T targetElement, T replacement) {
+    public static <T> T[] replace(T[] array, T targetElement, T replacement) {
         var copy = Arrays.copyOf(array, array.length);
         for (int i = 0; i < copy.length; i++) {
             var element = array[i];
@@ -159,7 +154,7 @@ public class Utils {
         return copy;
     }
 
-    public <T> T[] replace(T[] array, T replacement, Predicate<T> predicate) {
+    public static <T> T[] replace(T[] array, T replacement, Predicate<T> predicate) {
         var copy = Arrays.copyOf(array, array.length);
         for (int i = 0; i < copy.length; i++) {
             var element = array[i];

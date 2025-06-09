@@ -55,7 +55,7 @@ public class BookBorrowingServiceImpl implements BookBorrowingService {
     @PostConstruct
     @Scheduled(fixedRate = 12 * 60 * 60 * 1000) // every 12 hrs
     public void clearExpired() {
-        var expirityTime = Instant.now().minusSeconds(Duration.ofDays(1).toMillis());
+        var expirityTime = Instant.now().minusSeconds(Duration.ofDays(1).toSeconds());
         var expired = Criteria.where(BookBorrowing.Fields.borrowedTime).lt(expirityTime);
 
         mongoTemplate.remove(new Query().addCriteria(new Criteria().andOperator(IS_NOT_PAID_CRITERIA, expired)), BookBorrowing.class);

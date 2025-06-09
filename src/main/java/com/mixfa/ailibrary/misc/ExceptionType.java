@@ -61,7 +61,6 @@ public enum ExceptionType {
         return INVOICE_CREATION_FAILED.instance;
     }
 
-
     public static UserFriendlyException accessDenied() {
         return ACCESS_DENIED.instance;
     }
@@ -113,7 +112,4 @@ public enum ExceptionType {
     public static UserFriendlyException bookAlreadyRated(Object bookId, String username) {
         return BOOK_ALREADY_RATED.make(Utils.idToStr(bookId), username);
     }
-
-
-
 }
