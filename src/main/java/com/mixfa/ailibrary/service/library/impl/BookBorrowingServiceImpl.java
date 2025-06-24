@@ -119,8 +119,9 @@ public class BookBorrowingServiceImpl implements BookBorrowingService {
             return false;
 
         borrowing = borrowingDataRepo.save(borrowing.withPaid(true));
-        var bookBorrowedEvent = new BookBorrowingService.Event.OnBookBorrowed(borrowing);
-        eventPublisher.publishEvent(bookBorrowedEvent);
+        eventPublisher.publishEvent(
+                new BookBorrowingService.Event.OnBookBorrowed(borrowing)
+        );
         return true;
     }
 

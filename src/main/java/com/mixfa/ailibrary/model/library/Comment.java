@@ -38,7 +38,4 @@ public record Comment(
             double rate
     ) {
     }
-
-    @Transient
-    public static String TABLE_NAME = MongoCollectionUtils.getPreferredCollectionName(Comment.class);
 }
